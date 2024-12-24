@@ -1,0 +1,43 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlservers.database.example.com
+spec:
+  group: database.example.com
+  names:
+    kind: SQLServer
+    listKind: SQLServerList
+    plural: sqlservers
+    singular: sqlserver
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status object for the entity.
+            properties:
+              state:
+                type: string
+              message:
+                type: string
+            type: object
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              version:
+                type: string
+              storageClass:
+                type: string
+              storageSize:
+                type: string
+              secretName:
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

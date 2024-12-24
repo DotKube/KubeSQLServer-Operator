@@ -1,0 +1,11 @@
+---
+apiVersion: database.example.com/v1alpha1
+kind: SQLServer
+metadata:
+  name: sqlserver-instance
+  namespace: default
+spec:
+  version: "2022"
+  storageClass: "standard"
+  storageSize: "20Gi"
+  secretName: "sqlserver-secret"
