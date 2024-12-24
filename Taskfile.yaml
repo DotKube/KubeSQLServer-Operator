@@ -1,0 +1,54 @@
+version: "3"
+
+tasks:
+  default:
+    cmds:
+    - task --list-all
+    desc: "List all available tasks in this Taskfile."
+
+  create-cluster:
+    cmds:
+    - kind create cluster --name sql-server-testing-cluster
+    desc: "Create a Kind Kubernetes cluster named 'sql-server-testing-cluster' for testing purposes."
+
+  delete-cluster:
+    cmds:
+    - kind delete cluster --name sql-server-testing-cluster
+    desc: "Delete the Kind Kubernetes cluster named 'sql-server-testing-cluster'."
+
+  create-crd-files:
+    dir: ./src/OperatorTemplate.ApiService
+    cmds:
+    - powershell -Command "if (Test-Path config) { Remove-Item -Recurse -Force config }"
+    - dotnet clean
+    - dotnet build
+    - rm -rf Dockerfile
+    desc: "Generate a fresh configuration for the OperatorTemplate.ApiService by cleaning and rebuilding the project."
+
+  apply-crds:
+    dir: ./src/OperatorTemplate.ApiService
+    cmds:
+    - dotnet run install
+    desc: "Apply the Custom Resource Definitions (CRDs) for the OperatorTemplate.ApiService."
+
+  dev:
+    dir: ./src/OperatorTemplate.AppHost
+    cmds:
+    - dotnet watch
+    desc: "Start the development environment for the OperatorTemplate.AppHost with live file watching enabled."
+
+  apply-crd-instance:
+    cmds:
+    - kubectl apply -f ./local-configs/sql-server-instance.yaml
+    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
+
+  build-container-image:
+    dir: ./src/OperatorTemplate.ApiService
+    cmds:
+    - docker compose build
+    desc: "Build the Docker image for the OperatorTemplate.ApiService."
+
+  load-image-into-kind:
+    cmds:
+    - kind load docker-image operator-template:latest --name sql-server-testing-cluster
+    desc: "Load the OperatorTemplate.ApiService Docker image into the Kind Kubernetes cluster."
