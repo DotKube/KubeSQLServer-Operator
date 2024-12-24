@@ -42,6 +42,11 @@ tasks:
     - kubectl apply -f ./local-configs/sql-server-instance.yaml
     desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
 
+  delete-crd-instance:
+    cmds:
+    - kubectl delete -f ./local-configs/sql-server-instance.yaml
+    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
+
   build-container-image:
     dir: ./src/OperatorTemplate.ApiService
     cmds:
