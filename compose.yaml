@@ -1,5 +1,6 @@
 services:
   operator:
+    image: operator-template:latest
     build:
       context: .
       dockerfile: ./src/OperatorTemplate.ApiService/Containerfile
