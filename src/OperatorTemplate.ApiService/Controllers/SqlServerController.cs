@@ -35,7 +35,7 @@ public class SQLServerController : IResourceController<V1SQLServer>
 
         // Handle SA password secret
         var saPasswordSecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
-        var saPassword = await GetOrCreateSaPasswordAsync(saPasswordSecretName, entity.Metadata.NamespaceProperty);
+        _ = await GetOrCreateSaPasswordAsync(saPasswordSecretName, entity.Metadata.NamespaceProperty);
 
         // Define StatefulSet metadata
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
