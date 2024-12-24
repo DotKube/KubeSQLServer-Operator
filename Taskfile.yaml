@@ -22,7 +22,7 @@ tasks:
     - powershell -Command "if (Test-Path config) { Remove-Item -Recurse -Force config }"
     - dotnet clean
     - dotnet build
-    - rm -rf Dockerfile
+    - powershell -Command "remove-item -recurse -force Dockerfile"
     desc: "Generate a fresh configuration for the OperatorTemplate.ApiService by cleaning and rebuilding the project."
 
   apply-crds:
@@ -57,3 +57,14 @@ tasks:
     cmds:
     - kind load docker-image operator-template:latest --name sql-server-testing-cluster
     desc: "Load the OperatorTemplate.ApiService Docker image into the Kind Kubernetes cluster."
+
+  full-start:
+    cmds:
+    - task delete-cluster
+    - task create-cluster
+    - task create-crd-files
+    - task apply-crds
+    - task build-container-image
+    - task load-image-into-kind
+    - task apply-crd-instance
+    desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
