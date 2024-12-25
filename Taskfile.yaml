@@ -17,13 +17,29 @@ tasks:
     desc: "Delete the Kind Kubernetes cluster named 'sql-server-testing-cluster'."
 
   create-crd-files:
+    internal: true
     dir: ./src/OperatorTemplate.ApiService
     cmds:
-    - powershell -Command "if (Test-Path config) { Remove-Item -Recurse -Force config }"
+    - powershell -Command "if (Test-Path ./config) { Get-ChildItem -Path ./config -Recurse -Force | Remove-Item -Recurse -Force; Remove-Item -Force ./config }"
     - dotnet clean
     - dotnet build
-    - powershell -Command "remove-item -recurse -force Dockerfile"
-    desc: "Generate a fresh configuration for the OperatorTemplate.ApiService by cleaning and rebuilding the project."
+    - powershell -Command "remove-item -recurse -force ./Dockerfile"
+    desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.ApiService by cleaning and rebuilding the project."
+
+  copy-to-helm:
+    internal: true
+    dir: .
+    cmds:
+    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.ApiService/config/rbac/*' -Destination './operator-chart/templates/' -Recurse -Force -Exclude 'kustomization.yaml'"
+    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.ApiService/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
+
+    desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
+
+  create-crds-and-copy:
+    cmds:
+    - task: create-crd-files
+    - task: copy-to-helm
+    desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.ApiService and copy them to the Helm chart directories."
 
   apply-crds:
     dir: ./src/OperatorTemplate.ApiService
@@ -62,7 +78,7 @@ tasks:
     cmds:
     - task delete-cluster
     - task create-cluster
-    - task create-crd-files
+    - task create-crds-and-copy
     - task apply-crds
     - task build-container-image
     - task load-image-into-kind
