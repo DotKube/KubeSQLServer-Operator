@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: operator-template
+  tag: latest
+  pullPolicy: IfNotPresent
+
+environment: Production
+
+resources: {}
