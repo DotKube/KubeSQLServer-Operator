@@ -22,6 +22,7 @@ spec:
         app: operator
         release: "{{ .Release.Name }}"
     spec:
+      serviceAccountName: {{ .Release.Name }}-operator-sa
       containers:
         - name: operator
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
