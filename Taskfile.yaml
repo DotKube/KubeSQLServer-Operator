@@ -73,7 +73,7 @@ tasks:
 
   apply-crd-instance:
     cmds:
-    - kubectl apply -f ./local-configs/sql-server-instance.yaml
+    - kubectl apply -f ./local-configs
     desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
 
   delete-crd-instance:
@@ -109,4 +109,5 @@ tasks:
     - task create-cluster
     - task create-crds-and-copy
     - task: apply-crds-from-helm-chart
+    - task apply-crd-instance
     - task dev
