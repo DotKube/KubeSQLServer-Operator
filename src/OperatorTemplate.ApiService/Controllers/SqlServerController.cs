@@ -72,17 +72,16 @@ public class SQLServerController : IResourceController<V1SQLServer>
                     },
                     Spec = new V1PodSpec
                     {
-                        Containers = new List<V1Container>
-                        {
+                        Containers =
+                        [
                             new V1Container
                             {
                                 Name = "sqlserver",
                                 Image = $"mcr.microsoft.com/mssql/server:{entity.Spec.Version}-latest",
-                                Env = new List<V1EnvVar>
-                                {
+                                Env =
+                                [
                                     new V1EnvVar { Name = "ACCEPT_EULA", Value = "Y" },
-                                    new V1EnvVar
-                                    {
+                                    new() {
                                         Name = "SA_PASSWORD",
                                         ValueFrom = new V1EnvVarSource
                                         {
@@ -93,26 +92,26 @@ public class SQLServerController : IResourceController<V1SQLServer>
                                             }
                                         }
                                     }
-                                },
-                                Ports = new List<V1ContainerPort>
-                                {
+                                ],
+                                Ports =
+                                [
                                     new V1ContainerPort { ContainerPort = 1433 }
-                                },
-                                VolumeMounts = new List<V1VolumeMount>
-                                {
+                                ],
+                                VolumeMounts =
+                                [
                                     new V1VolumeMount
                                     {
                                         Name = "data",
                                         MountPath = "/var/opt/mssql"
                                     }
-                                }
+                                ]
                             }
-                        },
-                        Volumes = new List<V1Volume>()
+                        ],
+                        Volumes = []
                     }
                 },
-                VolumeClaimTemplates = new List<V1PersistentVolumeClaim>
-                {
+                VolumeClaimTemplates =
+                [
                     new V1PersistentVolumeClaim
                     {
                         Metadata = new V1ObjectMeta
@@ -125,7 +124,7 @@ public class SQLServerController : IResourceController<V1SQLServer>
                         },
                         Spec = new V1PersistentVolumeClaimSpec
                         {
-                            AccessModes = new List<string> { "ReadWriteOnce" },
+                            AccessModes = ["ReadWriteOnce"],
                             Resources = new V1ResourceRequirements
                             {
                                 Requests = new Dictionary<string, ResourceQuantity>
@@ -136,7 +135,7 @@ public class SQLServerController : IResourceController<V1SQLServer>
                             StorageClassName = entity.Spec.StorageClass
                         }
                     }
-                }
+                ]
             }
         };
 
