@@ -30,7 +30,6 @@ tasks:
     internal: true
     dir: .
     cmds:
-    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.ApiService/config/rbac/*' -Destination './operator-chart/templates/' -Recurse -Force -Exclude 'kustomization.yaml'"
     - powershell -Command "Copy-Item -Path './src/OperatorTemplate.ApiService/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
 
     desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
@@ -41,11 +40,23 @@ tasks:
     - task: copy-to-helm
     desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.ApiService and copy them to the Helm chart directories."
 
-  apply-crds:
-    dir: ./src/OperatorTemplate.ApiService
+  install-helm-chart:
+    dir: ./operator-chart
     cmds:
-    - dotnet run install
-    desc: "Apply the Custom Resource Definitions (CRDs) for the OperatorTemplate.ApiService."
+    - helm upgrade --install sql-server . --namespace sql-server --create-namespace --wait
+    desc: "Deploy the Helm chart for the OperatorTemplate stack."
+
+  uninstall-helm-chart:
+    dir: ./operator-chart
+    cmds:
+    - helm uninstall sql-server --namespace sql-server
+    desc: "Uninstall the Helm chart for the OperatorTemplate stack."
+
+  delete-crd-from-cluster:
+    dir: ./operator-chart
+    cmds:
+    - kubectl delete -f ./crds
+    desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.ApiService from the Kubernetes cluster."
 
   dev:
     dir: ./src/OperatorTemplate.AppHost
@@ -79,8 +90,8 @@ tasks:
     - task delete-cluster
     - task create-cluster
     - task create-crds-and-copy
-    - task apply-crds
     - task build-container-image
     - task load-image-into-kind
+    - task install-helm-chart
     - task apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
