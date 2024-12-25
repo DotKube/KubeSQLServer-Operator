@@ -52,6 +52,13 @@ tasks:
     - helm uninstall sql-server --namespace sql-server
     desc: "Uninstall the Helm chart for the OperatorTemplate stack."
 
+  apply-crds-from-helm-chart:
+    dir: ./operator-chart
+    cmds:
+    - kubectl apply -f ./crds
+    desc: "Apply the Custom Resource Definitions (CRDs) from the Helm chart to the Kubernetes cluster."
+    internal: true
+
   delete-crd-from-cluster:
     dir: ./operator-chart
     cmds:
@@ -85,7 +92,7 @@ tasks:
     - kind load docker-image operator-template:latest --name sql-server-testing-cluster
     desc: "Load the OperatorTemplate.ApiService Docker image into the Kind Kubernetes cluster."
 
-  full-start:
+  quick-deploy:
     cmds:
     - task delete-cluster
     - task create-cluster
@@ -95,3 +102,11 @@ tasks:
     - task install-helm-chart
     - task apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
+
+  quick-dev:
+    cmds:
+    - task delete-cluster
+    - task create-cluster
+    - task create-crds-and-copy
+    - task: apply-crds-from-helm-chart
+    - task dev
