@@ -1,4 +1,6 @@
+using k8s;
 using k8s.Models;
+using KubeOps.KubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Finalizer;
@@ -7,8 +9,6 @@ using SqlServerOperator.Entities;
 using SqlServerOperator.Finalizers;
 using System.Security.Cryptography;
 using System.Text;
-using k8s;
-using KubeOps.KubernetesClient;
 
 namespace SqlServerOperator.Controllers;
 
@@ -39,9 +39,9 @@ public class SQLServerController : IResourceController<V1SQLServer>
 
         // Define StatefulSet metadata
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
-        var statefulSet = new V1StatefulSet
+        V1StatefulSet statefulSet = new()
         {
-            Metadata = new V1ObjectMeta
+            Metadata = new()
             {
                 Name = statefulSetName,
                 NamespaceProperty = entity.Metadata.NamespaceProperty,
@@ -50,9 +50,9 @@ public class SQLServerController : IResourceController<V1SQLServer>
                     { "app", entity.Metadata.Name }
                 }
             },
-            Spec = new V1StatefulSetSpec
+            Spec = new()
             {
-                Selector = new V1LabelSelector
+                Selector = new()
                 {
                     MatchLabels = new Dictionary<string, string>
                     {
@@ -61,27 +61,28 @@ public class SQLServerController : IResourceController<V1SQLServer>
                 },
                 ServiceName = entity.Metadata.Name,
                 Replicas = 1,
-                Template = new V1PodTemplateSpec
+                Template = new()
                 {
-                    Metadata = new V1ObjectMeta
+                    Metadata = new()
                     {
                         Labels = new Dictionary<string, string>
                         {
                             { "app", entity.Metadata.Name }
                         }
                     },
-                    Spec = new V1PodSpec
+                    Spec = new()
                     {
                         Containers =
                         [
-                            new V1Container
+                            new()
                             {
                                 Name = "sqlserver",
                                 Image = $"mcr.microsoft.com/mssql/server:{entity.Spec.Version}-latest",
                                 Env =
                                 [
-                                    new V1EnvVar { Name = "ACCEPT_EULA", Value = "Y" },
-                                    new() {
+                                    new() { Name = "ACCEPT_EULA", Value = "Y" },
+                                    new()
+                                    {
                                         Name = "SA_PASSWORD",
                                         ValueFrom = new V1EnvVarSource
                                         {
@@ -112,9 +113,9 @@ public class SQLServerController : IResourceController<V1SQLServer>
                 },
                 VolumeClaimTemplates =
                 [
-                    new V1PersistentVolumeClaim
+                    new()
                     {
-                        Metadata = new V1ObjectMeta
+                        Metadata = new()
                         {
                             Name = "data",
                             Labels = new Dictionary<string, string>
@@ -122,10 +123,10 @@ public class SQLServerController : IResourceController<V1SQLServer>
                                 { "app", entity.Metadata.Name }
                             }
                         },
-                        Spec = new V1PersistentVolumeClaimSpec
+                        Spec = new()
                         {
                             AccessModes = ["ReadWriteOnce"],
-                            Resources = new V1ResourceRequirements
+                            Resources = new()
                             {
                                 Requests = new Dictionary<string, ResourceQuantity>
                                 {
@@ -142,9 +143,15 @@ public class SQLServerController : IResourceController<V1SQLServer>
         // Create or update the StatefulSet
         try
         {
-            var existingStatefulSet = await _kubernetesClient.ApiClient.AppsV1.ReadNamespacedStatefulSetAsync(statefulSetName, entity.Metadata.NamespaceProperty);
+            V1StatefulSet? existingStatefulSet = await _kubernetesClient.ApiClient
+                .AppsV1
+                .ReadNamespacedStatefulSetAsync(statefulSetName, entity.Metadata.NamespaceProperty);
+
             _logger.LogInformation("Updating StatefulSet for SQLServer: {Name}", entity.Metadata.Name);
-            await _kubernetesClient.ApiClient.AppsV1.ReplaceNamespacedStatefulSetAsync(statefulSet, statefulSetName, entity.Metadata.NamespaceProperty);
+
+            await _kubernetesClient.ApiClient
+            .AppsV1
+            .ReplaceNamespacedStatefulSetAsync(statefulSet, statefulSetName, entity.Metadata.NamespaceProperty);
         }
         catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -205,13 +212,12 @@ public class SQLServerController : IResourceController<V1SQLServer>
     private string GenerateRandomPassword()
     {
         const string validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-        var random = new RNGCryptoServiceProvider();
         var result = new char[16];
         var buffer = new byte[1];
 
         for (int i = 0; i < result.Length; i++)
         {
-            random.GetBytes(buffer);
+            RandomNumberGenerator.Fill(buffer);
             result[i] = validChars[buffer[0] % validChars.Length];
         }
 

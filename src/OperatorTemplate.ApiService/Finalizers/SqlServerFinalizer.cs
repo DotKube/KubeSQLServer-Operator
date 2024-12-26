@@ -1,7 +1,9 @@
-﻿using KubeOps.Operator.Finalizer;
-using SqlServerOperator.Entities;
-using KubeOps.KubernetesClient;
 using k8s;
+
+using KubeOps.KubernetesClient;
+using KubeOps.Operator.Finalizer;
+
+using SqlServerOperator.Entities;
 
 namespace SqlServerOperator.Finalizers;
 
