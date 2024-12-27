@@ -1,0 +1,44 @@
+version: "3"
+
+tasks:
+
+  create:
+    cmds:
+    - kind delete cluster --name sql-server-testing-cluster
+    - kind create cluster --config ./kind-config.yaml
+    - task: install-helm-charts
+    desc: "Create a Kind Kubernetes cluster named 'sql-server-testing-cluster' for testing purposes."
+
+  delete:
+    cmds:
+    - kind delete cluster --name sql-server-testing-cluster
+    desc: "Delete the Kind Kubernetes cluster named 'sql-server-testing-cluster'."
+
+  install-helm-charts:
+    cmds:
+    - |
+      helm repo add istio https://istio-release.storage.googleapis.com/charts
+      helm repo add jetstack https://charts.jetstack.io
+      helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      helm repo update
+
+      helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.2 --set crds.enabled=true
+
+      helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --wait
+
+      helm upgrade --install istio-base istio/base -n istio-system --create-namespace --wait
+
+      helm upgrade --install istio-cni istio/cni -n istio-system --wait
+
+      helm upgrade --install istiod istio/istiod -n istio-system --wait
+
+      helm upgrade --install istio-ingress istio/gateway -n istio-ingress --create-namespace -f ./istio-gateway-config.yaml --wait
+
+    desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
+    ignore_error: true
+
+  loadimage:
+    desc: "Load an image into the Kind Kubernetes cluster. Usage: task load-image <image-name>"
+    cmds:
+    - kind load docker-image {{.CLI_ARGS}} --name sql-server-testing-cluster

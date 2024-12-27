@@ -1,20 +1,16 @@
 version: "3"
 
+includes:
+  cluster:
+    taskfile: ./local-configs/Taskfile.yaml
+    dir: ./local-configs
+    internal: false
+
 tasks:
   default:
     cmds:
     - task --list-all
     desc: "List all available tasks in this Taskfile."
-
-  create-cluster:
-    cmds:
-    - kind create cluster --name sql-server-testing-cluster
-    desc: "Create a Kind Kubernetes cluster named 'sql-server-testing-cluster' for testing purposes."
-
-  delete-cluster:
-    cmds:
-    - kind delete cluster --name sql-server-testing-cluster
-    desc: "Delete the Kind Kubernetes cluster named 'sql-server-testing-cluster'."
 
   create-crd-files:
     internal: true
@@ -73,7 +69,7 @@ tasks:
 
   apply-crd-instance:
     cmds:
-    - kubectl apply -f ./local-configs
+    - kubectl apply -f ./local-configs/example.yaml
     desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
 
   delete-crd-instance:
@@ -87,28 +83,23 @@ tasks:
     - docker compose build
     desc: "Build the Docker image for the OperatorTemplate.Operator."
 
-  load-image-into-kind:
-    cmds:
-    - kind load docker-image operator-template:latest --name sql-server-testing-cluster
-    desc: "Load the OperatorTemplate.Operator Docker image into the Kind Kubernetes cluster."
-
   quick-deploy:
     cmds:
-    - task delete-cluster
-    - task create-cluster
-    - task create-crds-and-copy
-    - task build-container-image
-    - task load-image-into-kind
-    - task install-helm-chart
-    - task apply-crd-instance
+    - task: cluster:delete
+    - task: cluster:create
+    - task: create-crds-and-copy
+    - task: cluster:loadimage -- operator-template:latest
+    - task: cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task: install-helm-chart
+    - task: apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
 
   quick-dev:
     cmds:
-    - task delete-cluster
-    - task create-cluster
-    - task create-crds-and-copy
+    - task: cluster:delete
+    - task: cluster:create
+    - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task: create-crds-and-copy
     - task: apply-crds-from-helm-chart
-    - kind load docker-image mcr.microsoft.com/mssql/server:2022-latest --name sql-server-testing-cluster
-    - task apply-crd-instance
-    - task dev
+    - task: apply-crd-instance
+    - task: dev
