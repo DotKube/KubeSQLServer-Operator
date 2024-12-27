@@ -15,188 +15,217 @@ namespace SqlServerOperator.Controllers;
 [EntityRbac(typeof(V1SQLServer), Verbs = RbacVerb.All)]
 public class SQLServerController(ILogger<SQLServerController> logger, IFinalizerManager<V1SQLServer> finalizerManager, IKubernetesClient kubernetesClient) : IResourceController<V1SQLServer>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServer entity)
+public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServer entity)
+{
+    logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
+
+    // Register the finalizer
+    await finalizerManager.RegisterFinalizerAsync<SQLServerFinalizer>(entity);
+
+    // Handle SA password secret
+    var saPasswordSecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
+    _ = await GetOrCreateSaPasswordAsync(saPasswordSecretName, entity.Metadata.NamespaceProperty);
+
+    // Define the ConfigMap
+    var configMapName = $"{entity.Metadata.Name}-config";
+    var configMap = new V1ConfigMap
     {
-        logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
-
-        // Register the finalizer
-        await finalizerManager.RegisterFinalizerAsync<SQLServerFinalizer>(entity);
-
-        // Handle SA password secret
-        var saPasswordSecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
-        _ = await GetOrCreateSaPasswordAsync(saPasswordSecretName, entity.Metadata.NamespaceProperty);
-
-        // Define StatefulSet metadata
-        var statefulSetName = $"{entity.Metadata.Name}-statefulset";
-        V1StatefulSet statefulSet = new()
+        Metadata = new()
         {
-            Metadata = new()
+            Name = configMapName,
+            NamespaceProperty = entity.Metadata.NamespaceProperty,
+            Labels = new Dictionary<string, string>
             {
-                Name = statefulSetName,
-                NamespaceProperty = entity.Metadata.NamespaceProperty,
-                Labels = new Dictionary<string, string>
+                { "app", entity.Metadata.Name }
+            }
+        },
+        Data = new Dictionary<string, string>
+        {
+            {
+                "mssql.conf", @"
+[EULA]
+accepteula = Y
+accepteulaml = Y
+
+[coredump]
+captureminiandfull = true
+coredumptype = full
+
+[hadr]
+hadrenabled = 1
+
+[language]
+lcid = 1033"
+            }
+        }
+    };
+
+    // Create or update the ConfigMap
+    try
+    {
+        await kubernetesClient.ApiClient.CoreV1.CreateNamespacedConfigMapAsync(configMap, entity.Metadata.NamespaceProperty);
+        logger.LogInformation("Created ConfigMap for SQLServer: {Name}", entity.Metadata.Name);
+    }
+    catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
+    {
+        logger.LogInformation("ConfigMap for SQLServer {Name} already exists. Skipping creation.", entity.Metadata.Name);
+    }
+
+    // Define StatefulSet metadata
+    var statefulSetName = $"{entity.Metadata.Name}-statefulset";
+    V1StatefulSet statefulSet = new()
+    {
+        Metadata = new()
+        {
+            Name = statefulSetName,
+            NamespaceProperty = entity.Metadata.NamespaceProperty,
+            Labels = new Dictionary<string, string>
+            {
+                { "app", entity.Metadata.Name }
+            }
+        },
+        Spec = new()
+        {
+            Selector = new()
+            {
+                MatchLabels = new Dictionary<string, string>
                 {
                     { "app", entity.Metadata.Name }
                 }
             },
-            Spec = new()
+            ServiceName = entity.Metadata.Name,
+            Replicas = 1,
+            Template = new()
             {
-                Selector = new()
+                Metadata = new()
                 {
-                    MatchLabels = new Dictionary<string, string>
+                    Labels = new Dictionary<string, string>
                     {
                         { "app", entity.Metadata.Name }
                     }
                 },
-                ServiceName = entity.Metadata.Name,
-                Replicas = 1,
-                Template = new()
+                Spec = new()
                 {
-                    Metadata = new()
-                    {
-                        Labels = new Dictionary<string, string>
+                    Containers =
+                    [
+                        new()
                         {
-                            { "app", entity.Metadata.Name }
-                        }
-                    },
-                    Spec = new()
-                    {
-                        Containers =
-                        [
-                            new()
-                            {
-                                Name = "sqlserver",
-                                Image = $"mcr.microsoft.com/mssql/server:{entity.Spec.Version}-latest",
-                                Env =
-                                [
-                                    new() { Name = "ACCEPT_EULA", Value = "Y" },
-                                    new()
+                            Name = "sqlserver",
+                            Image = $"mcr.microsoft.com/mssql/server:{entity.Spec.Version}-latest",
+                            Env =
+                            [
+                                new() { Name = "ACCEPT_EULA", Value = "Y" },
+                                new()
+                                {
+                                    Name = "SA_PASSWORD",
+                                    ValueFrom = new V1EnvVarSource
                                     {
-                                        Name = "SA_PASSWORD",
-                                        ValueFrom = new V1EnvVarSource
+                                        SecretKeyRef = new V1SecretKeySelector
                                         {
-                                            SecretKeyRef = new V1SecretKeySelector
-                                            {
-                                                Name = saPasswordSecretName,
-                                                Key = "sa-password"
-                                            }
+                                            Name = saPasswordSecretName,
+                                            Key = "sa-password"
                                         }
                                     }
-                                ],
-                                Ports =
-                                [
-                                    new V1ContainerPort { ContainerPort = 1433 }
-                                ],
-                                VolumeMounts =
-                                [
-                                    new V1VolumeMount
-                                    {
-                                        Name = "data",
-                                        MountPath = "/var/opt/mssql"
-                                    }
-                                ]
-                            }
-                        ],
-                        Volumes = []
-                    }
-                },
-                VolumeClaimTemplates =
-                [
-                    new()
-                    {
-                        Metadata = new()
-                        {
-                            Name = "data",
-                            Labels = new Dictionary<string, string>
-                            {
-                                { "app", entity.Metadata.Name }
-                            }
-                        },
-                        Spec = new()
-                        {
-                            AccessModes = ["ReadWriteOnce"],
-                            Resources = new()
-                            {
-                                Requests = new Dictionary<string, ResourceQuantity>
-                                {
-                                    { "storage", new ResourceQuantity(entity.Spec.StorageSize) }
                                 }
-                            },
-                            StorageClassName = entity.Spec.StorageClass
+                            ],
+                            Ports =
+                            [
+                                new() { ContainerPort = 1433 }
+                            ],
+                            VolumeMounts =
+                            [
+                                new()
+                                {
+                                    Name = "mssql-config-volume",
+                                    MountPath = "/var/opt/config",
+                                    SubPath = "mssql.conf"
+                                }
+                            ]
                         }
-                    }
-                ]
+                    ],
+                    Volumes =
+                    [
+                        new V1Volume
+                        {
+                            Name = "mssql-config-volume",
+                            ConfigMap = new V1ConfigMapVolumeSource
+                            {
+                                Name = configMapName
+                            }
+                        }
+                    ]
+                }
             }
-        };
+        }
+    };
 
-        // Create or update the StatefulSet
-        try
-        {
-            V1StatefulSet? existingStatefulSet = await kubernetesClient.ApiClient
-                .AppsV1
-                .ReadNamespacedStatefulSetAsync(statefulSetName, entity.Metadata.NamespaceProperty);
+    // Create or update the StatefulSet
+    try
+    {
+        V1StatefulSet? existingStatefulSet = await kubernetesClient.ApiClient
+            .AppsV1
+            .ReadNamespacedStatefulSetAsync(statefulSetName, entity.Metadata.NamespaceProperty);
 
-            logger.LogInformation("Updating StatefulSet for SQLServer: {Name}", entity.Metadata.Name);
+        logger.LogInformation("Updating StatefulSet for SQLServer: {Name}", entity.Metadata.Name);
 
-            await kubernetesClient.ApiClient
+        await kubernetesClient.ApiClient
             .AppsV1
             .ReplaceNamespacedStatefulSetAsync(statefulSet, statefulSetName, entity.Metadata.NamespaceProperty);
-        }
-        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            logger.LogInformation("Creating StatefulSet for SQLServer: {Name}", entity.Metadata.Name);
-            await kubernetesClient.ApiClient.AppsV1.CreateNamespacedStatefulSetAsync(statefulSet, entity.Metadata.NamespaceProperty);
-        }
-
-        // Define headless service
-        var serviceName = $"{entity.Metadata.Name}-headless";
-        V1Service service = new()
-        {
-            Metadata = new()
-            {
-                Name = serviceName,
-                NamespaceProperty = entity.Metadata.NamespaceProperty,
-                Labels = new Dictionary<string, string>
-            {
-                { "app", entity.Metadata.Name }
-            }
-            },
-            Spec = new()
-            {
-                Selector = new Dictionary<string, string>
-            {
-                { "app", entity.Metadata.Name }
-            },
-                ClusterIP = "None",
-                Ports = new List<V1ServicePort>
-            {
-                new() { Name = "sql", Port = 1433, TargetPort = 1433 }
-            }
-            }
-        };
-
-        // Create or update the headless service
-        try
-        {
-            V1Service? existingService = await kubernetesClient.ApiClient
-                .CoreV1
-                .ReadNamespacedServiceAsync(serviceName, entity.Metadata.NamespaceProperty);
-
-            logger.LogInformation("Updating headless service for SQLServer: {Name}", entity.Metadata.Name);
-
-            await kubernetesClient.ApiClient
-            .CoreV1
-            .ReplaceNamespacedServiceAsync(service, serviceName, entity.Metadata.NamespaceProperty);
-        }
-        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            logger.LogInformation("Creating headless service for SQLServer: {Name}", entity.Metadata.Name);
-            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
-        }
-
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(5));
+    }
+    catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+    {
+        logger.LogInformation("Creating StatefulSet for SQLServer: {Name}", entity.Metadata.Name);
+        await kubernetesClient.ApiClient.AppsV1.CreateNamespacedStatefulSetAsync(statefulSet, entity.Metadata.NamespaceProperty);
     }
 
+    // Define headless service
+    var serviceName = $"{entity.Metadata.Name}-headless";
+    V1Service service = new()
+    {
+        Metadata = new()
+        {
+            Name = serviceName,
+            NamespaceProperty = entity.Metadata.NamespaceProperty,
+            Labels = new Dictionary<string, string>
+            {
+                { "app", entity.Metadata.Name }
+            }
+        },
+        Spec = new()
+        {
+            Selector = new Dictionary<string, string>
+            {
+                { "app", entity.Metadata.Name }
+            },
+            ClusterIP = "None",
+            Ports =
+            [
+                new() { Name = "sql", Port = 1433, TargetPort = 1433 }
+            ]
+        }
+    };
+
+    // Create or update the headless service
+    try
+    {
+        V1Service? existingService = await kubernetesClient.ApiClient
+            .CoreV1
+            .ReadNamespacedServiceAsync(serviceName, entity.Metadata.NamespaceProperty);
+
+        logger.LogInformation("Updating headless service for SQLServer: {Name}", entity.Metadata.Name);
+
+        await kubernetesClient.ApiClient
+            .CoreV1
+            .ReplaceNamespacedServiceAsync(service, serviceName, entity.Metadata.NamespaceProperty);
+    }
+    catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+    {
+        logger.LogInformation("Creating headless service for SQLServer: {Name}", entity.Metadata.Name);
+        await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
+    }
+
+    return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(5));
+}
     public Task StatusModifiedAsync(V1SQLServer entity)
     {
         logger.LogInformation("Status modified for SQLServer: {Name}", entity.Metadata.Name);
