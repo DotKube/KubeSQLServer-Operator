@@ -1,7 +1,7 @@
-namespace: operatortemplate-apiservice-system
-namePrefix: operatortemplate-apiservice-
+namespace: operatortemplate-operator-system
+namePrefix: operatortemplate-operator-
 commonLabels:
-  operator: operatortemplate-apiservice
+  operator: operatortemplate-operator
 resources:
 - ./namespace.yaml
 - ../crds

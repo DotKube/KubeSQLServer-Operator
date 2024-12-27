@@ -1,5 +1,5 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var apiService = builder.AddProject<Projects.OperatorTemplate_ApiService>("apiservice");
+var k8Operator = builder.AddProject<Projects.OperatorTemplate_Operator>("k8Operator");
 
 builder.Build().Run();

@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OperatorTemplate.ApiService\OperatorTemplate.ApiService.csproj" />
+    <ProjectReference Include="..\OperatorTemplate.Operator\OperatorTemplate.Operator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

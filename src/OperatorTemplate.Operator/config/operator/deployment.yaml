@@ -2,18 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    operator-deployment: operatortemplate-apiservice
+    operator-deployment: operatortemplate-operator
   name: operator
 spec:
   replicas: 1
   revisionHistoryLimit: 0
   selector:
     matchLabels:
-      operator: operatortemplate-apiservice
+      operator: operatortemplate-operator
   template:
     metadata:
       labels:
-        operator: operatortemplate-apiservice
+        operator: operatortemplate-operator
     spec:
       containers:
       - env:

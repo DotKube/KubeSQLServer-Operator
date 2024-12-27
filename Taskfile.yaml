@@ -18,19 +18,19 @@ tasks:
 
   create-crd-files:
     internal: true
-    dir: ./src/OperatorTemplate.ApiService
+    dir: ./src/OperatorTemplate.Operator
     cmds:
     - powershell -Command "if (Test-Path ./config) { Get-ChildItem -Path ./config -Recurse -Force | Remove-Item -Recurse -Force; Remove-Item -Force ./config }"
     - dotnet clean
     - dotnet build
     - powershell -Command "remove-item -recurse -force ./Dockerfile"
-    desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.ApiService by cleaning and rebuilding the project."
+    desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
 
   copy-to-helm:
     internal: true
     dir: .
     cmds:
-    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.ApiService/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
+    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.Operator/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
 
     desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
 
@@ -38,7 +38,7 @@ tasks:
     cmds:
     - task: create-crd-files
     - task: copy-to-helm
-    desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.ApiService and copy them to the Helm chart directories."
+    desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.Operator and copy them to the Helm chart directories."
 
   install-helm-chart:
     dir: ./operator-chart
@@ -63,7 +63,7 @@ tasks:
     dir: ./operator-chart
     cmds:
     - kubectl delete -f ./crds
-    desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.ApiService from the Kubernetes cluster."
+    desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.Operator from the Kubernetes cluster."
 
   dev:
     dir: ./src/OperatorTemplate.AppHost
@@ -74,23 +74,23 @@ tasks:
   apply-crd-instance:
     cmds:
     - kubectl apply -f ./local-configs
-    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
+    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
 
   delete-crd-instance:
     cmds:
     - kubectl delete -f ./local-configs/sql-server-instance.yaml
-    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.ApiService."
+    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
 
   build-container-image:
-    dir: ./src/OperatorTemplate.ApiService
+    dir: ./src/OperatorTemplate.Operator
     cmds:
     - docker compose build
-    desc: "Build the Docker image for the OperatorTemplate.ApiService."
+    desc: "Build the Docker image for the OperatorTemplate.Operator."
 
   load-image-into-kind:
     cmds:
     - kind load docker-image operator-template:latest --name sql-server-testing-cluster
-    desc: "Load the OperatorTemplate.ApiService Docker image into the Kind Kubernetes cluster."
+    desc: "Load the OperatorTemplate.Operator Docker image into the Kind Kubernetes cluster."
 
   quick-deploy:
     cmds:
