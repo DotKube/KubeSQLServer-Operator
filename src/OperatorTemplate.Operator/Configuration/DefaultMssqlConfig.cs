@@ -5,19 +5,19 @@ namespace SqlServerOperator.Configuration;
 public class DefaultMssqlConfig
 {
     public string DefaultConfigMapData = @"
-    [EULA]
-    accepteula = Y
-    accepteulaml = Y
+[EULA]
+accepteula = Y
+accepteulaml = Y
 
-    [coredump]
-    captureminiandfull = true
-    coredumptype = full
+[coredump]
+captureminiandfull = true
+coredumptype = full
 
-    [hadr]
-    hadrenabled = 1
+[hadr]
+hadrenabled = 1
 
-    [language]
-    lcid = 1033
+[language]
+lcid = 1033
 ";
 
     public int DefaultRequeueTimeMinutes = 5;

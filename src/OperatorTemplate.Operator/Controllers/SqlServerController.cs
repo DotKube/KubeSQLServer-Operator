@@ -105,6 +105,11 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                                     {
                                         Name = "MSSQL_AGENT_ENABLED",
                                         Value = "true"
+                                    },
+                                    new V1EnvVar
+                                    {
+                                        Name = "MSSQL_ENABLE_HADR",
+                                        Value = "1"
                                     }
                                 ],
                                 Ports = [new V1ContainerPort { ContainerPort = 1433 }],
