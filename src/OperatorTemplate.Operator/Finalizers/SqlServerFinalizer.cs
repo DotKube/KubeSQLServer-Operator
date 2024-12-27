@@ -1,8 +1,6 @@
 using k8s;
-
 using KubeOps.KubernetesClient;
 using KubeOps.Operator.Finalizer;
-
 using SqlServerOperator.Entities;
 
 namespace SqlServerOperator.Finalizers;
@@ -24,12 +22,16 @@ public class SQLServerFinalizer : IResourceFinalizer<V1SQLServer>
 
         var namespaceName = entity.Metadata.NamespaceProperty;
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
+        var serviceName = $"{entity.Metadata.Name}-headless";
         var secretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
 
         try
         {
             // Delete the StatefulSet
             await DeleteStatefulSetAsync(statefulSetName, namespaceName);
+
+            // Delete the headless service
+            await DeleteServiceAsync(serviceName, namespaceName);
 
             // Delete the Secret
             await DeleteSecretAsync(secretName, namespaceName);
@@ -53,6 +55,20 @@ public class SQLServerFinalizer : IResourceFinalizer<V1SQLServer>
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete StatefulSet: {StatefulSetName} in namespace {Namespace}", statefulSetName, namespaceName);
+        }
+    }
+
+    private async Task DeleteServiceAsync(string serviceName, string namespaceName)
+    {
+        try
+        {
+            _logger.LogInformation("Deleting Service: {ServiceName} in namespace {Namespace}", serviceName, namespaceName);
+            await _kubernetesClient.ApiClient.CoreV1.DeleteNamespacedServiceAsync(serviceName, namespaceName);
+            _logger.LogInformation("Service {ServiceName} deleted successfully.", serviceName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete Service: {ServiceName} in namespace {Namespace}", serviceName, namespaceName);
         }
     }
 

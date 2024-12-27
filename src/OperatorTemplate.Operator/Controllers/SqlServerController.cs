@@ -148,6 +148,52 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
             await kubernetesClient.ApiClient.AppsV1.CreateNamespacedStatefulSetAsync(statefulSet, entity.Metadata.NamespaceProperty);
         }
 
+        // Define headless service
+        var serviceName = $"{entity.Metadata.Name}-headless";
+        V1Service service = new()
+        {
+            Metadata = new()
+            {
+                Name = serviceName,
+                NamespaceProperty = entity.Metadata.NamespaceProperty,
+                Labels = new Dictionary<string, string>
+            {
+                { "app", entity.Metadata.Name }
+            }
+            },
+            Spec = new()
+            {
+                Selector = new Dictionary<string, string>
+            {
+                { "app", entity.Metadata.Name }
+            },
+                ClusterIP = "None",
+                Ports = new List<V1ServicePort>
+            {
+                new() { Name = "sql", Port = 1433, TargetPort = 1433 }
+            }
+            }
+        };
+
+        // Create or update the headless service
+        try
+        {
+            V1Service? existingService = await kubernetesClient.ApiClient
+                .CoreV1
+                .ReadNamespacedServiceAsync(serviceName, entity.Metadata.NamespaceProperty);
+
+            logger.LogInformation("Updating headless service for SQLServer: {Name}", entity.Metadata.Name);
+
+            await kubernetesClient.ApiClient
+            .CoreV1
+            .ReplaceNamespacedServiceAsync(service, serviceName, entity.Metadata.NamespaceProperty);
+        }
+        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            logger.LogInformation("Creating headless service for SQLServer: {Name}", entity.Metadata.Name);
+            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
+        }
+
         return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(5));
     }
 
@@ -180,9 +226,9 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         }
 
         var password = GenerateRandomPassword();
-        var secret = new V1Secret
+        V1Secret secret = new()
         {
-            Metadata = new V1ObjectMeta
+            Metadata = new()
             {
                 Name = secretName,
                 NamespaceProperty = namespaceName
