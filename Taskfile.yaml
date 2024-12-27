@@ -109,5 +109,6 @@ tasks:
     - task create-cluster
     - task create-crds-and-copy
     - task: apply-crds-from-helm-chart
+    - kind load docker-image mcr.microsoft.com/mssql/server:2022-latest --name sql-server-testing-cluster
     - task apply-crd-instance
     - task dev
