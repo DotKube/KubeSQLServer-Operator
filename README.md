@@ -1,38 +1,68 @@
+# KubeSQLServer Operator
 
-# OperatorTemplate Development Workflow
+KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kubernetes operator designed to help you run and manage Microsoft SQL Server seamlessly.
 
-This repository contains a **KubeOps-based .NET Operator** and a Helm chart for deploying it. The setup supports both local and in-cluster workflows for development and testing.
+This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license. KubeSQLServer Operator aims to provide a no-license-required solution for SQL Server management in Kubernetes.
+
+> **Note:** This project is in the very early stages of development and is not yet ready for distribution. Stay tuned for updates as the project progresses!
 
 ---
 
-## Components
+## Planned Features and Roadmap
 
-1. **KubeOps Operator**  
-   - Located in `src/OperatorTemplate.ApiService`.
-   - Manages custom Kubernetes resources with controllers and CRDs.
+Here are the planned features and milestones for KubeSQLServer Operator:
+
+- **API and CRD Scope Definition**  
+  Design and define the scope of APIs and Custom Resource Definitions (CRDs).
+
+- **Testing Strategies**  
+  Establish robust testing strategies for the operator, CRDs, and related components.
+
+- **Helm Chart**  
+  Create and host a Helm chart for easy deployment of the operator.
+
+- **Documentation**  
+  Develop comprehensive documentation and decide how it will be hosted.
+
+- **Base Container Images**  
+  Build base images for the operator:
+  - Rootless SQL Server container instances (Ubuntu and RHEL-based).
+  - Rootless MS SQL client container instance.
+
+- **CLI Tooling**  
+  Develop a CLI for managing the operator and resources.
+
+---
+
+## Development Workflow
+
+This repository contains the following components:
+
+1. **KubeOps-based .NET Operator**  
+   - Located in `src/OperatorTemplate.ApiService`.  
+   - Implements controllers and CRDs to manage custom Kubernetes resources.
 
 2. **Helm Chart**  
-   - Located in `operator-chart`.
-   - Includes CRD definitions, RBAC configurations, and a deployment for the operator.
+   - Located in `operator-chart`.  
+   - Includes CRD definitions, RBAC configurations, and deployment manifests for the operator.
 
 3. **Taskfile Workflow**  
-   - Simplifies cluster management, CRD handling, and operator deployment with convenient tasks.
+   - Simplifies cluster setup, CRD management, and operator deployment through automated tasks.
 
 ---
 
-## Key Commands
+## Local Development - Key Commands
 
-### `task quick-dev`
-Runs the operator **locally on your laptop** while applying all necessary CRDs and creating an instance in the Kind cluster.  
-Ideal for real-time debugging and development.
+### Local Development (`task quick-dev`)
+Run the operator **locally** on your laptop while applying necessary CRDs and creating an instance in a Kind cluster.  
+This is ideal for debugging and real-time development.
 
 ```bash
 task quick-dev
 ```
 
-### `task quick-deploy`
-Builds and deploys the operator **into the Kind cluster**.  
-Perfect for testing the operator as it would run in production.
+### In-Cluster Deployment (`task quick-deploy`)
+Build and deploy the operator **to a Kind cluster**, replicating a production-like environment for testing.
 
 ```bash
 task quick-deploy
@@ -40,15 +70,16 @@ task quick-deploy
 
 ---
 
-## Other Useful Tasks
-- **Cluster Management**: `create-cluster`, `delete-cluster`
-- **CRD Management**: `create-crds-and-copy`, `apply-crds-from-helm-chart`
-- **Helm Deployment**: `install-helm-chart`, `uninstall-helm-chart`
+## Additional Commands
 
----
+- **Cluster Management**  
+  - Create: `task create-cluster`  
+  - Delete: `task delete-cluster`
 
-## Summary
-This repo streamlines Kubernetes operator development. Use:
-- **`quick-dev`** for local development.
-- **`quick-deploy`** for in-cluster testing.  
-These commands simplify the workflow so you can focus on building your operator!
+- **CRD Management**  
+  - Generate and copy CRDs: `task create-crds-and-copy`  
+  - Apply CRDs: `task apply-crds-from-helm-chart`
+
+- **Helm Deployment**  
+  - Install: `task install-helm-chart`  
+  - Uninstall: `task uninstall-helm-chart`
