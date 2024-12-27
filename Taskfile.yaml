@@ -1,9 +1,15 @@
 version: "3"
 
 includes:
+
   cluster:
     taskfile: ./local-configs/Taskfile.yaml
     dir: ./local-configs
+    internal: false
+
+  operator-chart:
+    taskfile: ./operator-chart/Taskfile.yaml
+    dir: ./operator-chart
     internal: false
 
 tasks:
@@ -36,30 +42,10 @@ tasks:
     - task: copy-to-helm
     desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.Operator and copy them to the Helm chart directories."
 
-  install-helm-chart:
-    dir: ./operator-chart
+  build-operator-image:
     cmds:
-    - helm upgrade --install sql-server . --namespace sql-server --create-namespace --wait
-    desc: "Deploy the Helm chart for the OperatorTemplate stack."
-
-  uninstall-helm-chart:
-    dir: ./operator-chart
-    cmds:
-    - helm uninstall sql-server --namespace sql-server
-    desc: "Uninstall the Helm chart for the OperatorTemplate stack."
-
-  apply-crds-from-helm-chart:
-    dir: ./operator-chart
-    cmds:
-    - kubectl apply -f ./crds
-    desc: "Apply the Custom Resource Definitions (CRDs) from the Helm chart to the Kubernetes cluster."
-    internal: true
-
-  delete-crd-from-cluster:
-    dir: ./operator-chart
-    cmds:
-    - kubectl delete -f ./crds
-    desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.Operator from the Kubernetes cluster."
+    - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
+    desc: "Build the Docker image for the OperatorTemplate.Operator."
 
   dev:
     dir: ./src/OperatorTemplate.AppHost
@@ -67,31 +53,16 @@ tasks:
     - dotnet watch
     desc: "Start the development environment for the OperatorTemplate.AppHost with live file watching enabled."
 
-  apply-crd-instance:
-    cmds:
-    - kubectl apply -f ./local-configs/example.yaml
-    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
-
-  delete-crd-instance:
-    cmds:
-    - kubectl delete -f ./local-configs/sql-server-instance.yaml
-    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
-
-  build-container-image:
-    dir: ./src/OperatorTemplate.Operator
-    cmds:
-    - docker compose build
-    desc: "Build the Docker image for the OperatorTemplate.Operator."
-
   quick-deploy:
     cmds:
     - task: cluster:delete
     - task: cluster:create
     - task: create-crds-and-copy
+    - task: build-operator-image
     - task: cluster:loadimage -- operator-template:latest
     - task: cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
-    - task: install-helm-chart
-    - task: apply-crd-instance
+    - task: operator-chart:install-helm-chart
+    - task: cluster:apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
 
   quick-dev:
@@ -100,6 +71,6 @@ tasks:
     - task: cluster:create
     - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
     - task: create-crds-and-copy
-    - task: apply-crds-from-helm-chart
-    - task: apply-crd-instance
+    - task: operator-chart:apply-crds-from-helm-chart
+    - task: cluster:apply-crd-instance
     - task: dev

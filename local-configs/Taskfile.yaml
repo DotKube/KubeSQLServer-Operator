@@ -35,6 +35,10 @@ tasks:
 
       helm upgrade --install istio-ingress istio/gateway -n istio-ingress --create-namespace -f ./istio-gateway-config.yaml --wait
 
+      helm upgrade --install istio-gateways ./istio-gateway -n istio-gateways --create-namespace --wait
+
+      kubectl label namespace istio-gateways istio-injection=enabled
+
     desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
     ignore_error: true
 
@@ -42,3 +46,13 @@ tasks:
     desc: "Load an image into the Kind Kubernetes cluster. Usage: task load-image <image-name>"
     cmds:
     - kind load docker-image {{.CLI_ARGS}} --name sql-server-testing-cluster
+
+  apply-crd-instance:
+    cmds:
+    - kubectl apply -f ./example.yaml
+    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
+
+  delete-crd-instance:
+    cmds:
+    - kubectl delete -f ./example.yaml
+    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."

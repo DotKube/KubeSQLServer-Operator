@@ -2,17 +2,22 @@ service:
   service:
   type: NodePort
   ports:
-  - name: status-port
-    port: 15021
-    protocol: TCP
-    targetPort: 15021
-  - name: http2
-    port: 80
-    protocol: TCP
-    targetPort: 80
-    nodePort: 30050
-  - name: https
-    port: 443
-    protocol: TCP
-    targetPort: 443
-    nodePort: 30051
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: 30050
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+      nodePort: 30051
+    - name: tcp-sql
+      port: 1433
+      protocol: TCP
+      targetPort: 1433
+      nodePort: 31433

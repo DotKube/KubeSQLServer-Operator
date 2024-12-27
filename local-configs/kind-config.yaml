@@ -20,3 +20,5 @@ nodes:
     hostPort: 30443
   - containerPort: 15021
     hostPort: 15021
+  - containerPort: 31433
+    hostPort: 31433

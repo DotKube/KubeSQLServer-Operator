@@ -1,11 +1,114 @@
 ---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sqlserver-example
+  labels:
+    istio-injection: enabled
+
+
+---
+
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: sqlserver-virtualservice
+  namespace: sqlserver-example
+spec:
+  gateways:
+    - istio-gateways/localhost-gateway
+  hosts:
+    - "sqlserver.localhost"
+    - "sqlserver.local-cluster.com"
+  tcp:
+    - match:
+        - port: 1433
+      route:
+        - destination:
+            host: sqlserver-instance-headless
+            port:
+              number: 1433
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-secret
+  namespace: sqlserver-example
+type: Opaque
+stringData:
+  sa-password: "RunningMan323#"
+
+---
+
+
+
 apiVersion: database.example.com/v1alpha1
 kind: SQLServer
 metadata:
   name: sqlserver-instance
-  namespace: default
+  namespace: sqlserver-example
 spec:
   version: "2022"
   storageClass: "standard"
-  storageSize: "20Gi"
+  storageSize: "2Gi"
   secretName: "sqlserver-secret"
+
+
+
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sqlserver-new
+  labels:
+    istio-injection: enabled
+
+---
+
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: sqlserver-new-virtualservice
+  namespace: sqlserver-new
+spec:
+  gateways:
+    - istio-gateways/localhost-gateway
+  hosts:
+    - "sqlserver-new.localhost"
+  tcp:
+    - match:
+        - port: 1433
+      route:
+        - destination:
+            host: sqlserver-new-instance-headless
+            port:
+              number: 1433
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-new-secret
+  namespace: sqlserver-new
+type: Opaque
+stringData:
+  sa-password: "ComplexPass#1234"
+
+---
+
+apiVersion: database.example.com/v1alpha1
+kind: SQLServer
+metadata:
+  name: sqlserver-new-instance
+  namespace: sqlserver-new
+spec:
+  version: "2022"
+  storageClass: "standard"
+  storageSize: "5Gi"
+  secretName: "sqlserver-new-secret"
