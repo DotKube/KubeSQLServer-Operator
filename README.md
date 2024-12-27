@@ -39,7 +39,7 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 This repository contains the following components:
 
 1. **KubeOps-based .NET Operator**  
-   - Located in `src/OperatorTemplate.ApiService`.  
+   - Located in `src/OperatorTemplate.Operator`.  
    - Implements controllers and CRDs to manage custom Kubernetes resources.
 
 2. **Helm Chart**  
