@@ -185,7 +185,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         {
             var existingSecret = await kubernetesClient.ApiClient.CoreV1.ReadNamespacedSecretAsync(secretName, namespaceName);
 
-            if (existingSecret.Data != null && existingSecret.Data.ContainsKey("sa-password"))
+            if ((existingSecret.Data is not null) && existingSecret.Data.ContainsKey("sa-password"))
             {
                 return;
             }
