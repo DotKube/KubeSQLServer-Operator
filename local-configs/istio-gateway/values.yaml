@@ -3,4 +3,4 @@ gateway:
   ns: "istio-ingress"
   host: "*.localhost"
   tlsSecretName: "localhost-tls-secret"
-  forceHttpToHttps: true
+  forceHttpToHttps: false

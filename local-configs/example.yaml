@@ -19,8 +19,8 @@ spec:
   gateways:
     - istio-gateways/localhost-gateway
   hosts:
-    - "sqlserver.localhost"
-    - "sqlserver.local-cluster.com"
+    - "first-sql.localhost"
+    - "first-sql.local-cluster.com"
   tcp:
     - match:
         - port: 1433

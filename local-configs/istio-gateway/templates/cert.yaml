@@ -10,5 +10,8 @@ spec:
     name: selfsigned-cluster-issuer
     kind: ClusterIssuer
   commonName: "*.localhost"
+  privateKey:
+    algorithm: RSA
+    size: 2048
   dnsNames:
     - "*.localhost"

@@ -22,11 +22,9 @@ spec:
         protocol: HTTPS
       hosts:
         - {{ .Values.gateway.host | quote }}
-        - "*.local-cluster.com"
       tls:
         mode: SIMPLE
         credentialName: {{ .Values.gateway.tlsSecretName }}
-
     - port:
         number: 1433
         name: tcp-sql

@@ -20,6 +20,7 @@ tasks:
       helm repo add istio https://istio-release.storage.googleapis.com/charts
       helm repo add jetstack https://charts.jetstack.io
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      helm repo add kiali https://kiali.org/helm-charts
 
       helm repo update
 
@@ -38,6 +39,10 @@ tasks:
       helm upgrade --install istio-gateways ./istio-gateway -n istio-gateways --create-namespace --wait
 
       kubectl label namespace istio-gateways istio-injection=enabled
+
+      helm upgrade --install --namespace istio-system kiali-server kiali/kiali-server --wait -f ./kiali-config.yaml
+
+      kubectl label namespace kiali-operator istio-injection=enabled
 
     desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
     ignore_error: true
