@@ -76,6 +76,10 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                     },
                     Spec = new V1PodSpec
                     {
+                        SecurityContext = new V1PodSecurityContext
+                        {
+                            FsGroup = 10001
+                        },
                         Containers =
                         [
                             new V1Container
@@ -83,45 +87,40 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                                 Name = "sqlserver",
                                 Image = $"mcr.microsoft.com/mssql/server:{entity.Spec.Version}-latest",
                                 Env =
-                                [
-                                    new V1EnvVar
+                            [
+                                new V1EnvVar
+                                {
+                                    Name = "ACCEPT_EULA",
+                                    Value = "Y"
+                                },
+                                new V1EnvVar
+                                {
+                                    Name = "SA_PASSWORD",
+                                    ValueFrom = new V1EnvVarSource
                                     {
-                                        Name = "ACCEPT_EULA",
-                                        Value = "Y"
-                                    },
-                                    new V1EnvVar
-                                    {
-                                        Name = "SA_PASSWORD",
-                                        ValueFrom = new V1EnvVarSource
+                                        SecretKeyRef = new V1SecretKeySelector
                                         {
-                                            SecretKeyRef = new V1SecretKeySelector
-                                            {
-                                                Name = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret",
-                                                Key = "sa-password"
-                                            }
+                                            Name = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret",
+                                            Key = "sa-password"
                                         }
-                                    },
-                                    new V1EnvVar
-                                    {
-                                        Name = "MSSQL_AGENT_ENABLED",
-                                        Value = "true"
-                                    },
-                                    new V1EnvVar
-                                    {
-                                        Name = "MSSQL_ENABLE_HADR",
-                                        Value = "1"
                                     }
-                                ],
+                                },
+                                new V1EnvVar
+                                {
+                                    Name = "MSSQL_PID",
+                                    Value = "Developer"
+                                }
+                            ],
                                 Ports = [new V1ContainerPort { ContainerPort = 1433 }],
                                 VolumeMounts =
-                                [
-                                    new V1VolumeMount
-                                    {
-                                        Name = "mssql-config-volume",
-                                        MountPath = "/var/opt/config",
-                                        SubPath = "mssql.conf"
-                                    }
-                                ]
+                            [
+                                new V1VolumeMount
+                                {
+                                    Name = "mssql-config-volume",
+                                    MountPath = "/var/opt/config",
+                                }
+                            ],
+                                Command = ["/bin/bash", "-c", "cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr"]
                             }
                         ],
                         Volumes =
@@ -132,6 +131,14 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                                 ConfigMap = new V1ConfigMapVolumeSource
                                 {
                                     Name = $"{entity.Metadata.Name}-config"
+                                }
+                            },
+                            new V1Volume
+                            {
+                                Name = "mssql-secret-volume",
+                                Secret = new V1SecretVolumeSource
+                                {
+                                    SecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret"
                                 }
                             }
                         ]
