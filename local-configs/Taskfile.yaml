@@ -40,9 +40,7 @@ tasks:
 
       kubectl label namespace istio-gateways istio-injection=enabled
 
-      helm upgrade --install --namespace istio-system kiali-server kiali/kiali-server --wait -f ./kiali-config.yaml
-
-      kubectl label namespace kiali-operator istio-injection=enabled
+      helm upgrade --install --namespace istio-system --create-namespace kiali-server kiali/kiali-server --wait -f ./kiali-config.yaml
 
     desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
     ignore_error: true
