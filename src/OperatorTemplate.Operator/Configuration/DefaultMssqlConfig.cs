@@ -20,5 +20,5 @@ hadrenabled = 1
 lcid = 1033
 ";
 
-    public int DefaultRequeueTimeMinutes = 5;
+    public double DefaultRequeueTimeMinutes = 0.5;
 }
