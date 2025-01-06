@@ -25,6 +25,8 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         await EnsureConfigMapAsync(entity);
         await EnsureStatefulSetAsync(entity);
         await EnsureHeadlessServiceAsync(entity);
+        await EnsureSqlcmdPodAsync(entity);
+
 
         return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
     }
@@ -234,4 +236,71 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
 
         return new string(result);
     }
+
+    private async Task EnsureSqlcmdPodAsync(V1SQLServer entity)
+    {
+        var podName = $"{entity.Metadata.Name}-sqlcmd-pod";
+        var namespaceName = entity.Metadata.NamespaceProperty;
+
+        var pod = new V1Pod
+        {
+            Metadata = new V1ObjectMeta
+            {
+                Name = podName,
+                NamespaceProperty = namespaceName,
+                Labels = new Dictionary<string, string>
+            {
+                { "app", "sqlcmd-tools" },
+                { "instance", entity.Metadata.Name }
+            }
+            },
+            Spec = new V1PodSpec
+            {
+                RestartPolicy = "Never",
+                Containers = new List<V1Container>
+            {
+                new V1Container
+                {
+                    Name = "sqlcmd-container",
+                    Image = "mcr.microsoft.com/mssql-tools",
+                    Command = new List<string> { "/bin/bash" },
+                    Args = new List<string> { "-c", "tail -f /dev/null" },
+                    VolumeMounts = new List<V1VolumeMount>
+                    {
+                        new V1VolumeMount
+                        {
+                            Name = "sql-secrets-volume",
+                            MountPath = "/var/run/secrets/sql"
+                        }
+                    }
+                }
+            },
+                Volumes = new List<V1Volume>
+            {
+                new V1Volume
+                {
+                    Name = "sql-secrets-volume",
+                    Secret = new V1SecretVolumeSource
+                    {
+                        SecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret"
+                    }
+                }
+            }
+            }
+        };
+
+        try
+        {
+            // Check if the pod already exists
+            await kubernetesClient.ApiClient.CoreV1.ReadNamespacedPodAsync(podName, namespaceName);
+            logger.LogInformation("Pod {PodName} already exists in namespace {Namespace}. Skipping creation.", podName, namespaceName);
+        }
+        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Create the pod
+            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedPodAsync(pod, namespaceName);
+            logger.LogInformation("Created Pod {PodName} in namespace {Namespace}.", podName, namespaceName);
+        }
+    }
+
 }
