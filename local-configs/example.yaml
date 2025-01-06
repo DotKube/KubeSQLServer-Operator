@@ -39,7 +39,7 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: "RunningMan323#"
+  sa-password: RunningMan323#
 
 ---
 
@@ -67,4 +67,16 @@ metadata:
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: hello-world
+  databaseName: HelloWorld
+
+
+---
+
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: disable-mtls
+  namespace: sqlserver-example
+spec:
+  mtls:
+    mode: DISABLE
