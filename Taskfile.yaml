@@ -12,6 +12,11 @@ includes:
     dir: ./operator-chart
     internal: false
 
+  mssql-tools:
+    taskfile: ./container-images/mssql-tools/Taskfile.yaml
+    dir: ./container-images/mssql-tools
+    internal: true
+
 tasks:
   default:
     cmds:
@@ -58,6 +63,8 @@ tasks:
     - task: cluster:delete
     - task: cluster:create
     - task: create-crds-and-copy
+    - task: mssql-tools:build
+    - task: mssql-tools:load-image-into-kind
     - task: build-operator-image
     - task: cluster:loadimage -- operator-template:latest
     - task: cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
@@ -70,6 +77,8 @@ tasks:
     - task: cluster:delete
     - task: cluster:create
     - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task: mssql-tools:build
+    - task: mssql-tools:load-image-into-kind
     - task: create-crds-and-copy
     - task: operator-chart:apply-crds-from-helm-chart
     - task: cluster:apply-crd-instance
