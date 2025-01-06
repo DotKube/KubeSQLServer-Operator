@@ -1,15 +1,17 @@
-using k8s;
-using k8s.Models;
+using Microsoft.Data.SqlClient;
 using KubeOps.KubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using SqlServerOperator.Entities;
+using k8s.Models;
+using System.Text;
+using SqlServerOperator.Configuration;
 
 namespace SqlServerOperator.Controllers;
 
 [EntityRbac(typeof(V1SQLServerDatabase), Verbs = RbacVerb.All)]
-public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> logger, IKubernetesClient kubernetesClient) : IResourceController<V1SQLServerDatabase>
+public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config) : IResourceController<V1SQLServerDatabase>
 {
     public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServerDatabase entity)
     {
@@ -17,32 +19,24 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
 
         try
         {
-            // Determine the SecretName to use
             var secretName = await DetermineSecretNameAsync(entity);
-
-            // Ensure the CronJob exists
-            await EnsureCronJobAsync(entity, secretName);
-
-            // Update the status to reflect success
-            await UpdateStatusAsync(entity, "Ready", "CronJob created and reconciliation succeeded.", DateTime.UtcNow);
+            var (server, username, password) = await GetSqlServerCredentialsAsync(entity, secretName);
+            await EnsureDatabaseExistsAsync(entity.Spec.DatabaseName, server, username, password);
+            await UpdateStatusAsync(entity, "Ready", "Database ensured.", DateTime.UtcNow);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during reconciliation of SQLServerDatabase: {Name}", entity.Metadata.Name);
-
-            // Update the status to reflect the error
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow);
         }
 
-        return null; // No need to requeue; the CronJob handles periodic checks
+        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
     }
 
     private async Task<string> DetermineSecretNameAsync(V1SQLServerDatabase entity)
     {
         var instanceName = entity.Spec.InstanceName;
         var namespaceName = entity.Metadata.NamespaceProperty;
-
-        // Fetch the SQLServer instance
         var sqlServer = await kubernetesClient.Get<V1SQLServer>(instanceName, namespaceName);
 
         if (sqlServer == null)
@@ -50,105 +44,64 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
             throw new Exception($"SQLServer instance '{instanceName}' not found in namespace '{namespaceName}'.");
         }
 
-        // Use the SecretName from the SQLServer instance if not explicitly defined
-        var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
-
-        logger.LogInformation("Determined SecretName for SQLServerDatabase {Name}: {SecretName}", entity.Metadata.Name, secretName);
-
-        return secretName;
+        return sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
     }
 
-    private async Task EnsureCronJobAsync(V1SQLServerDatabase entity, string secretName)
+    private async Task<(string server, string username, string password)> GetSqlServerCredentialsAsync(V1SQLServerDatabase entity, string secretName)
     {
-        var cronJobName = $"{entity.Metadata.Name}-cronjob";
         var namespaceName = entity.Metadata.NamespaceProperty;
-        var instanceName = entity.Spec.InstanceName;
-        var databaseName = entity.Spec.DatabaseName;
 
-        var cronJob = new V1CronJob
+        logger.LogInformation("Namespace: {Namespace}", namespaceName);
+
+        var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+
+        logger.LogInformation("Secret: {Secret}", secretName);
+
+        if (secret?.Data == null || !secret.Data.ContainsKey("sa-password"))
         {
-            Metadata = new V1ObjectMeta
-            {
-                Name = cronJobName,
-                NamespaceProperty = namespaceName,
-                Labels = new Dictionary<string, string>
-                {
-                    { "app", "sqlserver-database" },
-                    { "database-name", databaseName }
-                }
-            },
-            Spec = new V1CronJobSpec
-            {
-                Schedule = "*/5 * * * *", // Run every 5 minutes
-                JobTemplate = new V1JobTemplateSpec
-                {
-                    Spec = new V1JobSpec
-                    {
-                        Template = new V1PodTemplateSpec
-                        {
-                            Metadata = new V1ObjectMeta
-                            {
-                                Labels = new Dictionary<string, string>
-                                {
-                                    { "app", "sqlserver-database" }
-                                }
-                            },
-                            Spec = new V1PodSpec
-                            {
-                                Containers = new List<V1Container>
-                                {
-                                    new V1Container
-                                    {
-                                        Name = "sqlcmd-check",
-                                        Image = "sqlcmd-tools-container:latest",
-                                        Command = new List<string>
-                                        {
-                                            "/bin/bash", "-c",
-                                            @$"
-                                            if ! echo 'SELECT name FROM sys.databases WHERE name = ''{databaseName}'';' | sqlcmd -S tcp:{instanceName}-headless,1433 -U sa -P $(cat /var/run/secrets/sql/sa-password) | grep -q '{databaseName}'; then
-                                                echo 'Database {databaseName} does not exist. Creating...';
-                                                echo 'CREATE DATABASE [{databaseName}];' | sqlcmd -S tcp:{instanceName}-headless,1433 -U sa -P $(cat /var/run/secrets/sql/sa-password);
-                                            else
-                                                echo 'Database {databaseName} already exists.';
-                                            fi"
-                                        },
-                                        VolumeMounts = new List<V1VolumeMount>
-                                        {
-                                            new V1VolumeMount
-                                            {
-                                                Name = "sql-secret",
-                                                MountPath = "/var/run/secrets/sql",
-                                            }
-                                        }
-                                    }
-                                },
-                                RestartPolicy = "OnFailure",
-                                Volumes = new List<V1Volume>
-                                {
-                                    new V1Volume
-                                    {
-                                        Name = "sql-secret",
-                                        Secret = new V1SecretVolumeSource
-                                        {
-                                            SecretName = secretName
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            throw new Exception($"Secret '{secretName}' does not contain the expected 'sa-password' key.");
+        }
+
+        var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
+        var podName = $"{entity.Spec.InstanceName}-0";
+        var server = $"{podName}.{entity.Spec.InstanceName}-headless.{namespaceName}.svc.cluster.local";
+        var username = "sa";
+
+        return (server, username, password);
+    }
+
+    private async Task EnsureDatabaseExistsAsync(string databaseName, string server, string username, string password)
+    {
+        var builder = new SqlConnectionStringBuilder
+        {
+            DataSource = server,
+            UserID = username,
+            Password = password,
+            InitialCatalog = "master",
+            TrustServerCertificate = true,
+            Encrypt = false,
         };
+
+        var connectionString = builder.ConnectionString;
+
+        logger.LogInformation("Ensuring database '{DatabaseName}' on server '{Server}'.", databaseName, server);
+        logger.LogInformation("Connection string: {ConnectionString}", connectionString);
 
         try
         {
-            await kubernetesClient.ApiClient.BatchV1.CreateNamespacedCronJobAsync(cronJob, namespaceName);
-            logger.LogInformation("Created CronJob for SQLServerDatabase: {Name}", entity.Metadata.Name);
+            using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            var commandText = $"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName) CREATE DATABASE [{databaseName}]";
+            using var command = new SqlCommand(commandText, connection);
+            command.Parameters.AddWithValue("@DatabaseName", databaseName);
+
+            await command.ExecuteNonQueryAsync();
+            logger.LogInformation("Database '{DatabaseName}' ensured on server '{Server}'.", databaseName, server);
         }
-        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        catch (Exception ex)
         {
-            logger.LogInformation("CronJob for SQLServerDatabase {Name} already exists. Skipping creation.", entity.Metadata.Name);
+            throw new Exception($"Failed to ensure database '{databaseName}': {ex.Message}", ex);
         }
     }
 
