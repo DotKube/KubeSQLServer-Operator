@@ -63,8 +63,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
-        var podName = $"{entity.Spec.InstanceName}-0";
-        var server = $"{podName}.{entity.Spec.InstanceName}-headless.{namespaceName}.svc.cluster.local";
+        var server = $"sqlserver-instance-statefulset-0.{entity.Spec.InstanceName}-headless.{namespaceName}.svc.cluster.local";
         var username = "sa";
 
         return (server, username, password);
