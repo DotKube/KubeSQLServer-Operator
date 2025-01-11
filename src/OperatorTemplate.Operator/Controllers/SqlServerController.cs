@@ -80,7 +80,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                     {
                         SecurityContext = new V1PodSecurityContext
                         {
-                            FsGroup = 10001
+                            FsGroup = 0
                         },
                         Containers =
                         [
