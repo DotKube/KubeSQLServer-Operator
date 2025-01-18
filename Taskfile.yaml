@@ -15,7 +15,7 @@ includes:
 tasks:
   default:
     cmds:
-    - task --list-all
+    - go-task --list-all
     desc: "List all available tasks in this Taskfile."
 
   create-crd-files:
@@ -69,7 +69,7 @@ tasks:
     cmds:
     - task: cluster:delete
     - task: cluster:create
-    - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - go-task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
     - task: create-crds-and-copy
     - task: operator-chart:apply-crds-from-helm-chart
     - task: cluster:apply-crd-instance
