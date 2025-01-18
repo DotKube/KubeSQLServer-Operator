@@ -82,4 +82,37 @@ task quick-deploy
 
 - **Helm Deployment**  
   - Install: `task install-helm-chart`  
+
   - Uninstall: `task uninstall-helm-chart`
+## Fedora 41
+
+To fix too many files being watched error
+
+```bash
+
+fs.inotify.max_user_watches = 2099999999
+fs.inotify.max_user_instances = 2099999999
+fs.inotify.max_queued_events = 2099999999
+
+```
+
+To tasks not working, I would say to set an alias for go-task to be task in your .bashrc file
+
+```bash
+
+echo "alias task=go-task" >> ~/.bashrc
+
+source ~/.bashrc
+```
+
+To fix podman error with aspire
+
+```bash
+export DOTNET_ASPIRE_CONTAINER_RUNTIME=podman
+```
+
+To fix https issue with dotnet
+
+```bash
+dotnet dev-certs https --trust
+```

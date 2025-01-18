@@ -18,15 +18,16 @@ tasks:
     cmds:
     - |
       helm repo add istio https://istio-release.storage.googleapis.com/charts
-      helm repo add jetstack https://charts.jetstack.io
+      helm repo add jetstack https://charts.jetstack.io --force-update
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
       helm repo add kiali https://kiali.org/helm-charts
 
       helm repo update
 
-      helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.2 --set crds.enabled=true
 
       helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --wait
+
+      helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.2 --set crds.enabled=true
 
       helm upgrade --install istio-base istio/base -n istio-system --create-namespace --wait
 
