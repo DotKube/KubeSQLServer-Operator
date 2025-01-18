@@ -50,6 +50,9 @@ tasks:
   build-operator-image:
     cmds:
     - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
+    - docker tag operator-template:latest localhost:5001/operator-template:latest
+    - docker push localhost:5001/operator-template:latest
+
     desc: "Build the Docker image for the OperatorTemplate.Operator."
 
   dev:
@@ -60,14 +63,15 @@ tasks:
 
   quick-deploy:
     cmds:
+    - task: cluster:create-registry
     - task: cluster:delete
     - task: cluster:create
     - task: create-crds-and-copy
     - task: mssql-tools:build
     - task: mssql-tools:load-image-into-kind
     - task: build-operator-image
-    - task: cluster:loadimage -- operator-template:latest
-    - task: cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - go-task cluster:loadimage -- localhost:5001/operator-template:latest
+    - go-task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
     - task: operator-chart:install-helm-chart
     - task: cluster:apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."

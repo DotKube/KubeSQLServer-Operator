@@ -1,0 +1,14 @@
+
+services:
+  registry:
+    image: registry:2
+    container_name: kind-registry
+    restart: always
+    ports:
+      - "5001:5000"
+    networks:
+      - kind
+
+networks:
+  kind:
+    driver: bridge
