@@ -22,17 +22,17 @@ tasks:
     internal: true
     dir: ./src/OperatorTemplate.Operator
     cmds:
-    - powershell -Command "if (Test-Path ./config) { Get-ChildItem -Path ./config -Recurse -Force | Remove-Item -Recurse -Force; Remove-Item -Force ./config }"
+    - pwsh -Command "if (Test-Path ./config) { Get-ChildItem -Path ./config -Recurse -Force | Remove-Item -Recurse -Force; Remove-Item -Force ./config }"
     - dotnet clean
     - dotnet build
-    - powershell -Command "remove-item -recurse -force ./Dockerfile"
+    - pwsh -Command "remove-item -recurse -force ./Dockerfile"
     desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
 
   copy-to-helm:
     internal: true
     dir: .
     cmds:
-    - powershell -Command "Copy-Item -Path './src/OperatorTemplate.Operator/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
+    - pwsh -Command "Copy-Item -Path './src/OperatorTemplate.Operator/config/crds/*' -Destination './operator-chart/crds/' -Recurse -Force -Exclude 'kustomization.yaml'"
 
     desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
 
