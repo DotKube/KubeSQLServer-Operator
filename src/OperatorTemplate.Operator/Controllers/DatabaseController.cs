@@ -1,12 +1,12 @@
-using Microsoft.Data.SqlClient;
+using k8s.Models;
 using KubeOps.KubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using SqlServerOperator.Entities;
-using k8s.Models;
-using System.Text;
+using Microsoft.Data.SqlClient;
 using SqlServerOperator.Configuration;
+using SqlServerOperator.Entities;
+using System.Text;
 
 namespace SqlServerOperator.Controllers;
 
@@ -63,7 +63,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
-        var server = $"sqlserver-instance-statefulset-0.{entity.Spec.InstanceName}-headless.{namespaceName}.svc.cluster.local";
+        var server = $"{entity.Spec.InstanceName}-headless.{namespaceName}";
         var username = "sa";
 
         return (server, username, password);

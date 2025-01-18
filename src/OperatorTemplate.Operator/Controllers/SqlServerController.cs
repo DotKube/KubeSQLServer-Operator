@@ -74,7 +74,11 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } }
+                        Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
+                        Annotations = new Dictionary<string, string>
+                        {
+                            { "sidecar.istio.io/inject", "false" }
+                        }
                     },
                     Spec = new V1PodSpec
                     {
@@ -249,43 +253,28 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                 Name = podName,
                 NamespaceProperty = namespaceName,
                 Labels = new Dictionary<string, string>
-            {
-                { "app", "sqlcmd-tools" },
-                { "instance", entity.Metadata.Name }
-            }
+                {
+                    { "app", "sqlcmd-tools" },
+                    { "instance", entity.Metadata.Name }
+                },
+                Annotations = new Dictionary<string, string>
+                {
+                    { "sidecar.istio.io/inject", "false" }
+                }
             },
             Spec = new V1PodSpec
             {
                 RestartPolicy = "Never",
                 Containers = new List<V1Container>
-            {
-                new V1Container
                 {
-                    Name = "sqlcmd-container",
-                    Image = "mcr.microsoft.com/mssql-tools",
-                    Command = new List<string> { "/bin/bash" },
-                    Args = new List<string> { "-c", "tail -f /dev/null" },
-                    VolumeMounts = new List<V1VolumeMount>
+                    new V1Container
                     {
-                        new V1VolumeMount
-                        {
-                            Name = "sql-secrets-volume",
-                            MountPath = "/var/run/secrets/sql"
-                        }
+                        Name = "sqlcmd-container",
+                        Image = "mcr.microsoft.com/mssql-tools",
+                        Command = new List<string> { "/bin/bash" },
+                        Args = new List<string> { "-c", "tail -f /dev/null" },
                     }
                 }
-            },
-                Volumes = new List<V1Volume>
-            {
-                new V1Volume
-                {
-                    Name = "sql-secrets-volume",
-                    Secret = new V1SecretVolumeSource
-                    {
-                        SecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret"
-                    }
-                }
-            }
             }
         };
 
