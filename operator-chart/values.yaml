@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: operator-template
+  repository: localhost:5001/operator-template
   tag: latest
   pullPolicy: IfNotPresent
 

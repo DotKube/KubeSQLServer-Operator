@@ -1,14 +1,14 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: sqlservers.database.example.com
+  name: databases.database.example.com
 spec:
   group: database.example.com
   names:
-    kind: SQLServer
-    listKind: SQLServerList
-    plural: sqlservers
-    singular: sqlserver
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
   scope: Namespaced
   versions:
   - name: v1alpha1
@@ -21,17 +21,16 @@ spec:
                 type: string
               message:
                 type: string
+              lastChecked:
+                format: date-time
+                nullable: true
+                type: string
             type: object
           spec:
             properties:
-              version:
+              instanceName:
                 type: string
-              storageClass:
-                type: string
-              storageSize:
-                type: string
-              secretName:
-                nullable: true
+              databaseName:
                 type: string
             type: object
         type: object

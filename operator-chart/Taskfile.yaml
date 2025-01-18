@@ -3,7 +3,7 @@ version: "3"
 tasks:
   install-helm-chart:
     cmds:
-    - helm upgrade --install sql-server . --namespace sql-server --create-namespace --wait
+    - helm upgrade --install sql-server . --namespace sql-server --create-namespace
     desc: "Deploy the Helm chart for the OperatorTemplate stack."
 
   uninstall-helm-chart:

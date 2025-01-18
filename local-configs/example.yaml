@@ -10,27 +10,6 @@ metadata:
 
 ---
 
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: sqlserver-virtualservice
-  namespace: sqlserver-example
-spec:
-  gateways:
-    - istio-gateways/localhost-gateway
-  hosts:
-    - "first-sql.localhost"
-    - "first-sql.local-cluster.com"
-  tcp:
-    - match:
-        - port: 1433
-      route:
-        - destination:
-            host: sqlserver-instance-headless
-            port:
-              number: 1433
-
----
 
 apiVersion: v1
 kind: Secret
@@ -39,7 +18,7 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: "RunningMan323#"
+  sa-password: RunningMan323#
 
 ---
 
@@ -53,62 +32,34 @@ metadata:
 spec:
   version: "2022"
   storageClass: "standard"
-  storageSize: "2Gi"
+  storageSize: "6Gi"
   secretName: "sqlserver-secret"
 
 
-
-
 ---
 
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: sqlserver-new
-  labels:
-    istio-injection: enabled
-
----
-
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: sqlserver-new-virtualservice
-  namespace: sqlserver-new
-spec:
-  gateways:
-    - istio-gateways/localhost-gateway
-  hosts:
-    - "sqlserver-new.localhost"
-  tcp:
-    - match:
-        - port: 1433
-      route:
-        - destination:
-            host: sqlserver-new-instance-headless
-            port:
-              number: 1433
-
----
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: sqlserver-new-secret
-  namespace: sqlserver-new
-type: Opaque
-stringData:
-  sa-password: "ComplexPass#1234"
-
----
 
 apiVersion: database.example.com/v1alpha1
-kind: SQLServer
+kind: Database
 metadata:
-  name: sqlserver-new-instance
-  namespace: sqlserver-new
+  name: example-database
+  namespace: sqlserver-example
 spec:
-  version: "2022"
-  storageClass: "standard"
-  storageSize: "5Gi"
-  secretName: "sqlserver-new-secret"
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld
+
+
+
+
+---
+
+
+apiVersion: database.example.com/v1alpha1
+kind: Database
+metadata:
+  name: example-database
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld2
+

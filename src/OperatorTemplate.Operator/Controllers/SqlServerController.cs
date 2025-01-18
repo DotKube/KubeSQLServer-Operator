@@ -25,6 +25,8 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         await EnsureConfigMapAsync(entity);
         await EnsureStatefulSetAsync(entity);
         await EnsureHeadlessServiceAsync(entity);
+        await EnsureSqlcmdPodAsync(entity);
+
 
         return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
     }
@@ -72,13 +74,17 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } }
+                        Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
+                        Annotations = new Dictionary<string, string>
+                        {
+                            { "sidecar.istio.io/inject", "false" }
+                        }
                     },
                     Spec = new V1PodSpec
                     {
                         SecurityContext = new V1PodSecurityContext
                         {
-                            FsGroup = 10001
+                            FsGroup = 0
                         },
                         Containers =
                         [
@@ -234,4 +240,56 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
 
         return new string(result);
     }
+
+    private async Task EnsureSqlcmdPodAsync(V1SQLServer entity)
+    {
+        var podName = $"{entity.Metadata.Name}-sqlcmd-pod";
+        var namespaceName = entity.Metadata.NamespaceProperty;
+
+        var pod = new V1Pod
+        {
+            Metadata = new V1ObjectMeta
+            {
+                Name = podName,
+                NamespaceProperty = namespaceName,
+                Labels = new Dictionary<string, string>
+                {
+                    { "app", "sqlcmd-tools" },
+                    { "instance", entity.Metadata.Name }
+                },
+                Annotations = new Dictionary<string, string>
+                {
+                    { "sidecar.istio.io/inject", "false" }
+                }
+            },
+            Spec = new V1PodSpec
+            {
+                RestartPolicy = "Never",
+                Containers = new List<V1Container>
+                {
+                    new V1Container
+                    {
+                        Name = "sqlcmd-container",
+                        Image = "mcr.microsoft.com/mssql-tools",
+                        Command = new List<string> { "/bin/bash" },
+                        Args = new List<string> { "-c", "tail -f /dev/null" },
+                    }
+                }
+            }
+        };
+
+        try
+        {
+            // Check if the pod already exists
+            await kubernetesClient.ApiClient.CoreV1.ReadNamespacedPodAsync(podName, namespaceName);
+            logger.LogInformation("Pod {PodName} already exists in namespace {Namespace}. Skipping creation.", podName, namespaceName);
+        }
+        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Create the pod
+            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedPodAsync(pod, namespaceName);
+            logger.LogInformation("Created Pod {PodName} in namespace {Namespace}.", podName, namespaceName);
+        }
+    }
+
 }

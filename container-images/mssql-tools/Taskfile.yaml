@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build the container image for SQL Server Command Line Tools
+    cmds:
+    - docker build -f Containerfile -t sqlcmd-tools-container .
+
+  load-image-into-kind:
+    desc: Load the container image into the Kind Kubernetes cluster
+    cmds:
+    - kind load docker-image sqlcmd-tools-container --name sql-server-testing-cluster

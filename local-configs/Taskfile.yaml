@@ -6,6 +6,8 @@ tasks:
     cmds:
     - kind delete cluster --name sql-server-testing-cluster
     - kind create cluster --config ./kind-config.yaml
+    - bash ./scripts/configure-registry-with-kind.sh
+
     - task: install-helm-charts
     desc: "Create a Kind Kubernetes cluster named 'sql-server-testing-cluster' for testing purposes."
 
@@ -60,3 +62,8 @@ tasks:
     cmds:
     - kubectl delete -f ./example.yaml
     desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
+
+  
+  create-registry:
+    cmds:
+    - podman compose -f ./registry.yaml up -d
