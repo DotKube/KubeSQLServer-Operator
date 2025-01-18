@@ -48,3 +48,18 @@ spec:
   instanceName: sqlserver-instance
   databaseName: HelloWorld
 
+
+
+
+---
+
+
+apiVersion: database.example.com/v1alpha1
+kind: Database
+metadata:
+  name: example-database
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld2
+
