@@ -8,6 +8,65 @@ This project is intended to be an open-source alternative to D2HI's Dx Operator,
 
 ---
 
+
+
+## Operator Functionality
+
+```
+
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sqlserver-example
+  labels:
+    istio-injection: enabled
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-secret
+  namespace: sqlserver-example
+type: Opaque
+stringData:
+  sa-password: JoeMontana4292#
+
+
+---
+
+apiVersion: sql.dotkube.org/v1alpha1
+kind: SQLServer
+metadata:
+  name: sqlserver-instance
+  namespace: sqlserver-example
+spec:
+  version: "2022"
+  storageClass: "longhorn"
+  storageSize: "6Gi"
+  secretName: sqlserver-secret
+  enableHighAvailibility: true
+  enableFullTextSearch: true
+
+
+---
+
+apiVersion: sql.dotkube.org/v1alpha1
+kind: Database
+metadata:
+  name: example-database
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld
+  createCorrespondingDAB: true
+  serrviceType: LoadBalancer
+
+
+
+```
+
 ## Planned Features and Roadmap
 
 Here are the planned features and milestones for KubeSQLServer Operator:
@@ -33,6 +92,8 @@ Here are the planned features and milestones for KubeSQLServer Operator:
   Develop a CLI for managing the operator and resources.
 
 ---
+
+
 
 ## Development Workflow
 
