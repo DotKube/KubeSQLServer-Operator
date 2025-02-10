@@ -63,7 +63,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
-        var server = $"{entity.Spec.InstanceName}-headless.{namespaceName}";
+        var server = $"{entity.Spec.InstanceName}-service.{namespaceName}";
         var username = "sa";
 
         return (server, username, password);

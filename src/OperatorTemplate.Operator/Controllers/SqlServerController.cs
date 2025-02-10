@@ -24,7 +24,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         await EnsureSaPasswordSecretAsync(entity);
         await EnsureConfigMapAsync(entity);
         await EnsureStatefulSetAsync(entity);
-        await EnsureHeadlessServiceAsync(entity);
+        await EnsureServiceAsync(entity);
         await EnsureSqlcmdPodAsync(entity);
 
 
@@ -164,28 +164,44 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         }
     }
 
-    private async Task EnsureHeadlessServiceAsync(V1SQLServer entity)
+    private async Task EnsureServiceAsync(V1SQLServer entity)
     {
-        var serviceName = $"{entity.Metadata.Name}-headless";
+        var serviceName = $"{entity.Metadata.Name}-service";
+        string serviceType = entity.Spec.ServiceType.ToLower();
 
-        var service = new ServiceBuilder()
-            .WithMetadata(serviceName, entity.Metadata.NamespaceProperty, new Dictionary<string, string> { { "app", entity.Metadata.Name } })
-            .WithSpec(new V1ServiceSpec
+        // Initialize serviceSpec
+        var serviceSpec = new V1ServiceSpec
+        {
+            Selector = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
+            Ports = new List<V1ServicePort> { new V1ServicePort { Name = "sql", Port = 1433, TargetPort = 1433 } }
+        };
+
+        // Set service type (LoadBalancer or None for headless)
+        serviceSpec.Type = serviceType switch
+        {
+            "loadbalancer" => "LoadBalancer",
+            _ => "None", // Default to headless service
+        };
+
+        // Create the service
+        var service = new V1Service
+        {
+            Metadata = new V1ObjectMeta
             {
-                ClusterIP = "None",
-                Selector = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
-                Ports = [new V1ServicePort { Name = "sql", Port = 1433, TargetPort = 1433 }]
-            })
-            .Build();
+                Name = serviceName,
+                NamespaceProperty = entity.Metadata.NamespaceProperty
+            },
+            Spec = serviceSpec
+        };
 
         try
         {
             await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
-            logger.LogInformation("Created headless service for SQLServer: {Name}", entity.Metadata.Name);
+            logger.LogInformation("Created service for SQLServer: {Name} with type {ServiceType}", entity.Metadata.Name, entity.Spec.ServiceType);
         }
         catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            logger.LogInformation("Headless service for SQLServer {Name} already exists. Skipping creation.", entity.Metadata.Name);
+            logger.LogInformation("Service for SQLServer {Name} already exists. Skipping creation.", entity.Metadata.Name);
         }
     }
 

@@ -20,7 +20,7 @@ includes:
 tasks:
   default:
     cmds:
-    - go-task --list-all
+    - task --list-all
     desc: "List all available tasks in this Taskfile."
 
   create-crd-files:
@@ -66,12 +66,13 @@ tasks:
     - task: cluster:create-registry
     - task: cluster:delete
     - task: cluster:create
+    - task: cluster:add-metallb
     - task: create-crds-and-copy
     - task: mssql-tools:build
     - task: mssql-tools:load-image-into-kind
     - task: build-operator-image
-    - go-task cluster:loadimage -- localhost:5001/operator-template:latest
-    - go-task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task cluster:loadimage -- localhost:5001/operator-template:latest
+    - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
     - task: operator-chart:install-helm-chart
     - task: cluster:apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
@@ -80,7 +81,8 @@ tasks:
     cmds:
     - task: cluster:delete
     - task: cluster:create
-    - go-task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task: cluster:add-metallb
+    - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
     - task: mssql-tools:build
     - task: mssql-tools:load-image-into-kind
     - task: create-crds-and-copy

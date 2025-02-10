@@ -12,7 +12,8 @@ public class V1SQLServer : CustomKubernetesEntity<V1SQLServer.V1SQLServerSpec, V
         public string Version { get; set; } = "2022";
         public string StorageClass { get; set; } = "standard";
         public string StorageSize { get; set; } = "20Gi";
-        public string? SecretName { get; set; } // Name of the secret containing SA password
+        public string? SecretName { get; set; }
+        public string? ServiceType { get; set; } = "None";
     }
 
     public class V1SQLServerStatus
