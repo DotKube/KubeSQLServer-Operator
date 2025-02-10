@@ -18,7 +18,7 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: RunningMan323#
+  sa-password: SuperSecretPassword123!
 
 ---
 
