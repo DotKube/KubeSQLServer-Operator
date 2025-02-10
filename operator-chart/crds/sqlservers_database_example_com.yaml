@@ -33,6 +33,9 @@ spec:
               secretName:
                 nullable: true
                 type: string
+              serviceType:
+                nullable: true
+                type: string
             type: object
         type: object
     served: true

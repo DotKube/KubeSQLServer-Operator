@@ -157,19 +157,19 @@ fs.inotify.max_queued_events = 2099999999
 
 ```
 
-To tasks not working, I would say to set an alias for go-task to be task in your .bashrc file
+To tasks not working, I would say to set an alias for task to be task in your .bashrc file
 
 ```bash
 
-echo "alias task=go-task" >> ~/.bashrc
+echo "alias task=task" >> ~/.bashrc
 
 source ~/.bashrc
 ```
 
-To fix podman error with aspire
+To fix docker error with aspire
 
 ```bash
-export DOTNET_ASPIRE_CONTAINER_RUNTIME=podman
+export DOTNET_ASPIRE_CONTAINER_RUNTIME=docker
 ```
 
 To fix https issue with dotnet
