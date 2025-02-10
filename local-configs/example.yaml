@@ -34,6 +34,7 @@ spec:
   storageClass: "standard"
   storageSize: "6Gi"
   secretName: "sqlserver-secret"
+  serviceType: "LoadBalancer"
 
 
 ---
@@ -46,7 +47,7 @@ metadata:
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: HelloWorld
+  databaseName: HelloWorld1
 
 
 
