@@ -63,7 +63,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
-        var server = $"{entity.Spec.InstanceName}-service.{namespaceName}";
+        var server = $"{entity.Spec.InstanceName}-service.{namespaceName}";  // when developing locally, use the external IP of the service instead of the service name
         var username = "sa";
 
         return (server, username, password);
