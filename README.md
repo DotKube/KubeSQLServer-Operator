@@ -2,7 +2,7 @@
 
 KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kubernetes operator designed to help you run and manage Microsoft SQL Server seamlessly.
 
-This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license. KubeSQLServer Operator aims to provide a no-license-required solution for SQL Server management in Kubernetes.
+This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/). KubeSQLServer Operator aims to provide a no-license-required solution for SQL Server management in Kubernetes for development purposes. This isn't meant to be run in production!! This is only for local development and dev stages. 
 
 > **Note:** This project is in the very early stages of development and is not yet ready for distribution. Stay tuned for updates as the project progresses!
 
@@ -79,6 +79,9 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 
 - **API and CRD Scope Definition**  
   Design and define the scope of APIs and Custom Resource Definitions (CRDs).
+
+- **Data API Integration**
+  Easily Integrate the Data API to your sql server for a full blown backend in a fraction of the time of manually scaffolding out an api with your favorite programming language.
 
 - **Testing Strategies**  
   Establish robust testing strategies for the operator, CRDs, and related components.
