@@ -33,6 +33,7 @@ spec:
   storageSize: "6Gi"
   secretName: "sqlserver-secret"
   serviceType: "LoadBalancer"
+  enableFullTextSearch: true
 
 
 ---
