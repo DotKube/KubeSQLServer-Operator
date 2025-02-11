@@ -8,19 +8,15 @@ This project is intended to be an open-source alternative to D2HI's Dx Operator,
 
 ---
 
-
-
 ## Operator Functionality
 
-```
+```yaml
 
 
 apiVersion: v1
 kind: Namespace
 metadata:
   name: sqlserver-example
-  labels:
-    istio-injection: enabled
 
 ---
 
@@ -48,6 +44,7 @@ spec:
   secretName: sqlserver-secret
   enableHighAvailibility: true
   enableFullTextSearch: true
+  serviceType: LoadBalancer
 
 
 ---
@@ -55,14 +52,23 @@ spec:
 apiVersion: sql.dotkube.org/v1alpha1
 kind: Database
 metadata:
-  name: example-database
+  name: foo
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: HelloWorld
-  createCorrespondingDAB: true
-  serrviceType: LoadBalancer
+  databaseName: Foo
 
+
+---
+
+apiVersion: sql.dotkube.org/v1alpha1
+kind: Database
+metadata:
+  name: bar
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: Bar
 
 
 ```
