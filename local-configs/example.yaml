@@ -43,7 +43,7 @@ spec:
 apiVersion: database.example.com/v1alpha1
 kind: Database
 metadata:
-  name: example-database
+  name: example-database1
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
@@ -58,7 +58,7 @@ spec:
 apiVersion: database.example.com/v1alpha1
 kind: Database
 metadata:
-  name: example-database
+  name: example-database2
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
