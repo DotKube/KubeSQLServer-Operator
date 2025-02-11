@@ -68,11 +68,9 @@ tasks:
     - task: cluster:create
     - task: cluster:add-metallb
     - task: create-crds-and-copy
-    - task: mssql-tools:build
-    - task: mssql-tools:load-image-into-kind
     - task: build-operator-image
     - task cluster:loadimage -- localhost:5001/operator-template:latest
-    - task cluster:loadimage -- mcr.microsoft.com/mssql/server:2022-latest
+    - task cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
     - task: operator-chart:install-helm-chart
     - task: cluster:apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
