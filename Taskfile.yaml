@@ -89,3 +89,9 @@ tasks:
     - task: operator-chart:apply-crds-from-helm-chart
     - task: cluster:apply-crd-instance
     - task: dev
+
+  clean:
+    cmds:
+    - task: cluster:delete
+    desc: "Clean up the Kind Kubernetes cluster."
+    
