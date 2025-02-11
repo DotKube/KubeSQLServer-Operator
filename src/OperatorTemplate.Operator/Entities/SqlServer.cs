@@ -14,6 +14,7 @@ public class V1SQLServer : CustomKubernetesEntity<V1SQLServer.V1SQLServerSpec, V
         public string StorageSize { get; set; } = "20Gi";
         public string? SecretName { get; set; }
         public string? ServiceType { get; set; } = "None";
+        public bool EnableFullTextSearch { get; set; } = false;
     }
 
     public class V1SQLServerStatus

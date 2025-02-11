@@ -36,6 +36,8 @@ spec:
               serviceType:
                 nullable: true
                 type: string
+              enableFullTextSearch:
+                type: boolean
             type: object
         type: object
     served: true
