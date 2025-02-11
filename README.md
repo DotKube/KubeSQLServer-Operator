@@ -80,6 +80,9 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 - **API and CRD Scope Definition**  
   Design and define the scope of APIs and Custom Resource Definitions (CRDs).
 
+- **Data API Integration**
+  Easily Integrate the Data API to your sql server for a full blown backend in a fraction of the time of manually scaffolding out an api with your favorite programming language.
+
 - **Testing Strategies**  
   Establish robust testing strategies for the operator, CRDs, and related components.
 
