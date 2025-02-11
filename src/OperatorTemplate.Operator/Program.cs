@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddSingleton<SqlServerImages>();
 builder.Services.AddSingleton<DefaultMssqlConfig>();
 
 builder.Services.AddKubernetesOperator();
