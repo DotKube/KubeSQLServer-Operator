@@ -135,7 +135,8 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                                 }
 
                             ],
-                                Command = ["/opt/mssql/bin/sqlservr"],                            }
+                                Command = ["/opt/mssql/bin/sqlservr"],
+                            }
                         ],
                         Volumes =
                         [
