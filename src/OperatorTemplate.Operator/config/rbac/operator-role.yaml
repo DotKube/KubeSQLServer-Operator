@@ -4,7 +4,7 @@ metadata:
   name: operator-role
 rules:
 - apiGroups:
-  - database.example.com
+  - sql-server.dotkube.io
   - coordination.k8s.io
   resources:
   - sqlservers
@@ -28,7 +28,7 @@ rules:
   - get
   - list
 - apiGroups:
-  - database.example.com
+  - sql-server.dotkube.io
   resources:
   - sqlservers/status
   verbs:

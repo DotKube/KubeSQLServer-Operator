@@ -22,7 +22,7 @@ stringData:
 
 
 
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServer
 metadata:
   name: sqlserver-instance
@@ -39,7 +39,7 @@ spec:
 ---
 
 
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
   name: example-database1
@@ -54,7 +54,7 @@ spec:
 ---
 
 
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
   name: example-database2

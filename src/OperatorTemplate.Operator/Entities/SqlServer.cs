@@ -4,7 +4,7 @@ using KubeOps.Operator.Entities;
 
 namespace SqlServerOperator.Entities;
 
-[KubernetesEntity(Group = "database.example.com", ApiVersion = "v1alpha1", Kind = "SQLServer")]
+[KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServer")]
 public class V1SQLServer : CustomKubernetesEntity<V1SQLServer.V1SQLServerSpec, V1SQLServer.V1SQLServerStatus>
 {
     public class V1SQLServerSpec
