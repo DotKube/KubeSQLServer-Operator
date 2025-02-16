@@ -79,3 +79,10 @@ tasks:
       - bash ./scripts/metallb-setup.sh
 
 
+
+
+  test-login:
+    cmds:
+    - bash ./scripts/test-logins.sh
+
+
