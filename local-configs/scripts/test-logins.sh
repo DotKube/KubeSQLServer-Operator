@@ -11,10 +11,10 @@ fi
 
 CREDENTIALS=(
     "sa SuperSecretPassword123! master"
-    "adminuser SuperSecretPassword123! HelloWorld1"
-    "adminuser SuperSecretPassword123! HelloWorld2"
-    "datauser SuperSecretPassword123! HelloWorld1"
-    "datauser SuperSecretPassword123! HelloWorld2"
+    "adminuser1 SuperSecretPassword123! HelloWorld1"
+    "adminuser2 SuperSecretPassword123! HelloWorld2"
+    "datauser1 SuperSecretPassword123! HelloWorld1"
+    "datauser2 SuperSecretPassword123! HelloWorld2"
 )
 
 echo "Testing SQL Server connections on $SQL_SERVER:$SQL_PORT..."
