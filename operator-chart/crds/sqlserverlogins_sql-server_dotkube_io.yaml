@@ -1,0 +1,45 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlserverlogins.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: SQLServerLogin
+    listKind: SQLServerLoginList
+    plural: sqlserverlogins
+    singular: sqlserverlogin
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            properties:
+              state:
+                type: string
+              message:
+                type: string
+              lastChecked:
+                format: date-time
+                nullable: true
+                type: string
+            type: object
+          spec:
+            properties:
+              sqlServerName:
+                type: string
+              loginName:
+                type: string
+              authenticationType:
+                type: string
+              secretName:
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
