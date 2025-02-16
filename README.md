@@ -4,7 +4,7 @@ KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kuber
 
 This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/).
 
-### GitOpsify local/staging/production SQL Servers or exisiting SQL Server instances
+### 😎 GitOpsify  New or Existing SQL Server instances
 
 ```yaml
 
