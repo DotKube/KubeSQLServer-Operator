@@ -5,13 +5,19 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Configuration;
+using SqlServerOperator.Controllers.Services;
 using SqlServerOperator.Entities;
 using System.Text;
 
 namespace SqlServerOperator.Controllers;
 
 [EntityRbac(typeof(V1SQLServerDatabase), Verbs = RbacVerb.All)]
-public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config) : IResourceController<V1SQLServerDatabase>
+public class SQLServerDatabaseController(
+    ILogger<SQLServerDatabaseController> logger,
+    IKubernetesClient kubernetesClient,
+    DefaultMssqlConfig config,
+    SqlServerEndpointService sqlServerEndpointService) 
+    : IResourceController<V1SQLServerDatabase>
 {
     public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServerDatabase entity)
     {
@@ -39,7 +45,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         var namespaceName = entity.Metadata.NamespaceProperty;
         var sqlServer = await kubernetesClient.Get<V1SQLServer>(instanceName, namespaceName);
 
-        if (sqlServer == null)
+        if (sqlServer is null)
         {
             throw new Exception($"SQLServer instance '{instanceName}' not found in namespace '{namespaceName}'.");
         }
@@ -50,12 +56,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
     private async Task<(string server, string username, string password)> GetSqlServerCredentialsAsync(V1SQLServerDatabase entity, string secretName)
     {
         var namespaceName = entity.Metadata.NamespaceProperty;
-
-        logger.LogInformation("Namespace: {Namespace}", namespaceName);
-
         var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
-
-        logger.LogInformation("Secret: {Secret}", secretName);
 
         if (secret?.Data == null || !secret.Data.ContainsKey("sa-password"))
         {
@@ -63,7 +64,7 @@ public class SQLServerDatabaseController(ILogger<SQLServerDatabaseController> lo
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
-        var server = $"{entity.Spec.InstanceName}-service.{namespaceName}";  // when developing locally, use the external IP of the service instead of the service name
+        var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, namespaceName);
         var username = "sa";
 
         return (server, username, password);

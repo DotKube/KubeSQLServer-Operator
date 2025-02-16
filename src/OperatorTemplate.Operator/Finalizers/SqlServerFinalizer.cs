@@ -1,4 +1,5 @@
 using k8s;
+using k8s.Models;
 using KubeOps.KubernetesClient;
 using KubeOps.Operator.Finalizer;
 using SqlServerOperator.Entities;
@@ -67,11 +68,21 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
         }
     }
 
+
+
     private async Task DeleteSecretAsync(string secretName, string namespaceName)
     {
         try
         {
             logger.LogInformation("Deleting Secret: {SecretName} in namespace {Namespace}", secretName, namespaceName);
+
+            var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+            if (secret is null)
+            {
+                logger.LogWarning("Secret {SecretName} not found in namespace {Namespace}. Skipping deletion.", secretName, namespaceName);
+                return;
+            }
+
             await kubernetesClient.ApiClient.CoreV1.DeleteNamespacedSecretAsync(secretName, namespaceName);
             logger.LogInformation("Secret {SecretName} deleted successfully.", secretName);
         }
@@ -80,6 +91,7 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
             logger.LogError(ex, "Failed to delete Secret: {SecretName} in namespace {Namespace}", secretName, namespaceName);
         }
     }
+
 
     private async Task DeleteConfigMapAsync(string configMapName, string namespaceName)
     {
