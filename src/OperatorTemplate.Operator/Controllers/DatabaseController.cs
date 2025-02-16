@@ -58,12 +58,12 @@ public class SQLServerDatabaseController(
         var namespaceName = entity.Metadata.NamespaceProperty;
         var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
 
-        if (secret?.Data == null || !secret.Data.ContainsKey("sa-password"))
+        if (secret?.Data == null || !secret.Data.ContainsKey("password"))
         {
-            throw new Exception($"Secret '{secretName}' does not contain the expected 'sa-password' key.");
+            throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");
         }
 
-        var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
+        var password = Encoding.UTF8.GetString(secret.Data["password"]);
         var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, namespaceName);
         var username = "sa";
 

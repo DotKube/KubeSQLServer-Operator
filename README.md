@@ -27,7 +27,7 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: JoeMontana4292#
+  password: JoeMontana4292#
 
 
 ---

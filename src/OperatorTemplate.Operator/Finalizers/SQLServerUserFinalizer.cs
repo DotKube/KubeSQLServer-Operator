@@ -43,12 +43,12 @@ public class SQLServerUserFinalizer(
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
         var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
-        if (secret?.Data is null || !secret.Data.ContainsKey("sa-password"))
+        if (secret?.Data is null || !secret.Data.ContainsKey("password"))
         {
-            throw new Exception($"Secret '{secretName}' does not contain the expected 'sa-password' key.");
+            throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");
         }
 
-        var password = Encoding.UTF8.GetString(secret.Data["sa-password"]);
+        var password = Encoding.UTF8.GetString(secret.Data["password"]);
         var username = "sa";
 
         return (username, password);

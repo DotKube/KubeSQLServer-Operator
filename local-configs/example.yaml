@@ -12,7 +12,7 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: SuperSecretPassword123!
+  password: SuperSecretPassword123!
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1

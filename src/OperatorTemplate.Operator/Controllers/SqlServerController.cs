@@ -110,7 +110,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
                                         SecretKeyRef = new V1SecretKeySelector
                                         {
                                             Name = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret",
-                                            Key = "sa-password"
+                                            Key = "password"
                                         }
                                     }
                                 },
@@ -223,7 +223,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         {
             var existingSecret = await kubernetesClient.ApiClient.CoreV1.ReadNamespacedSecretAsync(secretName, namespaceName);
 
-            if ((existingSecret.Data is not null) && existingSecret.Data.ContainsKey("sa-password"))
+            if ((existingSecret.Data is not null) && existingSecret.Data.ContainsKey("password"))
             {
                 return;
             }
@@ -243,7 +243,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
             },
             StringData = new Dictionary<string, string>
             {
-                { "sa-password", password }
+                { "password", password }
             },
             Type = "Opaque"
         };
