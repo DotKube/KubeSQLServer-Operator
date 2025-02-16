@@ -4,10 +4,13 @@ metadata:
   name: operator-role
 rules:
 - apiGroups:
-  - database.example.com
+  - sql-server.dotkube.io
   - coordination.k8s.io
   resources:
+  - databases
+  - sqlserverusers
   - sqlservers
+  - sqlserverlogins
   - leases
   verbs:
   - '*'
@@ -28,9 +31,33 @@ rules:
   - get
   - list
 - apiGroups:
-  - database.example.com
+  - sql-server.dotkube.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
   resources:
   - sqlservers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverlogins/status
   verbs:
   - get
   - patch

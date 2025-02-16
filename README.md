@@ -2,16 +2,11 @@
 
 KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kubernetes operator designed to help you run and manage Microsoft SQL Server seamlessly.
 
-This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/). KubeSQLServer Operator aims to provide a no-license-required solution for SQL Server management in Kubernetes for development purposes. This isn't meant to be run in production!! This is only for local development and dev stages.
+This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/).
 
-> **Note:** This project is in the very early stages of development and is not yet ready for distribution. Stay tuned for updates as the project progresses!
-
----
-
-## Operator Functionality
+### GitOpsify local/staging/production SQL Servers or exisiting SQL Server instances
 
 ```yaml
-
 
 apiVersion: v1
 kind: Namespace
@@ -27,12 +22,33 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: JoeMontana4292#
+  password: JoeMontana4292#
+
+# or 
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: sqlserver-secret
+  namespace: sqlserver-example
+spec:
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: sqlserver-secret-store
+    kind: ClusterSecretStore
+  target:
+    name: sqlserver-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: /sqlserver/password
+
 
 
 ---
 
-apiVersion: sql.dotkube.org/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServer
 metadata:
   name: sqlserver-instance
@@ -46,10 +62,22 @@ spec:
   enableFullTextSearch: true
   serviceType: LoadBalancer
 
+# or 
+
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: ExternallyManagedSQLServer
+metadata:
+  name: external-sqlserver-instance
+  namespace: sqlserver-example
+spec:
+  hostname: "sqlserver-instance.database.windows.net"
+  port: 1433
+  authentication:
+    secretName: sqlserver-secret
 
 ---
 
-apiVersion: sql.dotkube.org/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
   name: foo
@@ -58,17 +86,44 @@ spec:
   instanceName: sqlserver-instance
   databaseName: Foo
 
-
 ---
 
-apiVersion: sql.dotkube.org/v1alpha1
-kind: Database
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: DatabaseSchema
 metadata:
-  name: bar
+  name: foo-schema
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: Bar
+  databaseName: Foo
+
+---
+
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: app-login
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  loginName: appuser
+  authenticationType: SQL
+  secretName: sqlserver-secret
+
+---
+
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: app-user
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: Foo
+  loginName: appuser
+  roles:
+    - db_owner
+
 
 
 ```
@@ -77,31 +132,13 @@ spec:
 
 Here are the planned features and milestones for KubeSQLServer Operator:
 
-- **API and CRD Scope Definition**  
-  Design and define the scope of APIs and Custom Resource Definitions (CRDs).
-
-- **Data API Integration**
-  Easily Integrate the Data API to your sql server for a full blown backend in a fraction of the time of manually scaffolding out an api with your favorite programming language.
-
-- **Testing Strategies**  
-  Establish robust testing strategies for the operator, CRDs, and related components.
-
-- **Helm Chart**  
-  Create and host a Helm chart for easy deployment of the operator.
-
-- **Documentation**  
-  Develop comprehensive documentation and decide how it will be hosted.
-
-- **Base Container Images**  
-  Build base images for the operator:
-  - Rootless SQL Server container instances (Ubuntu and RHEL-based).
-  - Rootless MS SQL client container instance.
-
-- **CLI Tooling**  
-  Develop a CLI for managing the operator and resources.
-
----
-
+- Manage existing SQL Server instances
+- CLI Tooling
+- Helm Chart in a public repo
+- Documentation Site
+- Data API Integration
+- Testing Strategies
+- Pipeline Automation
 
 
 ## Development Workflow
@@ -136,53 +173,4 @@ Build and deploy the operator **to a Kind cluster**, replicating a production-li
 
 ```bash
 task quick-deploy
-```
-
----
-
-## Additional Commands
-
-- **Cluster Management**  
-  - Create: `task create-cluster`  
-  - Delete: `task delete-cluster`
-
-- **CRD Management**  
-  - Generate and copy CRDs: `task create-crds-and-copy`  
-  - Apply CRDs: `task apply-crds-from-helm-chart`
-
-- **Helm Deployment**  
-  - Install: `task install-helm-chart`  
-
-  - Uninstall: `task uninstall-helm-chart`
-## Fedora 41
-
-To fix too many files being watched error
-
-```bash
-
-fs.inotify.max_user_watches = 2099999999
-fs.inotify.max_user_instances = 2099999999
-fs.inotify.max_queued_events = 2099999999
-
-```
-
-To tasks not working, I would say to set an alias for task to be task in your .bashrc file
-
-```bash
-
-echo "alias task=task" >> ~/.bashrc
-
-source ~/.bashrc
-```
-
-To fix docker error with aspire
-
-```bash
-export DOTNET_ASPIRE_CONTAINER_RUNTIME=docker
-```
-
-To fix https issue with dotnet
-
-```bash
-dotnet dev-certs https --trust
 ```

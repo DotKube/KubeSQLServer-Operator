@@ -1,14 +1,10 @@
 ---
-
 apiVersion: v1
 kind: Namespace
 metadata:
   name: sqlserver-example
 
-
 ---
-
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -16,13 +12,10 @@ metadata:
   namespace: sqlserver-example
 type: Opaque
 stringData:
-  sa-password: SuperSecretPassword123!
+  password: SuperSecretPassword123!
 
 ---
-
-
-
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServer
 metadata:
   name: sqlserver-instance
@@ -35,11 +28,8 @@ spec:
   serviceType: "LoadBalancer"
   enableFullTextSearch: true
 
-
 ---
-
-
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
   name: example-database1
@@ -48,13 +38,8 @@ spec:
   instanceName: sqlserver-instance
   databaseName: HelloWorld1
 
-
-
-
 ---
-
-
-apiVersion: database.example.com/v1alpha1
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
   name: example-database2
@@ -63,3 +48,104 @@ spec:
   instanceName: sqlserver-instance
   databaseName: HelloWorld2
 
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: admin1-login
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  loginName: adminuser1
+  authenticationType: SQL
+  secretName: sqlserver-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: admin2-login
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  loginName: adminuser2
+  authenticationType: SQL
+  secretName: sqlserver-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: admin-user1
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: HelloWorld1
+  loginName: adminuser1
+  roles:
+    - db_owner
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: admin-user2
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: HelloWorld2
+  loginName: adminuser2
+  roles:
+    - db_owner
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: datauser1-login
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  loginName: datauser1
+  authenticationType: SQL
+  secretName: sqlserver-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: datauser2-login
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  loginName: datauser2
+  authenticationType: SQL
+  secretName: sqlserver-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: datauser1-user
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: HelloWorld1
+  loginName: datauser1
+  roles:
+    - db_datareader
+    - db_datawriter
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: datauser2-user
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: HelloWorld2
+  loginName: datauser2
+  roles:
+    - db_datareader
+    - db_datawriter
