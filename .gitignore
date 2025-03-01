@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+
+
+# Github Actions workflow files
+.secrets
+*.env

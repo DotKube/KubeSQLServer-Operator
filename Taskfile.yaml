@@ -16,6 +16,10 @@ includes:
     taskfile: ./container-images/mssql-tools/Taskfile.yaml
     dir: ./container-images/mssql-tools
     internal: true
+  
+  local-ci-cd:
+    taskfile: ./taskfiles/local-cicd.Taskfile.yaml
+    internal: false
 
 tasks:
   default:
@@ -92,4 +96,3 @@ tasks:
     cmds:
     - task: cluster:delete
     desc: "Clean up the Kind Kubernetes cluster."
-    
