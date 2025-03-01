@@ -1,10 +1,7 @@
 name: Build/Publish Controller Container Image to GHCR
 
 on:
-  push:
-    branches:
-      - main
-      - 'release/**'
+  workflow_dispatch:
 
 jobs:
   publish-image:
