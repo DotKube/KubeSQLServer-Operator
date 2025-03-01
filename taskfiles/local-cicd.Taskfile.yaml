@@ -12,7 +12,7 @@ tasks:
     desc: "Creates the .env and .secrets files for running act locally for GitHub Actions."
     cmds:
      - touch actions.env .secrets
-     - echo "GITHUB_TOKEN=<gha-token>" >> .secrets
+     - echo "TOKEN=<gha-token>" >> .secrets
      - echo "IMAGE_TAG=latest" >> actions.env
      - echo "GITHUB_REPOSITORY_OWNER=dotkube" >> actions.env
 
