@@ -2,6 +2,11 @@ name: Build/Publish Controller Container Image to GHCR
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Tag for the container image"
+        required: true
+        default: "latest"
 
 jobs:
   publish-image:
@@ -36,5 +41,5 @@ jobs:
           push: true
           tags: |
             ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest
-            ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:${{ env.IMAGE_TAG }}
+            ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:${{ inputs.image_tag }}
 
