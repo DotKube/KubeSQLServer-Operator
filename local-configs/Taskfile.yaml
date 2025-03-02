@@ -19,35 +19,13 @@ tasks:
   install-helm-charts:
     cmds:
     - |
-      helm repo add istio https://istio-release.storage.googleapis.com/charts
-      helm repo add jetstack https://charts.jetstack.io --force-update
       helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-      helm repo add kiali https://kiali.org/helm-charts
       helm repo add metallb https://metallb.github.io/metallb
 
       helm repo update
 
-
-      # Install MetalLB
       helm upgrade --wait --install metallb metallb/metallb --namespace metallb-system --create-namespace
-
       helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --wait
-
-      # helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.2 --set crds.enabled=true
-
-      # helm upgrade --install istio-base istio/base -n istio-system --create-namespace --wait
-
-      # helm upgrade --install istio-cni istio/cni -n istio-system --wait
-
-      # helm upgrade --install istiod istio/istiod -n istio-system --wait
-
-      # helm upgrade --install istio-ingress istio/gateway -n istio-ingress --create-namespace -f ./istio-gateway-config.yaml --wait
-
-      # helm upgrade --install istio-gateways ./istio-gateway -n istio-gateways --create-namespace --wait
-
-      # kubectl label namespace istio-gateways istio-injection=enabled
-
-      # helm upgrade --install --namespace istio-system --create-namespace kiali-server kiali/kiali-server --wait -f ./kiali-config.yaml
 
     desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
     ignore_error: true

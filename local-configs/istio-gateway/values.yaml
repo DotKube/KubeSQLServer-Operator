@@ -1,6 +1,0 @@
-gateway:
-  name: "localhost-gateway"
-  ns: "istio-ingress"
-  host: "*.localhost"
-  tlsSecretName: "localhost-tls-secret"
-  forceHttpToHttps: false
