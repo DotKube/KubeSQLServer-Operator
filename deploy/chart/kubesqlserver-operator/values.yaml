@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller
+  tag: latest
+  pullPolicy: IfNotPresent
+
+environment: Production
+
+resources: {}

@@ -1,0 +1,33 @@
+version: "3"
+
+tasks:
+
+  default:
+    desc: "List all tasks"
+    cmds:
+      - task --list-all
+
+  load-images-into-kind:
+    desc: "Load images into kind cluster"
+    cmds:
+      - kind load docker-image ghcr.io/dotkube/sql-server:22-ubuntu --name=kubesqlserver-operator-test
+      - kind load docker-image ghcr.io/dotkube/sql-server:22-ubuntu-fts --name=kubesqlserver-operator-test
+      - kind load docker-image ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest --name=kubesqlserver-operator-test
+
+  test-locally:
+    cmds:
+      - kind create cluster --name kubesqlserver-operator-test
+      - |
+        while [[ $(kubectl get nodes --no-headers | grep -c 'NotReady') -gt 0 ]]; do
+          echo "Waiting for nodes to become Ready..."
+          sleep 5
+        done
+        echo "All nodes are Ready!"
+
+      - kubectl wait --for=create namespace/local-path-storage --timeout=30s || true
+      - task: load-images-into-kind
+      - helm upgrade --install kubesqlserver-operator  . -n kubesql --create-namespace
+
+  test-locally-destroy:
+    cmds:
+      - kind delete cluster --name kubesqlserver-operator-test
