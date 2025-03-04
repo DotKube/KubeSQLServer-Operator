@@ -16,7 +16,7 @@ includes:
     taskfile: ./container-images/mssql-tools/Taskfile.yaml
     dir: ./container-images/mssql-tools
     internal: true
-  
+
   local-ci-cd:
     taskfile: ./taskfiles/local-cicd.Taskfile.yaml
     internal: false
@@ -31,10 +31,11 @@ tasks:
     internal: true
     dir: ./src/OperatorTemplate.Operator
     cmds:
-    - pwsh -Command "if (Test-Path ./config) { Get-ChildItem -Path ./config -Recurse -Force | Remove-Item -Recurse -Force; Remove-Item -Force ./config }"
+    - rm -rf ./config || true
+    - mkdir ./config
     - dotnet clean
     - dotnet build
-    - pwsh -Command "remove-item -recurse -force ./Dockerfile"
+    - rm -rf ./Dockerfile || true
     desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
 
   copy-to-helm:
