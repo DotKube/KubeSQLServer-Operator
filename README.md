@@ -24,28 +24,6 @@ type: Opaque
 stringData:
   password: JoeMontana4292#
 
-# or 
-
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: sqlserver-secret
-  namespace: sqlserver-example
-spec:
-  refreshInterval: "1h"
-  secretStoreRef:
-    name: sqlserver-secret-store
-    kind: ClusterSecretStore
-  target:
-    name: sqlserver-secret
-    creationPolicy: Owner
-  data:
-    - secretKey: password
-      remoteRef:
-        key: /sqlserver/password
-
-
-
 ---
 
 apiVersion: sql-server.dotkube.io/v1alpha1
@@ -61,19 +39,6 @@ spec:
   enableHighAvailibility: true
   enableFullTextSearch: true
   serviceType: LoadBalancer
-
-# or 
-
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: ExternallyManagedSQLServer
-metadata:
-  name: external-sqlserver-instance
-  namespace: sqlserver-example
-spec:
-  hostname: "sqlserver-instance.database.windows.net"
-  port: 1433
-  authentication:
-    secretName: sqlserver-secret
 
 ---
 
@@ -99,6 +64,19 @@ spec:
 
 ---
 
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-login-secret
+  namespace: sqlserver-example
+type: Opaque
+stringData:
+  password: JoeMontana4292#
+
+---
+
+
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerLogin
 metadata:
@@ -108,7 +86,7 @@ spec:
   sqlServerName: sqlserver-instance
   loginName: appuser
   authenticationType: SQL
-  secretName: sqlserver-secret
+  secretName: sqlserver-login-secret
 
 ---
 
@@ -139,22 +117,6 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 - Data API Integration
 - Testing Strategies
 - Pipeline Automation
-
-
-## Development Workflow
-
-This repository contains the following components:
-
-1. **KubeOps-based .NET Operator**  
-   - Located in `src/OperatorTemplate.Operator`.  
-   - Implements controllers and CRDs to manage custom Kubernetes resources.
-
-2. **Helm Chart**  
-   - Located in `operator-chart`.  
-   - Includes CRD definitions, RBAC configurations, and deployment manifests for the operator.
-
-3. **Taskfile Workflow**  
-   - Simplifies cluster setup, CRD management, and operator deployment through automated tasks.
 
 ---
 
