@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5001/operator-template
+  tag: latest
+  pullPolicy: IfNotPresent
+
+environment: Production
+
+resources: {}

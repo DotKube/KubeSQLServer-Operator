@@ -1,0 +1,66 @@
+version: "3"
+
+tasks:
+
+  create:
+    cmds:
+    - kind delete cluster --name sql-server-testing-cluster
+    - kind create cluster --config ./kind-config.yaml
+    - bash ./scripts/configure-registry-with-kind.sh
+
+    - task: install-helm-charts
+    desc: "Create a Kind Kubernetes cluster named 'sql-server-testing-cluster' for testing purposes."
+
+  delete:
+    cmds:
+    - kind delete cluster --name sql-server-testing-cluster
+    desc: "Delete the Kind Kubernetes cluster named 'sql-server-testing-cluster'."
+
+  install-helm-charts:
+    cmds:
+    - |
+      helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      helm repo add metallb https://metallb.github.io/metallb
+
+      helm repo update
+
+      helm upgrade --wait --install metallb metallb/metallb --namespace metallb-system --create-namespace
+      helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --wait
+
+    desc: "Installs all of the necessary Helm charts for the OperatorTemplate stack."
+    ignore_error: true
+
+  loadimage:
+    desc: "Load an image into the Kind Kubernetes cluster. Usage: task load-image <image-name>"
+    cmds:
+    - kind load docker-image {{.CLI_ARGS}} --name sql-server-testing-cluster
+
+  apply-crd-instance:
+    cmds:
+    - kubectl apply -f ./example.yaml
+    desc: "Apply the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
+
+  delete-crd-instance:
+    cmds:
+    - kubectl delete -f ./example.yaml
+    desc: "Delete the Custom Resource Instance (CRI) for the OperatorTemplate.Operator."
+
+  
+  create-registry:
+    cmds:
+    - docker compose -f ./registry.yaml up -d
+
+  
+  add-metallb:
+    cmds:
+      - go install sigs.k8s.io/cloud-provider-kind@latest
+      - bash ./scripts/metallb-setup.sh
+
+
+
+
+  test-login:
+    cmds:
+    - bash ./scripts/test-logins.sh
+
+

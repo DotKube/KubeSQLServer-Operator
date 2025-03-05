@@ -1,0 +1,23 @@
+version: "3"
+
+tasks:
+  install-helm-chart:
+    cmds:
+    - helm upgrade --install sql-server . --namespace sql-server --create-namespace
+    desc: "Deploy the Helm chart for the OperatorTemplate stack."
+
+  uninstall-helm-chart:
+    cmds:
+    - helm uninstall sql-server --namespace sql-server
+    desc: "Uninstall the Helm chart for the OperatorTemplate stack."
+
+  apply-crds-from-helm-chart:
+    cmds:
+    - kubectl apply -f ./crds
+    desc: "Apply the Custom Resource Definitions (CRDs) from the Helm chart to the Kubernetes cluster."
+    internal: true
+
+  delete-crd-from-cluster:
+    cmds:
+    - kubectl delete -f ./crds
+    desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.Operator from the Kubernetes cluster."

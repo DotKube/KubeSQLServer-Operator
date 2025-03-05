@@ -1,0 +1,22 @@
+version: '3'
+
+
+tasks:
+
+  install-act:
+    desc: "Installs act locally for GitHub Actions."
+    cmds:
+      - curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+  create-env-and-secrets-file:
+    desc: "Creates the .env and .secrets files for running act locally for GitHub Actions."
+    cmds:
+     - touch actions.env .secrets
+     - echo "TOKEN=<gha-token>" >> .secrets
+     - echo "IMAGE_TAG=latest" >> actions.env
+     - echo "GITHUB_REPOSITORY_OWNER=dotkube" >> actions.env
+
+  actions-publish-controller-image:
+    desc: "ACT - Build/Publish Controller Container Image to GHCR"
+    cmds:
+      - act -W .github/workflows/publish-controller-image.yaml --secret-file .secrets --env-file actions.env
