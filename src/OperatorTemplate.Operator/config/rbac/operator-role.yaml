@@ -7,10 +7,10 @@ rules:
   - sql-server.dotkube.io
   - coordination.k8s.io
   resources:
-  - databases
-  - sqlserverusers
   - sqlservers
+  - databases
   - sqlserverlogins
+  - sqlserverusers
   - leases
   verbs:
   - '*'
@@ -33,22 +33,6 @@ rules:
 - apiGroups:
   - sql-server.dotkube.io
   resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sql-server.dotkube.io
-  resources:
-  - sqlserverusers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sql-server.dotkube.io
-  resources:
   - sqlservers/status
   verbs:
   - get
@@ -57,7 +41,23 @@ rules:
 - apiGroups:
   - sql-server.dotkube.io
   resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
   - sqlserverlogins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverusers/status
   verbs:
   - get
   - patch

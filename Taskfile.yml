@@ -1,0 +1,105 @@
+version: "3"
+
+vars:
+  USE_EXTERNAL_IP_WITH_LB: false
+
+includes:
+
+  dev:
+    taskfile: ./dev/Taskfile.yaml
+    dir: ./dev
+
+  deployment-helm-chart:
+    taskfile: ./deploy/chart/kubesqlserver-operator/Taskfile.yaml
+    dir: ./deploy/chart/kubesqlserver-operator
+
+tasks:
+  default:
+    cmds:
+    - task --list-all
+    desc: "List all available tasks in this Taskfile."
+
+  create-crd-files:
+    internal: true
+    dir: ./src/OperatorTemplate.Operator
+    cmds:
+    - rm -rf ./config || true
+    - mkdir ./config
+    - dotnet clean
+    - dotnet build
+    - rm -rf ./Dockerfile || true
+    desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
+
+  copy-to-helm:
+    internal: true
+    dir: .
+    cmds:
+    - mkdir -p ./operator-chart/crds
+    - rsync -av --exclude='kustomization.yaml' ./src/OperatorTemplate.Operator/config/crds/ ./dev/dev-helm-chart/crds/
+
+
+    desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
+
+  create-crds-and-copy:
+    cmds:
+    - task: create-crd-files
+    - task: copy-to-helm
+    desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.Operator and copy them to the Helm chart directories."
+
+  build-operator-image:
+    cmds:
+    - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
+    - docker tag operator-template:latest localhost:5001/operator-template:latest
+    - docker push localhost:5001/operator-template:latest
+
+    desc: "Build the Docker image for the OperatorTemplate.Operator."
+
+  dev:
+    dir: ./src/OperatorTemplate.AppHost
+    cmds:
+    - dotnet watch
+    desc: "Start the development environment for the OperatorTemplate.AppHost with live file watching enabled."
+
+  quick-deploy:
+    cmds:
+    - task: dev:local-cluster:create-registry
+    - task: dev:local-cluster:delete
+    - task: dev:local-cluster:create
+    - | 
+      if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
+        echo "External IP with LoadBalancer is enabled."
+        task dev:local-cluster:add-metallb
+      else
+        echo "External IP with LoadBalancer is not enabled."
+      fi
+    - task: create-crds-and-copy
+    - task: build-operator-image
+    - task dev:local-cluster:loadimage -- localhost:5001/operator-template:latest
+    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
+    - task: dev:helm-chart:install-helm-chart
+    - task: dev:local-cluster:apply-crd-instance
+    desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
+
+  quick-dev:
+    cmds:
+    - task: dev:local-cluster:delete
+    - task: dev:local-cluster:create
+    
+    - | 
+      if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
+        echo "External IP with LoadBalancer is enabled."
+        task dev:local-cluster:add-metallb
+      else
+        echo "External IP with LoadBalancer is not enabled."
+      fi
+    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
+    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu
+    - task: create-crds-and-co 
+    - task: dev:helm-chart:apply-crds-from-helm-chart
+    - task: dev:local-cluster:apply-crd-instance
+    - task: dev
+
+  clean:
+    cmds:
+    - task: dev:local-cluster:delete
+    desc: "Clean up the Kind Kubernetes cluster."

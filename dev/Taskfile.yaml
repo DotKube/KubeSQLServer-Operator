@@ -1,20 +1,13 @@
-
-
-
 version: "3"
 
-
 includes:
-  
   local-cluster:
     taskfile: ./local-configs/Taskfile.yaml
     dir: ./local-configs
-  
 
   helm-chart:
     taskfile: ./dev-helm-chart/Taskfile.yaml
     dir: ./dev-helm-chart
-
   
   local-ci-cd:
     taskfile: ./local-ci-cd/Taskfile.yaml
