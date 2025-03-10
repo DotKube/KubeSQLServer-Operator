@@ -1,0 +1,408 @@
+---
+# Source: operator-chart/crds/databases_database_example_com.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+                lastChecked:
+                  format: date-time
+                  nullable: true
+                  type: string
+              type: object
+            spec:
+              properties:
+                instanceName:
+                  type: string
+                databaseName:
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/crds/databases_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databases.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: Database
+    listKind: DatabaseList
+    plural: databases
+    singular: database
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+                lastChecked:
+                  format: date-time
+                  nullable: true
+                  type: string
+              type: object
+            spec:
+              properties:
+                instanceName:
+                  type: string
+                databaseName:
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/crds/sqlserverlogins_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlserverlogins.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: SQLServerLogin
+    listKind: SQLServerLoginList
+    plural: sqlserverlogins
+    singular: sqlserverlogin
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+                lastChecked:
+                  format: date-time
+                  nullable: true
+                  type: string
+              type: object
+            spec:
+              properties:
+                sqlServerName:
+                  type: string
+                loginName:
+                  type: string
+                authenticationType:
+                  type: string
+                secretName:
+                  nullable: true
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/crds/sqlservers_database_example_com.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlservers.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: SQLServer
+    listKind: SQLServerList
+    plural: sqlservers
+    singular: sqlserver
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+              type: object
+            spec:
+              properties:
+                version:
+                  type: string
+                storageClass:
+                  type: string
+                storageSize:
+                  type: string
+                secretName:
+                  nullable: true
+                  type: string
+                serviceType:
+                  nullable: true
+                  type: string
+                enableFullTextSearch:
+                  type: boolean
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/crds/sqlservers_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlservers.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: SQLServer
+    listKind: SQLServerList
+    plural: sqlservers
+    singular: sqlserver
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+              type: object
+            spec:
+              properties:
+                version:
+                  type: string
+                storageClass:
+                  type: string
+                storageSize:
+                  type: string
+                secretName:
+                  nullable: true
+                  type: string
+                serviceType:
+                  nullable: true
+                  type: string
+                enableFullTextSearch:
+                  type: boolean
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/crds/sqlserverusers_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sqlserverusers.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: SQLServerUser
+    listKind: SQLServerUserList
+    plural: sqlserverusers
+    singular: sqlserveruser
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            status:
+              properties:
+                state:
+                  type: string
+                message:
+                  type: string
+                lastChecked:
+                  format: date-time
+                  nullable: true
+                  type: string
+              type: object
+            spec:
+              properties:
+                sqlServerName:
+                  type: string
+                databaseName:
+                  type: string
+                loginName:
+                  type: string
+                roles:
+                  items:
+                    type: string
+                  type: array
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+# Source: operator-chart/templates/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubesqlserver-operator-sa
+  labels:
+    app: operator
+    release: "release-name"
+  namespace: kubesql-operator
+---
+# Source: operator-chart/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: operator-role
+rules:
+  - apiGroups:
+      - sql-server.dotkube.io
+      - coordination.k8s.io
+    resources:
+      - databases
+      - sqlserverusers
+      - sqlservers
+      - sqlserverlogins
+      - leases
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - get
+      - list
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - sql-server.dotkube.io
+    resources:
+      - databases/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - sql-server.dotkube.io
+    resources:
+      - sqlserverusers/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - sql-server.dotkube.io
+    resources:
+      - sqlservers/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - sql-server.dotkube.io
+    resources:
+      - sqlserverlogins/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/status
+    verbs:
+      - get
+      - patch
+      - update
+---
+# Source: operator-chart/templates/role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: operator-role
+subjects:
+  - kind: ServiceAccount
+    name: kubesqlserver-operator-sa
+    namespace: kubesql-operator
+---
+# Source: operator-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "release-name-operator"
+  labels:
+    app: operator
+    chart: "operator-chart-0.1.0"
+    release: "release-name"
+    heritage: "Helm"
+  namespace: kubesql-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: operator
+      release: "release-name"
+  template:
+    metadata:
+      labels:
+        app: operator
+        release: "release-name"
+    spec:
+      serviceAccountName: kubesqlserver-operator-sa
+      containers:
+        - name: operator
+          image: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+          resources: {}
