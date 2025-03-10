@@ -10,4 +10,7 @@ name: sql-server-testing-cluster
 
 nodes:
 - role: control-plane
-- role: worker
+  extraPortMappings:
+  - containerPort: 30080
+    hostPort: 1434
+    protocol: TCP

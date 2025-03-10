@@ -84,7 +84,6 @@ tasks:
     cmds:
     - task: dev:local-cluster:delete
     - task: dev:local-cluster:create
-    
     - | 
       if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
         echo "External IP with LoadBalancer is enabled."
@@ -94,7 +93,7 @@ tasks:
       fi
     - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
     - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu
-    - task: create-crds-and-co 
+    - task: create-crds-and-copy
     - task: dev:helm-chart:apply-crds-from-helm-chart
     - task: dev:local-cluster:apply-crd-instance
     - task: dev

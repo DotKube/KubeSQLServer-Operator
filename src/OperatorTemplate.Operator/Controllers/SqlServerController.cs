@@ -182,13 +182,23 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
         var serviceSpec = new V1ServiceSpec
         {
             Selector = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
-            Ports = new List<V1ServicePort> { new V1ServicePort { Name = "sql", Port = 1433, TargetPort = 1433 } }
+            Ports = new List<V1ServicePort>
+            {
+                new V1ServicePort
+                {
+                    Name = "sql",
+                    Port = 1433,
+                    TargetPort = 1433,
+                    NodePort = serviceType == "nodeport" ? 30080 : null
+                }
+            }
         };
 
         // Set service type (LoadBalancer or None for headless)
         serviceSpec.Type = serviceType switch
         {
             "loadbalancer" => "LoadBalancer",
+            "nodeport" => "NodePort",
             _ => "None", // Default to headless service
         };
 
@@ -202,10 +212,29 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
             },
             Spec = serviceSpec
         };
-
         try
         {
-            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
+
+
+            V1Service? svc;
+            try
+            {
+                svc = await kubernetesClient.ApiClient.CoreV1.ReadNamespacedServiceAsync(serviceName, entity.Metadata.NamespaceProperty);
+            }
+            catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                svc = null;
+            }
+
+            if (svc is not null)
+            {
+                await kubernetesClient.ApiClient.CoreV1.ReplaceNamespacedServiceAsync(service, serviceName, entity.Metadata.NamespaceProperty);
+            }
+            else
+            {
+                await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
+            }
+
             logger.LogInformation("Created service for SQLServer: {Name} with type {ServiceType}", entity.Metadata.Name, entity.Spec.ServiceType);
         }
         catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)

@@ -24,6 +24,11 @@ public class SqlServerEndpointService(ILogger<SqlServerEndpointService> logger, 
             }
         }
 
+        if(service.Spec.Type == "NodePort")
+        {
+            return $"localhost,1434";
+        }
+
         return $"{serviceName}.{namespaceName}";
     }
 

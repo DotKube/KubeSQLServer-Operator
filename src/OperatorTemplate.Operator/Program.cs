@@ -10,6 +10,7 @@ builder.Services.AddSingleton<SqlServerImages>();
 builder.Services.AddSingleton<DefaultMssqlConfig>();
 builder.Services.AddSingleton<SqlServerEndpointService>();
 
+// Explicitly add Kubernetes client config
 builder.Services.AddKubernetesOperator();
 
 var app = builder.Build();

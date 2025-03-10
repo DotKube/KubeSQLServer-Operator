@@ -25,7 +25,7 @@ spec:
   storageClass: "standard"
   storageSize: "6Gi"
   secretName: "sqlserver-secret"
-  serviceType: "LoadBalancer"
+  serviceType: "NodePort"
   enableFullTextSearch: true
 
 ---
