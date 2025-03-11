@@ -23,8 +23,6 @@ docker run --rm -it `
     curl -LO https://dl.k8s.io/release/v1.22.2/bin/linux/amd64/kubectl && \
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     export KUBECONFIG=/root/.kube/config && \
-    echo 'Verifying Kubernetes configuration...' && \
-    kubectl config view && \
     curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
   "
 ```
