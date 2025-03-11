@@ -4,27 +4,19 @@ KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kuber
 
 This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/).
 
-### 😎 GitOpsify  New or Existing SQL Server instances
+## 😎 GitOpsify  New or Existing SQL Server instances
+
+Simply deploy into your Kubernetes cluster like so
+
+```bash
+curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
+```
+
+and then start creating SQL Server instances using the CRDs provided by the operator.
 
 ```yaml
 
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: sqlserver-example
-
----
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: sqlserver-secret
-  namespace: sqlserver-example
-type: Opaque
-stringData:
-  password: JoeMontana4292#
-
----
+# ... yaml omitted for brevity
 
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServer
@@ -106,6 +98,12 @@ spec:
 
 ```
 
+
+and you're good to go! You should be able to see the effect of the CRDs in your SQL Server instance.
+
+![Azure Data Studio](images/ads-screenshot.png)
+
+
 ## Planned Features and Roadmap
 
 Here are the planned features and milestones for KubeSQLServer Operator:
@@ -116,13 +114,13 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 - Documentation Site
 - Data API Integration
 - Testing Strategies
-- Pipeline Automation
 
 ---
 
 ## Local Development - Key Commands
 
 ### Local Development (`task quick-dev`)
+
 Run the operator **locally** on your laptop while applying necessary CRDs and creating an instance in a Kind cluster.  
 This is ideal for debugging and real-time development.
 
@@ -131,6 +129,7 @@ task quick-dev
 ```
 
 ### In-Cluster Deployment (`task quick-deploy`)
+
 Build and deploy the operator **to a Kind cluster**, replicating a production-like environment for testing.
 
 ```bash
