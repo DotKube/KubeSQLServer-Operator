@@ -63,13 +63,14 @@ spec:
 ---
 
 apiVersion: sql-server.dotkube.io/v1alpha1
-kind: DatabaseSchema
+kind: Database
 metadata:
-  name: foo-schema
+  name: bar
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: Foo
+  databaseName: Bar
+
 
 ---
 
