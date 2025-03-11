@@ -36,7 +36,7 @@ metadata:
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: Foo
+  databaseName: HelloWorld1
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
@@ -46,7 +46,7 @@ metadata:
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: Bar 
+  databaseName: HelloWorld2
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
