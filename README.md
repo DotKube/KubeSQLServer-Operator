@@ -12,6 +12,23 @@ Simply deploy into your Kubernetes cluster like so
 curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
 ```
 
+For those on windows, you can run this to quickly install kubesql operator
+
+```powershell
+docker run --rm -it `
+  --network host `
+  -v $env:USERPROFILE\.kube:/root/.kube `
+  fedora:41 bash -c "
+    dnf install -y curl sudo && \
+    curl -LO https://dl.k8s.io/release/v1.22.2/bin/linux/amd64/kubectl && \
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+    export KUBECONFIG=/root/.kube/config && \
+    echo 'Verifying Kubernetes configuration...' && \
+    kubectl config view && \
+    curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
+  "
+```
+
 and then start creating SQL Server instances using the CRDs provided by the operator.
 
 ```yaml
