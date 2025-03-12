@@ -3,43 +3,56 @@ using KubeOps.KubernetesClient;
 
 namespace SqlServerOperator.Controllers.Services;
 
-public class SqlServerEndpointService(ILogger<SqlServerEndpointService> logger, IKubernetesClient kubernetesClient)
+public class SqlServerEndpointService(
+    ILogger<SqlServerEndpointService> logger,
+    IKubernetesClient kubernetesClient,
+    IWebHostEnvironment environment)
 {
     public async Task<string> GetSqlServerEndpointAsync(string instanceName, string namespaceName)
     {
-        var serviceName = $"{instanceName}-service";
-        var service = await kubernetesClient.Get<V1Service>(serviceName, namespaceName);
+        var serviceType = await GetServiceTypeAsync(instanceName, namespaceName);
 
-        if (service is null)
+        if (environment.IsProduction())
         {
-            throw new Exception($"Service '{serviceName}' not found in namespace '{namespaceName}'.");
+            // Production environment: Always use the headless service FQDN
+            var headlessServiceName = $"{instanceName}-headless";
+            return $"{headlessServiceName}.{namespaceName}.svc.cluster.local";
         }
 
-        if (service.Spec.Type == "LoadBalancer")
+        // Non-production (dev) environment logic:
+        switch (serviceType)
         {
-            var externalIP = await GetLoadBalancerIPAsync(serviceName, namespaceName);
-            if (!string.IsNullOrEmpty(externalIP))
-            {
-                return externalIP;
-            }
+            case "LoadBalancer":
+                var externalIP = await GetLoadBalancerIPAsync($"{instanceName}-service", namespaceName);
+                if (!string.IsNullOrEmpty(externalIP))
+                {
+                    return externalIP;
+                }
+                logger.LogWarning("LoadBalancer IP for service '{Service}' not yet available.", $"{instanceName}-service");
+                break;
+
+            case "NodePort":
+                return "localhost,1434";
+
+            case "None":
+                logger.LogInformation("ServiceType is 'None', using headless FQDN.");
+                return $"{instanceName}-headless.{namespaceName}.svc.cluster.local";
         }
 
-        if(service.Spec.Type == "NodePort")
-        {
-            return $"localhost,1434";
-        }
-
-        return $"{serviceName}.{namespaceName}";
+        throw new Exception($"Unable to determine a valid SQL Server endpoint for instance '{instanceName}' in namespace '{namespaceName}'.");
     }
 
-    public async Task<string?> GetLoadBalancerIPAsync(string serviceName, string namespaceName)
+    private async Task<string> GetServiceTypeAsync(string instanceName, string namespaceName)
+    {
+        var service = await kubernetesClient.Get<V1Service>($"{instanceName}-service", namespaceName);
+        return service?.Spec?.Type ?? "None";
+    }
+
+    private async Task<string?> GetLoadBalancerIPAsync(string serviceName, string namespaceName)
     {
         var service = await kubernetesClient.Get<V1Service>(serviceName, namespaceName);
-        if (service?.Status?.LoadBalancer?.Ingress != null && service.Status.LoadBalancer.Ingress.Count > 0)
-        {
-            return service.Status.LoadBalancer.Ingress[0].Ip ?? service.Status.LoadBalancer.Ingress[0].Hostname;
-        }
 
-        return null;
+        var ingress = service?.Status?.LoadBalancer?.Ingress?.FirstOrDefault();
+        return ingress?.Ip ?? ingress?.Hostname;
     }
 }
