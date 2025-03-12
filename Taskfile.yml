@@ -49,8 +49,8 @@ tasks:
   build-operator-image:
     cmds:
     - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
-    - docker tag operator-template:latest localhost:5001/operator-template:latest
-    - docker push localhost:5001/operator-template:latest
+    - docker tag operator-template:latest localhost:5000/operator-template:latest
+    - docker push localhost:5000/operator-template:latest
 
     desc: "Build the Docker image for the OperatorTemplate.Operator."
 
@@ -74,7 +74,7 @@ tasks:
       fi
     - task: create-crds-and-copy
     - task: build-operator-image
-    - task dev:local-cluster:loadimage -- localhost:5001/operator-template:latest
+    - task dev:local-cluster:loadimage -- localhost:5000/operator-template:latest
     - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
     - task: dev:helm-chart:install-helm-chart
     - task: dev:local-cluster:apply-crd-instance

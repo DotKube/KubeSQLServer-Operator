@@ -3,7 +3,7 @@ set -o errexit
 
 # Define variables
 reg_name="kind-registry"
-reg_port="5001"
+reg_port="5000"
 REGISTRY_DIR="/etc/containerd/certs.d/localhost:$reg_port"
 
 # 1. Add the registry config to the nodes

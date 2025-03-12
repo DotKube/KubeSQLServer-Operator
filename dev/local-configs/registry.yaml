@@ -5,7 +5,7 @@ services:
     container_name: kind-registry
     restart: always
     ports:
-      - "5001:5000"
+      - "5000:5000"
     networks:
       - kind
 

@@ -175,71 +175,87 @@ public class SQLServerController(ILogger<SQLServerController> logger, IFinalizer
 
     private async Task EnsureServiceAsync(V1SQLServer entity)
     {
-        var serviceName = $"{entity.Metadata.Name}-service";
-        string serviceType = entity.Spec.ServiceType.ToLower();
+        var appLabel = entity.Metadata.Name;
+        var namespaceName = entity.Metadata.NamespaceProperty;
+        var serviceType = entity.Spec.ServiceType?.ToLower() ?? "none";
 
-        // Initialize serviceSpec
-        var serviceSpec = new V1ServiceSpec
+        // Always create the headless service
+        var headlessServiceName = $"{appLabel}-headless";
+        var headlessService = new V1Service
         {
-            Selector = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
-            Ports = new List<V1ServicePort>
+            Metadata = new V1ObjectMeta
             {
-                new V1ServicePort
+                Name = headlessServiceName,
+                NamespaceProperty = namespaceName,
+                Labels = new Dictionary<string, string> { { "app", appLabel } }
+            },
+            Spec = new V1ServiceSpec
+            {
+                ClusterIP = "None",
+                Selector = new Dictionary<string, string> { { "app", appLabel } },
+                Ports = new List<V1ServicePort>
+            {
+                new() { Name = "sql", Port = 1433, TargetPort = 1433 }
+            }
+            }
+        };
+
+        await CreateOrUpdateServiceAsync(headlessService, namespaceName);
+        logger.LogInformation("Ensured headless service '{ServiceName}' for SQLServer: {Name}", headlessServiceName, appLabel);
+
+        // If the type is "none", we're done after creating the headless service
+        if (serviceType == "none")
+        {
+            return;
+        }
+
+        // Determine and create the appropriate additional service based on service type
+        var serviceName = $"{appLabel}-service";
+
+        var additionalService = new V1Service
+        {
+            Metadata = new V1ObjectMeta
+            {
+                Name = serviceName,
+                NamespaceProperty = namespaceName,
+                Labels = new Dictionary<string, string> { { "app", appLabel } }
+            },
+            Spec = new V1ServiceSpec
+            {
+                Selector = new Dictionary<string, string> { { "app", appLabel } },
+                Ports = new List<V1ServicePort>
+            {
+                new()
                 {
                     Name = "sql",
                     Port = 1433,
                     TargetPort = 1433,
                     NodePort = serviceType == "nodeport" ? 30080 : null
                 }
+            },
+                Type = serviceType switch
+                {
+                    "loadbalancer" => "LoadBalancer",
+                    "nodeport" => "NodePort",
+                    _ => throw new InvalidOperationException($"Unsupported service type: {serviceType}")
+                }
             }
         };
 
-        // Set service type (LoadBalancer or None for headless)
-        serviceSpec.Type = serviceType switch
-        {
-            "loadbalancer" => "LoadBalancer",
-            "nodeport" => "NodePort",
-            _ => "None", // Default to headless service
-        };
+        await CreateOrUpdateServiceAsync(additionalService, namespaceName);
+        logger.LogInformation("Ensured service '{ServiceName}' of type '{ServiceType}' for SQLServer: {Name}", serviceName, additionalService.Spec.Type, appLabel);
+    }
 
-        // Create the service
-        var service = new V1Service
-        {
-            Metadata = new V1ObjectMeta
-            {
-                Name = serviceName,
-                NamespaceProperty = entity.Metadata.NamespaceProperty
-            },
-            Spec = serviceSpec
-        };
+    private async Task CreateOrUpdateServiceAsync(V1Service service, string namespaceName)
+    {
         try
         {
-
-
-            V1Service? svc;
-            try
-            {
-                svc = await kubernetesClient.ApiClient.CoreV1.ReadNamespacedServiceAsync(serviceName, entity.Metadata.NamespaceProperty);
-            }
-            catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                svc = null;
-            }
-
-            if (svc is not null)
-            {
-                await kubernetesClient.ApiClient.CoreV1.ReplaceNamespacedServiceAsync(service, serviceName, entity.Metadata.NamespaceProperty);
-            }
-            else
-            {
-                await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, entity.Metadata.NamespaceProperty);
-            }
-
-            logger.LogInformation("Created service for SQLServer: {Name} with type {ServiceType}", entity.Metadata.Name, entity.Spec.ServiceType);
+            var existingService = await kubernetesClient.ApiClient.CoreV1.ReadNamespacedServiceAsync(service.Metadata.Name, namespaceName);
+            await kubernetesClient.ApiClient.CoreV1.ReplaceNamespacedServiceAsync(service, service.Metadata.Name, namespaceName);
         }
-        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            logger.LogInformation("Service for SQLServer {Name} already exists. Skipping creation.", entity.Metadata.Name);
+            await kubernetesClient.ApiClient.CoreV1.CreateNamespacedServiceAsync(service, namespaceName);
         }
     }
 
