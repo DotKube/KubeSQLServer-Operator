@@ -1,13 +1,76 @@
 ---
 
+
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: {{ .Release.Name }}-operator-role
-  labels:
-    app: operator
-    release: "{{ .Release.Name }}"
 rules:
-  - apiGroups: ["*"] # Match all API groups
-    resources: ["*"] # Match all resource types
-    verbs: ["*"]     # Allow all actions (create, update, delete, etc.)
+- apiGroups:
+  - sql-server.dotkube.io
+  - coordination.k8s.io
+  resources:
+  - sqlservers
+  - databases
+  - sqlserverlogins
+  - sqlserverusers
+  - leases
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlservers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverlogins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
