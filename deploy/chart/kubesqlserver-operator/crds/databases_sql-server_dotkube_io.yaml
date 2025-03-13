@@ -16,21 +16,28 @@ spec:
       openAPIV3Schema:
         properties:
           status:
+            description: Status of the SQL Server database.
             properties:
               state:
+                description: The current state of the database.
                 type: string
               message:
+                description: A message indicating the current status of the database.
                 type: string
               lastChecked:
+                description: The last time the database status was checked.
                 format: date-time
                 nullable: true
                 type: string
             type: object
           spec:
+            description: Spec of the SQL Server database.
             properties:
               instanceName:
+                description: The name of the SQL Server instance where the database will be created.
                 type: string
               databaseName:
+                description: The name of the database to be created.
                 type: string
             type: object
         type: object
