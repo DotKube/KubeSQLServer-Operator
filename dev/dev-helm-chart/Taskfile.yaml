@@ -15,7 +15,6 @@ tasks:
     cmds:
     - kubectl apply -f ./crds
     desc: "Apply the Custom Resource Definitions (CRDs) from the Helm chart to the Kubernetes cluster."
-    internal: true
 
   delete-crd-from-cluster:
     cmds:
