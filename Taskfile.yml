@@ -34,7 +34,7 @@ tasks:
     internal: true
     dir: .
     cmds:
-    - mkdir -p ./operator-chart/crds
+    - mkdir -p ./dev/dev-helm-chart/crds
     - rsync -av --exclude='kustomization.yaml' ./src/OperatorTemplate.Operator/config/crds/ ./dev/dev-helm-chart/crds/
 
 
