@@ -1,9 +1,0 @@
-commonLabels:
-  operator-element: crd
-resources:
-- databases_sql-server_dotkube_io.yaml
-- sqlservers_sql-server_dotkube_io.yaml
-- sqlserverlogins_sql-server_dotkube_io.yaml
-- sqlserverusers_sql-server_dotkube_io.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
