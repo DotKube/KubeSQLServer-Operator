@@ -16,27 +16,37 @@ spec:
       openAPIV3Schema:
         properties:
           status:
+            description: Status of the SQL Server deployment.
             properties:
               state:
+                description: The current state of the SQL Server deployment.
                 type: string
               message:
+                description: A message providing details on the current status of SQL Server.
                 type: string
             type: object
           spec:
+            description: Spec of the SQL Server deployment.
             properties:
               version:
+                description: The version of SQL Server to deploy.
                 type: string
               storageClass:
+                description: The name of the storage class to use for SQL Server storage.
                 type: string
               storageSize:
+                description: The size of the persistent storage volume.
                 type: string
               secretName:
+                description: The name of the Kubernetes secret containing SQL Server credentials.
                 nullable: true
                 type: string
               serviceType:
+                description: The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).
                 nullable: true
                 type: string
               enableFullTextSearch:
+                description: Specifies whether full-text search is enabled in SQL Server.
                 type: boolean
             type: object
         type: object
