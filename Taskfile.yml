@@ -13,6 +13,11 @@ includes:
     taskfile: ./deploy/chart/kubesqlserver-operator/Taskfile.yaml
     dir: ./deploy/chart/kubesqlserver-operator
 
+  
+  doc-site:
+    taskfile: ./docs-site/Taskfile.yaml
+    dir: ./docs-site
+
 tasks:
   default:
     cmds:
