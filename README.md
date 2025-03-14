@@ -4,7 +4,7 @@ KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kuber
 
 This project is intended to be an open-source alternative to D2HI's Dx Operator, which requires a license [D2HI link](https://support.dh2i.com/dxoperator/guides/dxoperator-qsg/).
 
-## 😎 GitOpsify  New or Existing SQL Server instances
+## 😎 GitOpsify New or Existing SQL Server instances
 
 Simply deploy into your Kubernetes cluster like so
 
@@ -37,7 +37,6 @@ docker run --rm -it `
 and then start creating SQL Server instances using the CRDs provided by the operator.
 
 ```yaml
-
 # ... yaml omitted for brevity
 
 apiVersion: sql-server.dotkube.io/v1alpha1
@@ -55,7 +54,6 @@ spec:
   serviceType: LoadBalancer
 
 ---
-
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
@@ -66,7 +64,6 @@ spec:
   databaseName: Foo
 
 ---
-
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
@@ -76,10 +73,7 @@ spec:
   instanceName: sqlserver-instance
   databaseName: Bar
 
-
 ---
-
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -90,8 +84,6 @@ stringData:
   password: JoeMontana4292#
 
 ---
-
-
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerLogin
 metadata:
@@ -104,7 +96,6 @@ spec:
   secretName: sqlserver-login-secret
 
 ---
-
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerUser
 metadata:
@@ -116,16 +107,11 @@ spec:
   loginName: appuser
   roles:
     - db_owner
-
-
-
 ```
-
 
 and you're good to go! You should be able to see the effect of the CRDs in your SQL Server instance.
 
 ![Azure Data Studio](assets/ads-screenshot.png)
-
 
 ## Planned Features and Roadmap
 
@@ -158,3 +144,9 @@ Build and deploy the operator **to a Kind cluster**, replicating a production-li
 ```bash
 task quick-deploy
 ```
+
+---
+
+## Support
+
+If you have any questions or need help, please feel free to reach out to us on our [Slack Channel](https://join.slack.com/t/dotkube/shared_invite/zt-31u3vjhnn-5Wna5GDTW6tJTBzSf1PhyA)
