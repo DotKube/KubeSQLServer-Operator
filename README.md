@@ -9,7 +9,10 @@ This project is intended to be an open-source alternative to D2HI's Dx Operator,
 Simply deploy into your Kubernetes cluster like so
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
+kubectl create namespace sql-server
+kubectl config set-context --current --namespace=sql-server
+kubectl apply -f https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.yaml
+kubectl get all
 ```
 
 For those on windows, you can run this to quickly install kubesql operator
@@ -23,8 +26,12 @@ docker run --rm -it `
     curl -LO https://dl.k8s.io/release/v1.22.2/bin/linux/amd64/kubectl && \
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     export KUBECONFIG=/root/.kube/config && \
-    curl -sSL https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.sh | bash
+    kubectl create namespace sql-server && \
+    kubectl config set-context --current --namespace=sql-server && \
+    kubectl apply -f https://raw.githubusercontent.com/DotKube/KubeSQLServer-Operator/main/deploy/yaml/deploy.yaml && \
+    kubectl get all
   "
+
 ```
 
 and then start creating SQL Server instances using the CRDs provided by the operator.
