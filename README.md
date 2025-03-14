@@ -117,7 +117,7 @@ spec:
 
 and you're good to go! You should be able to see the effect of the CRDs in your SQL Server instance.
 
-![Azure Data Studio](images/ads-screenshot.png)
+![Azure Data Studio](assets/ads-screenshot.png)
 
 
 ## Planned Features and Roadmap
