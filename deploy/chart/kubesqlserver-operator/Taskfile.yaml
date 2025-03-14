@@ -31,3 +31,20 @@ tasks:
   test-locally-destroy:
     cmds:
       - kind delete cluster --name kubesqlserver-operator-test
+
+  template-output-to-file:
+    cmds:
+     - helm template sql-server . --namespace sql-server --create-namespace --include-crds > ./output.yaml
+    desc: "Create the Helm chart template for the OperatorTemplate stack."
+
+  template-output-to-file-cleanup:
+    cmds:
+    - rm ./output.yaml || true
+    desc: "Remove the Helm chart template for the OperatorTemplate stack."
+
+
+  clear-out-chart:
+    cmds:
+      - rm -rf ./templates/* || true
+      - rm -rf ./crds/* || true
+    

@@ -8,21 +8,21 @@ metadata:
   labels:
     app: operator
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: {{ .Release.Name | quote }}
-    heritage: {{ .Release.Service | quote }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: operator
-      release: {{ .Release.Name | quote }}
+      release: "{{ .Release.Name }}"
   template:
     metadata:
       labels:
         app: operator
-        release: {{ .Release.Name | quote }}
+        release: "{{ .Release.Name }}"
     spec:
-      serviceAccountName: kubesqlserver-operator-sa
+      serviceAccountName: {{ .Release.Name }}-operator-sa
       containers:
         - name: operator
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}

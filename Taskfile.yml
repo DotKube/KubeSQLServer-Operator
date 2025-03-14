@@ -101,4 +101,15 @@ tasks:
   clean:
     cmds:
     - task: dev:local-cluster:delete
+    - dotnet clean
     desc: "Clean up the Kind Kubernetes cluster."
+
+
+  build-release-helm-chart-and-yaml:
+    cmds:
+     - task: deployment-helm-chart:clear-out-chart
+     - cp -r ./dev/dev-helm-chart/crds/* ./deploy/chart/kubesqlserver-operator/crds/
+     - cp -r ./dev/dev-helm-chart/templates/* ./deploy/chart/kubesqlserver-operator/templates/
+     - task: deployment-helm-chart:template-output-to-file
+     - cp ./deploy/chart/kubesqlserver-operator/output.yaml ./deploy/yaml/deploy.yaml
+     - task: deployment-helm-chart:template-output-to-file-cleanup

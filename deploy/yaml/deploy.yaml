@@ -1,46 +1,4 @@
 ---
-# Source: operator-chart/crds/databases_database_example_com.yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: databases.sql-server.dotkube.io
-spec:
-  group: sql-server.dotkube.io
-  names:
-    kind: Database
-    listKind: DatabaseList
-    plural: databases
-    singular: database
-  scope: Namespaced
-  versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
-                  type: string
-                message:
-                  type: string
-                lastChecked:
-                  format: date-time
-                  nullable: true
-                  type: string
-              type: object
-            spec:
-              properties:
-                instanceName:
-                  type: string
-                databaseName:
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
----
 # Source: operator-chart/crds/databases_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -55,33 +13,40 @@ spec:
     singular: database
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
-                  type: string
-                message:
-                  type: string
-                lastChecked:
-                  format: date-time
-                  nullable: true
-                  type: string
-              type: object
-            spec:
-              properties:
-                instanceName:
-                  type: string
-                databaseName:
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the SQL Server database.
+            properties:
+              state:
+                description: The current state of the database.
+                type: string
+              message:
+                description: A message indicating the current status of the database.
+                type: string
+              lastChecked:
+                description: The last time the database status was checked.
+                format: date-time
+                nullable: true
+                type: string
+            type: object
+          spec:
+            description: Spec of the SQL Server database.
+            properties:
+              instanceName:
+                description: The name of the SQL Server instance where the database will be created.
+                type: string
+              databaseName:
+                description: The name of the database to be created.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 # Source: operator-chart/crds/sqlserverlogins_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -97,86 +62,47 @@ spec:
     singular: sqlserverlogin
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
-                  type: string
-                message:
-                  type: string
-                lastChecked:
-                  format: date-time
-                  nullable: true
-                  type: string
-              type: object
-            spec:
-              properties:
-                sqlServerName:
-                  type: string
-                loginName:
-                  type: string
-                authenticationType:
-                  type: string
-                secretName:
-                  nullable: true
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
----
-# Source: operator-chart/crds/sqlservers_database_example_com.yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: sqlservers.sql-server.dotkube.io
-spec:
-  group: sql-server.dotkube.io
-  names:
-    kind: SQLServer
-    listKind: SQLServerList
-    plural: sqlservers
-    singular: sqlserver
-  scope: Namespaced
-  versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
-                  type: string
-                message:
-                  type: string
-              type: object
-            spec:
-              properties:
-                version:
-                  type: string
-                storageClass:
-                  type: string
-                storageSize:
-                  type: string
-                secretName:
-                  nullable: true
-                  type: string
-                serviceType:
-                  nullable: true
-                  type: string
-                enableFullTextSearch:
-                  type: boolean
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the SQL Server login.
+            properties:
+              state:
+                description: The current state of the SQL Server login.
+                type: string
+              message:
+                description: A message indicating the current status of the SQL Server login.
+                type: string
+              lastChecked:
+                description: The last time the login status was checked.
+                format: date-time
+                nullable: true
+                type: string
+            type: object
+          spec:
+            description: Spec of the SQL Server login.
+            properties:
+              sqlServerName:
+                description: The name of the SQL Server instance.
+                type: string
+              loginName:
+                description: The login name for authentication.
+                type: string
+              authenticationType:
+                description: The authentication type for the login (e.g., SQL, Windows).
+                type: string
+              secretName:
+                description: The name of the Kubernetes secret storing authentication credentials.
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 # Source: operator-chart/crds/sqlservers_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -192,39 +118,49 @@ spec:
     singular: sqlserver
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
-                  type: string
-                message:
-                  type: string
-              type: object
-            spec:
-              properties:
-                version:
-                  type: string
-                storageClass:
-                  type: string
-                storageSize:
-                  type: string
-                secretName:
-                  nullable: true
-                  type: string
-                serviceType:
-                  nullable: true
-                  type: string
-                enableFullTextSearch:
-                  type: boolean
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the SQL Server deployment.
+            properties:
+              state:
+                description: The current state of the SQL Server deployment.
+                type: string
+              message:
+                description: A message providing details on the current status of SQL Server.
+                type: string
+            type: object
+          spec:
+            description: Spec of the SQL Server deployment.
+            properties:
+              version:
+                description: The version of SQL Server to deploy.
+                type: string
+              storageClass:
+                description: The name of the storage class to use for SQL Server storage.
+                type: string
+              storageSize:
+                description: The size of the persistent storage volume.
+                type: string
+              secretName:
+                description: The name of the Kubernetes secret containing SQL Server credentials.
+                nullable: true
+                type: string
+              serviceType:
+                description: The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).
+                nullable: true
+                type: string
+              enableFullTextSearch:
+                description: Specifies whether full-text search is enabled in SQL Server.
+                type: boolean
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 # Source: operator-chart/crds/sqlserverusers_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -240,162 +176,172 @@ spec:
     singular: sqlserveruser
   scope: Namespaced
   versions:
-    - name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          properties:
-            status:
-              properties:
-                state:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the database user.
+            properties:
+              state:
+                description: The current state of the database user.
+                type: string
+              message:
+                description: A message indicating the current status of the database user.
+                type: string
+              lastChecked:
+                description: The last time the database user status was checked.
+                format: date-time
+                nullable: true
+                type: string
+            type: object
+          spec:
+            description: Spec of the database user.
+            properties:
+              sqlServerName:
+                description: The name of the SQL Server instance.
+                type: string
+              databaseName:
+                description: The name of the database where this user will be created.
+                type: string
+              loginName:
+                description: The login name for the database user.
+                type: string
+              roles:
+                description: The roles assigned to the database user.
+                items:
                   type: string
-                message:
-                  type: string
-                lastChecked:
-                  format: date-time
-                  nullable: true
-                  type: string
-              type: object
-            spec:
-              properties:
-                sqlServerName:
-                  type: string
-                databaseName:
-                  type: string
-                loginName:
-                  type: string
-                roles:
-                  items:
-                    type: string
-                  type: array
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 # Source: operator-chart/templates/service-account.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kubesqlserver-operator-sa
+  name: sql-server-operator-sa
   labels:
     app: operator
-    release: "release-name"
-  namespace: kubesql-operator
+    release: "sql-server"
 ---
 # Source: operator-chart/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: operator-role
+  name: sql-server-operator-role
 rules:
-  - apiGroups:
-      - sql-server.dotkube.io
-      - coordination.k8s.io
-    resources:
-      - databases
-      - sqlserverusers
-      - sqlservers
-      - sqlserverlogins
-      - leases
-    verbs:
-      - '*'
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
-      - get
-      - list
-      - update
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - get
-      - list
-  - apiGroups:
-      - sql-server.dotkube.io
-    resources:
-      - databases/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - sql-server.dotkube.io
-    resources:
-      - sqlserverusers/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - sql-server.dotkube.io
-    resources:
-      - sqlservers/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - sql-server.dotkube.io
-    resources:
-      - sqlserverlogins/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - apps
-    resources:
-      - deployments/status
-    verbs:
-      - get
-      - patch
-      - update
+- apiGroups:
+  - sql-server.dotkube.io
+  - coordination.k8s.io
+  resources:
+  - sqlservers
+  - databases
+  - sqlserverlogins
+  - sqlserverusers
+  - leases
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlservers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - databases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverlogins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlserverusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
 ---
 # Source: operator-chart/templates/role-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: operator-role-binding
+  name: sql-server-operator-rb
+  labels:
+    app: operator
+    release: "sql-server"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: operator-role
+  name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: kubesqlserver-operator-sa
-    namespace: kubesql-operator
+    name: sql-server-operator-sa
+    namespace: sql-server
 ---
 # Source: operator-chart/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "release-name-operator"
+  name: "sql-server-operator"
   labels:
     app: operator
     chart: "operator-chart-0.1.0"
-    release: "release-name"
+    release: "sql-server"
     heritage: "Helm"
-  namespace: kubesql-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: operator
-      release: "release-name"
+      release: "sql-server"
   template:
     metadata:
       labels:
         app: operator
-        release: "release-name"
+        release: "sql-server"
     spec:
-      serviceAccountName: kubesqlserver-operator-sa
+      serviceAccountName: sql-server-operator-sa
       containers:
         - name: operator
           image: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest
@@ -405,4 +351,5 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
-          resources: {}
+          resources:
+            {}
