@@ -1,0 +1,30 @@
+version: "3"
+
+tasks:
+  dev:
+    cmds: 
+      - npm run start
+
+  build:
+    cmds: 
+      - npm run build
+
+  image-build:
+    cmds:
+      - docker build -t dotkube/sql-server-operator-docs-site:latest .
+
+  image-delete:
+    cmds:
+      - docker rmi dotkube/sql-server-operator-docs-site:latest -f
+
+  container-run:
+    cmds:
+      - docker run -d --name sql-operator-docs -p 8080:80 dotkube/sql-server-operator-docs-site:latest
+
+  container-stop:
+    cmds:
+      - docker stop sql-operator-docs
+
+  container-delete:
+    cmds:
+      - docker rm sql-operator-docs
