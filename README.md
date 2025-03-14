@@ -73,40 +73,6 @@ spec:
   instanceName: sqlserver-instance
   databaseName: Bar
 
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: sqlserver-login-secret
-  namespace: sqlserver-example
-type: Opaque
-stringData:
-  password: JoeMontana4292#
-
----
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: SQLServerLogin
-metadata:
-  name: app-login
-  namespace: sqlserver-example
-spec:
-  sqlServerName: sqlserver-instance
-  loginName: appuser
-  authenticationType: SQL
-  secretName: sqlserver-login-secret
-
----
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: SQLServerUser
-metadata:
-  name: app-user
-  namespace: sqlserver-example
-spec:
-  sqlServerName: sqlserver-instance
-  databaseName: Foo
-  loginName: appuser
-  roles:
-    - db_owner
 ```
 
 and you're good to go! You should be able to see the effect of the CRDs in your SQL Server instance.
