@@ -149,3 +149,28 @@ spec:
   roles:
     - db_datareader
     - db_datawriter
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: reporting-schema
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld1
+  schemaName: Reporting
+  schemaOwner: adminuser1
+
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: analytics-schema
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: HelloWorld2
+  schemaName: Analytics
+  schemaOwner: adminuser2
