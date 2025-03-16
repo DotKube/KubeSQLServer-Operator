@@ -6,6 +6,7 @@ tasks:
     cmds:
     - kind delete cluster --name sql-server-testing-cluster
     - kind create cluster --config ./kind-config.yaml
+    - task: create-registry
     - bash ./scripts/configure-registry-with-kind.sh
 
     - task: install-helm-repo-updates
