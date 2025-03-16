@@ -1,7 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/OperatorTemplate.AppHost/OperatorTemplate.AppHost.csproj" />
-    <Project Path="src/OperatorTemplate.Operator/OperatorTemplate.Operator.csproj" />
-    <Project Path="src/OperatorTemplate.ServiceDefaults/OperatorTemplate.ServiceDefaults.csproj" />
-  </Folder>
-</Solution>
