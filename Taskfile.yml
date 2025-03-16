@@ -67,6 +67,8 @@ tasks:
 
   quick-deploy:
     cmds:
+    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu-fts
+    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu
     - task: dev:local-cluster:create-registry
     - task: dev:local-cluster:delete
     - task: dev:local-cluster:create
@@ -87,6 +89,8 @@ tasks:
 
   quick-dev:
     cmds:
+    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu-fts
+    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu
     - task: dev:local-cluster:delete
     - task: dev:local-cluster:create
     - | 
@@ -102,6 +106,13 @@ tasks:
     - task: dev:helm-chart:apply-crds-from-helm-chart
     - task: dev:local-cluster:apply-crd-instance
     - task: dev
+
+  quick-dev-tmux:
+    cmds:
+    - bash "./dev/local-configs/scripts/tmux-setup.sh"
+    desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster with a Tmux session."
+  
+
 
   clean:
     cmds:
