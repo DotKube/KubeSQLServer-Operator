@@ -46,12 +46,11 @@ metadata:
   namespace: sqlserver-example
 spec:
   version: "2022"
-  storageClass: "longhorn"
+  storageClass: "standard"
   storageSize: "6Gi"
-  secretName: sqlserver-secret
-  enableHighAvailibility: true
+  secretName: "sqlserver-secret"
+  serviceType: "NodePort"
   enableFullTextSearch: true
-  serviceType: LoadBalancer
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
