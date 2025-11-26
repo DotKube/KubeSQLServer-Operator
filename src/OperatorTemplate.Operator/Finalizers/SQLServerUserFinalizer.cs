@@ -1,6 +1,6 @@
 using k8s.Models;
+using KubeOps.Abstractions.Finalizer;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Finalizer;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
 using SqlServerOperator.Entities;
@@ -12,9 +12,9 @@ public class SQLServerUserFinalizer(
     ILogger<SQLServerUserFinalizer> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IResourceFinalizer<V1DatabaseUser>
+) : IEntityFinalizer<V1DatabaseUser>
 {
-    public async Task FinalizeAsync(V1DatabaseUser entity)
+    public async Task FinalizeAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Finalizing SQLServerUser: {Name}", entity.Metadata.Name);
 
