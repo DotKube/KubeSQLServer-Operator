@@ -1,8 +1,7 @@
 using k8s.Models;
+using KubeOps.Abstractions.Controller;
+using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Controller;
-using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Rbac;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
 using SqlServerOperator.Entities;
@@ -15,9 +14,9 @@ public class SQLServerLoginController(
     ILogger<SQLServerLoginController> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IResourceController<V1SQLServerLogin>
+) : IEntityController<V1SQLServerLogin>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServerLogin entity)
+    public async Task ReconcileAsync(V1SQLServerLogin entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerLogin: {Name}", entity.Metadata.Name);
 
@@ -51,8 +50,6 @@ public class SQLServerLoginController(
 
             await kubernetesClient.UpdateStatus(entity);
         }
-
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(0.5));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)

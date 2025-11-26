@@ -1,8 +1,7 @@
 using k8s.Models;
+using KubeOps.Abstractions.Controller;
+using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Controller;
-using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Rbac;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Configuration;
 using SqlServerOperator.Controllers.Services;
@@ -17,9 +16,9 @@ public class SQLServerDatabaseController(
     IKubernetesClient kubernetesClient,
     DefaultMssqlConfig config,
     SqlServerEndpointService sqlServerEndpointService) 
-    : IResourceController<V1SQLServerDatabase>
+    : IEntityController<V1SQLServerDatabase>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServerDatabase entity)
+    public async Task ReconcileAsync(V1SQLServerDatabase entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerDatabase: {Name}", entity.Metadata.Name);
 
@@ -35,8 +34,6 @@ public class SQLServerDatabaseController(
             logger.LogError(ex, "Error during reconciliation of SQLServerDatabase: {Name}", entity.Metadata.Name);
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow);
         }
-
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
     }
 
     private async Task<string> DetermineSecretNameAsync(V1SQLServerDatabase entity)

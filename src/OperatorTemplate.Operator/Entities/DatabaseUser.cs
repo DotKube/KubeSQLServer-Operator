@@ -1,8 +1,8 @@
 
 
 using k8s.Models;
-using KubeOps.Operator.Entities;
-using KubeOps.Operator.Entities.Annotations;
+using KubeOps.Abstractions.Entities;
+using KubeOps.Abstractions.Entities.Attributes;
 
 namespace SqlServerOperator.Entities;
 

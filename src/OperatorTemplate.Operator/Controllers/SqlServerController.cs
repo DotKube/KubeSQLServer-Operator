@@ -1,10 +1,8 @@
 using k8s;
 using k8s.Models;
+using KubeOps.Abstractions.Controller;
+using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Controller;
-using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Finalizer;
-using KubeOps.Operator.Rbac;
 using SqlServerOperator.Builders;
 using SqlServerOperator.Configuration;
 using SqlServerOperator.Entities;
@@ -14,24 +12,18 @@ using System.Security.Cryptography;
 namespace SqlServerOperator.Controllers;
 
 [EntityRbac(typeof(V1SQLServer), Verbs = RbacVerb.All)]
-public class SQLServerController(ILogger<SQLServerController> logger, IFinalizerManager<V1SQLServer> finalizerManager, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IResourceController<V1SQLServer>
+public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1SQLServer>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServer entity)
+    public async Task ReconcileAsync(V1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
 
-        await RegisterFinalizerAsync(entity);
         await EnsureSaPasswordSecretAsync(entity);
         await EnsureConfigMapAsync(entity);
         await EnsureStatefulSetAsync(entity);
         await EnsureServiceAsync(entity);
 
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
-    }
-
-    private async Task RegisterFinalizerAsync(V1SQLServer entity)
-    {
-        await finalizerManager.RegisterFinalizerAsync<SQLServerFinalizer>(entity);
+        // Note: In KubeOps v10, finalizers are auto-registered and no return value needed
     }
 
     private async Task EnsureConfigMapAsync(V1SQLServer entity)

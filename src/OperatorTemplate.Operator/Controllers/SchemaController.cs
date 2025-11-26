@@ -1,8 +1,7 @@
 using k8s.Models;
+using KubeOps.Abstractions.Controller;
+using KubeOps.Abstractions.Rbac;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Controller;
-using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Rbac;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
 using SqlServerOperator.Entities;
@@ -15,9 +14,9 @@ public class SQLServerSchemaController(
     ILogger<SQLServerSchemaController> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IResourceController<V1SQLServerSchema>
+) : IEntityController<V1SQLServerSchema>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServerSchema entity)
+    public async Task ReconcileAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerSchema: {Name}", entity.Metadata.Name);
 
@@ -58,8 +57,6 @@ public class SQLServerSchemaController(
 
             await kubernetesClient.UpdateStatus(entity);
         }
-
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(1));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
