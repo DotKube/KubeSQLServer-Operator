@@ -1,7 +1,8 @@
 using k8s;
 using k8s.Models;
-using KubeOps.Abstractions.Controller;
 using KubeOps.Abstractions.Rbac;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using SqlServerOperator.Builders;
 using SqlServerOperator.Configuration;
@@ -14,7 +15,7 @@ namespace SqlServerOperator.Controllers;
 [EntityRbac(typeof(V1SQLServer), Verbs = RbacVerb.All)]
 public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1SQLServer>
 {
-    public async Task ReconcileAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1SQLServer>> ReconcileAsync(V1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
 
@@ -23,7 +24,13 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         await EnsureStatefulSetAsync(entity);
         await EnsureServiceAsync(entity);
 
-        // Note: In KubeOps v10, finalizers are auto-registered and no return value needed
+        return ReconciliationResult<V1SQLServer>.Success(entity);
+    }
+
+    public Task<ReconciliationResult<V1SQLServer>> DeletedAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Deleted SQLServer: {Name}", entity.Metadata.Name);
+        return Task.FromResult(ReconciliationResult<V1SQLServer>.Success(entity));
     }
 
     private async Task EnsureConfigMapAsync(V1SQLServer entity)

@@ -1,6 +1,7 @@
 using k8s.Models;
-using KubeOps.Abstractions.Controller;
 using KubeOps.Abstractions.Rbac;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
@@ -16,13 +17,13 @@ public class SQLServerLoginController(
     SqlServerEndpointService sqlServerEndpointService
 ) : IEntityController<V1SQLServerLogin>
 {
-    public async Task ReconcileAsync(V1SQLServerLogin entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1SQLServerLogin>> ReconcileAsync(V1SQLServerLogin entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerLogin: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.Get<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 throw new Exception($"SQLServer instance '{entity.Spec.SqlServerName}' not found.");
@@ -38,7 +39,8 @@ public class SQLServerLoginController(
             entity.Status.Message = "Login ensured.";
             entity.Status.LastChecked = DateTime.UtcNow;
 
-            await kubernetesClient.UpdateStatus(entity);
+            await kubernetesClient.UpdateStatusAsync(entity);
+            return ReconciliationResult<V1SQLServerLogin>.Success(entity);
         }
         catch (Exception ex)
         {
@@ -48,13 +50,20 @@ public class SQLServerLoginController(
             entity.Status.Message = ex.Message;
             entity.Status.LastChecked = DateTime.UtcNow;
 
-            await kubernetesClient.UpdateStatus(entity);
+            await kubernetesClient.UpdateStatusAsync(entity);
+            return ReconciliationResult<V1SQLServerLogin>.Failure(entity, ex.Message, ex);
         }
+    }
+
+    public Task<ReconciliationResult<V1SQLServerLogin>> DeletedAsync(V1SQLServerLogin entity, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Deleted SQLServerLogin: {Name}", entity.Metadata.Name);
+        return Task.FromResult(ReconciliationResult<V1SQLServerLogin>.Success(entity));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
-        var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+        var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
         if (secret?.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");

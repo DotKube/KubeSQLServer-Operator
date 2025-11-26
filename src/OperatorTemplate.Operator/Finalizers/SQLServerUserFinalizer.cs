@@ -1,5 +1,6 @@
 using k8s.Models;
-using KubeOps.Abstractions.Finalizer;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Finalizer;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
@@ -14,17 +15,17 @@ public class SQLServerUserFinalizer(
     SqlServerEndpointService sqlServerEndpointService
 ) : IEntityFinalizer<V1DatabaseUser>
 {
-    public async Task FinalizeAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1DatabaseUser>> FinalizeAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Finalizing SQLServerUser: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.Get<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", entity.Spec.SqlServerName);
-                return;
+                return ReconciliationResult<V1DatabaseUser>.Success(entity);
             }
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
@@ -33,16 +34,18 @@ public class SQLServerUserFinalizer(
             await DeleteUserAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, server, username, password);
 
             logger.LogInformation("Finalization complete for SQLServerUser: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1DatabaseUser>.Success(entity);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during finalization of SQLServerUser: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1DatabaseUser>.Failure(entity, ex.Message, ex);
         }
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
-        var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+        var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
         if (secret?.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");

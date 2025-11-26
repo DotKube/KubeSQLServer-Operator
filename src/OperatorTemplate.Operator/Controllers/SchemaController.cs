@@ -1,6 +1,7 @@
 using k8s.Models;
-using KubeOps.Abstractions.Controller;
 using KubeOps.Abstractions.Rbac;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
@@ -16,13 +17,13 @@ public class SQLServerSchemaController(
     SqlServerEndpointService sqlServerEndpointService
 ) : IEntityController<V1SQLServerSchema>
 {
-    public async Task ReconcileAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1SQLServerSchema>> ReconcileAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerSchema: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.Get<V1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 throw new Exception($"SQLServer instance '{entity.Spec.InstanceName}' not found.");
@@ -45,7 +46,8 @@ public class SQLServerSchemaController(
             entity.Status.Message = "Schema ensured.";
             entity.Status.LastChecked = DateTime.UtcNow;
 
-            await kubernetesClient.UpdateStatus(entity);
+            await kubernetesClient.UpdateStatusAsync(entity);
+            return ReconciliationResult<V1SQLServerSchema>.Success(entity);
         }
         catch (Exception ex)
         {
@@ -55,13 +57,20 @@ public class SQLServerSchemaController(
             entity.Status.Message = ex.Message;
             entity.Status.LastChecked = DateTime.UtcNow;
 
-            await kubernetesClient.UpdateStatus(entity);
+            await kubernetesClient.UpdateStatusAsync(entity);
+            return ReconciliationResult<V1SQLServerSchema>.Failure(entity, ex.Message, ex);
         }
+    }
+
+    public Task<ReconciliationResult<V1SQLServerSchema>> DeletedAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Deleted SQLServerSchema: {Name}", entity.Metadata.Name);
+        return Task.FromResult(ReconciliationResult<V1SQLServerSchema>.Success(entity));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
-        var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+        var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
         if (secret?.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");

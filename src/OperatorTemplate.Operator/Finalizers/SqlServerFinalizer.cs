@@ -1,6 +1,7 @@
 using k8s;
 using k8s.Models;
-using KubeOps.Abstractions.Finalizer;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Finalizer;
 using KubeOps.KubernetesClient;
 using SqlServerOperator.Entities;
 
@@ -8,7 +9,7 @@ namespace SqlServerOperator.Finalizers;
 
 public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesClient kubernetesClient) : IEntityFinalizer<V1SQLServer>
 {
-    public async Task FinalizeAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1SQLServer>> FinalizeAsync(V1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Finalizing SQLServer: {Name}", entity.Metadata.Name);
 
@@ -33,10 +34,12 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
             await DeleteConfigMapAsync(configMapName, namespaceName);
 
             logger.LogInformation("Finalization complete for SQLServer: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1SQLServer>.Success(entity);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while finalizing SQLServer: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1SQLServer>.Failure(entity, ex.Message, ex);
         }
     }
 
@@ -76,7 +79,7 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
         {
             logger.LogInformation("Deleting Secret: {SecretName} in namespace {Namespace}", secretName, namespaceName);
 
-            var secret = await kubernetesClient.Get<V1Secret>(secretName, namespaceName);
+            var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
             if (secret is null)
             {
                 logger.LogWarning("Secret {SecretName} not found in namespace {Namespace}. Skipping deletion.", secretName, namespaceName);
