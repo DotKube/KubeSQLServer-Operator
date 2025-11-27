@@ -1,0 +1,58 @@
+name: publish-helm-oci
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional chart version (SemVer). Defaults to version in Chart.yaml."
+        required: false
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/chart/kubesqlserver-operator/**'
+      - '.github/workflows/publish-helm-chart.yaml'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  CHART_DIR: deploy/chart/kubesqlserver-operator
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.2
+
+      - name: Set variables
+        run: |
+          echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "HELM_VERSION_FLAG=--version ${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Login to GHCR for Helm
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+
+      - name: Package chart
+        run: |
+          mkdir -p "$CHART_DIR/.artifacts"
+          cd "$CHART_DIR"
+          if [ -n "$HELM_VERSION_FLAG" ]; then
+            helm package . $HELM_VERSION_FLAG --destination .artifacts
+          else
+            helm package . --destination .artifacts
+          fi
+          echo "CHART_TGZ=$(ls .artifacts/*.tgz)" >> "$GITHUB_ENV"
+
+      - name: Push chart
+        run: |
+          cd "$CHART_DIR"
+          helm push "$CHART_TGZ" "oci://$REGISTRY/$OWNER_LC"
