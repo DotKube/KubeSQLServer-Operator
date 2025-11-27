@@ -289,73 +289,105 @@ kind: ClusterRole
 metadata:
   name: sql-server-operator-role
 rules:
+# Custom Resource Definitions - full access to our CRDs
 - apiGroups:
   - sql-server.dotkube.io
-  - coordination.k8s.io
   resources:
   - sqlservers
   - databases
   - sqlserverlogins
   - sqlserverusers
-  - leases
+  - sqlserverschemas
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+# Custom Resource Status subresources
+- apiGroups:
+  - sql-server.dotkube.io
+  resources:
+  - sqlservers/status
+  - databases/status
+  - sqlserverlogins/status
+  - sqlserverusers/status
+  - sqlserverschemas/status
+  verbs:
+  - get
+  - patch
+  - update
+
+# Secrets - needed to read SA passwords and manage secrets
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+
+# ConfigMaps - needed to create SQL Server configuration
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+
+# Services - needed to create SQL Server services
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+
+# Events - needed to emit Kubernetes events
 - apiGroups:
   - ""
   resources:
   - events
   verbs:
   - create
-  - get
-  - list
+  - patch
   - update
+
+# StatefulSets - needed to create SQL Server statefulsets
 - apiGroups:
   - apps
   resources:
-  - deployments
+  - statefulsets
   verbs:
+  - create
   - get
   - list
+  - watch
+
+# Leases - needed for leader election
 - apiGroups:
-  - sql-server.dotkube.io
+  - coordination.k8s.io
   resources:
-  - sqlservers/status
+  - leases
   verbs:
+  - create
   - get
-  - patch
+  - list
   - update
-- apiGroups:
-  - sql-server.dotkube.io
-  resources:
-  - databases/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sql-server.dotkube.io
-  resources:
-  - sqlserverlogins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sql-server.dotkube.io
-  resources:
-  - sqlserverusers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - apps
-  resources:
-  - deployments/status
-  verbs:
-  - get
-  - patch
-  - update
+  - watch
 ---
 # Source: operator-chart/templates/role-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -368,7 +400,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: sql-server-operator-role
 subjects:
   - kind: ServiceAccount
     name: sql-server-operator-sa
