@@ -55,4 +55,4 @@ jobs:
       - name: Push chart
         run: |
           cd "$CHART_DIR"
-          helm push "$CHART_TGZ" "oci://$REGISTRY/$OWNER_LC"
+          helm push "$CHART_TGZ" "oci://$REGISTRY/$OWNER_LC/chart"
