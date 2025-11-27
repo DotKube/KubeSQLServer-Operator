@@ -44,13 +44,13 @@ public class SqlServerEndpointService(
 
     private async Task<string> GetServiceTypeAsync(string instanceName, string namespaceName)
     {
-        var service = await kubernetesClient.Get<V1Service>($"{instanceName}-service", namespaceName);
+        var service = await kubernetesClient.GetAsync<V1Service>($"{instanceName}-service", namespaceName);
         return service?.Spec?.Type ?? "None";
     }
 
     private async Task<string?> GetLoadBalancerIPAsync(string serviceName, string namespaceName)
     {
-        var service = await kubernetesClient.Get<V1Service>(serviceName, namespaceName);
+        var service = await kubernetesClient.GetAsync<V1Service>(serviceName, namespaceName);
 
         var ingress = service?.Status?.LoadBalancer?.Ingress?.FirstOrDefault();
         return ingress?.Ip ?? ingress?.Hostname;

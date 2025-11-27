@@ -12,11 +12,6 @@ builder.Services.AddSingleton<SqlServerEndpointService>();
 
 builder.Services.AddKubernetesOperator();
 
-// Explicitly add Kubernetes client config
-builder.Services.AddKubernetesOperator();
-
 var app = builder.Build();
 
-app.UseKubernetesOperator();
-
-await app.RunOperatorAsync(args);
+await app.RunAsync();

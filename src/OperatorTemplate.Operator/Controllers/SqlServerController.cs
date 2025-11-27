@@ -1,10 +1,9 @@
 using k8s;
 using k8s.Models;
+using KubeOps.Abstractions.Rbac;
+using KubeOps.Abstractions.Reconciliation;
+using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
-using KubeOps.Operator.Controller;
-using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Finalizer;
-using KubeOps.Operator.Rbac;
 using SqlServerOperator.Builders;
 using SqlServerOperator.Configuration;
 using SqlServerOperator.Entities;
@@ -14,24 +13,24 @@ using System.Security.Cryptography;
 namespace SqlServerOperator.Controllers;
 
 [EntityRbac(typeof(V1SQLServer), Verbs = RbacVerb.All)]
-public class SQLServerController(ILogger<SQLServerController> logger, IFinalizerManager<V1SQLServer> finalizerManager, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IResourceController<V1SQLServer>
+public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1SQLServer>
 {
-    public async Task<ResourceControllerResult?> ReconcileAsync(V1SQLServer entity)
+    public async Task<ReconciliationResult<V1SQLServer>> ReconcileAsync(V1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
 
-        await RegisterFinalizerAsync(entity);
         await EnsureSaPasswordSecretAsync(entity);
         await EnsureConfigMapAsync(entity);
         await EnsureStatefulSetAsync(entity);
         await EnsureServiceAsync(entity);
 
-        return ResourceControllerResult.RequeueEvent(TimeSpan.FromMinutes(config.DefaultRequeueTimeMinutes));
+        return ReconciliationResult<V1SQLServer>.Success(entity);
     }
 
-    private async Task RegisterFinalizerAsync(V1SQLServer entity)
+    public Task<ReconciliationResult<V1SQLServer>> DeletedAsync(V1SQLServer entity, CancellationToken cancellationToken)
     {
-        await finalizerManager.RegisterFinalizerAsync<SQLServerFinalizer>(entity);
+        logger.LogInformation("Deleted SQLServer: {Name}", entity.Metadata.Name);
+        return Task.FromResult(ReconciliationResult<V1SQLServer>.Success(entity));
     }
 
     private async Task EnsureConfigMapAsync(V1SQLServer entity)
