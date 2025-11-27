@@ -19,7 +19,7 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
 # Create a non-root user and group
-RUN addgroup k8s-operator && useradd -G k8s-operator operator-user
+RUN groupadd -r k8s-operator && useradd -r -g k8s-operator operator-user
 
 WORKDIR /operator
 COPY --from=build /operator/src/OperatorTemplate.Operator/out/ ./
