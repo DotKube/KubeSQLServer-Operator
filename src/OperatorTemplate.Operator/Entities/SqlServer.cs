@@ -6,10 +6,10 @@ using KubeOps.Abstractions.Entities.Attributes;
 namespace SqlServerOperator.Entities;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServer")]
-public class V1SQLServer : CustomKubernetesEntity<V1SQLServer.V1SQLServerSpec, V1SQLServer.V1SQLServerStatus>
+public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alpha1SQLServerSpec, V1Alpha1SQLServer.V1Alpha1SQLServerStatus>
 {
     [Description("Spec of the SQL Server deployment.")]
-    public class V1SQLServerSpec
+    public class V1Alpha1SQLServerSpec
     {
         [Description("The version of SQL Server to deploy.")]
         public string Version { get; set; } = "2022";
@@ -31,7 +31,7 @@ public class V1SQLServer : CustomKubernetesEntity<V1SQLServer.V1SQLServerSpec, V
     }
 
     [Description("Status of the SQL Server deployment.")]
-    public class V1SQLServerStatus
+    public class V1Alpha1SQLServerStatus
     {
         [Description("The current state of the SQL Server deployment.")]
         public string State { get; set; } = "Pending";

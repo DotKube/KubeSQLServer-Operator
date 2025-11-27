@@ -10,20 +10,20 @@ using System.Text;
 
 namespace SqlServerOperator.Controllers;
 
-[EntityRbac(typeof(V1SQLServerSchema), Verbs = RbacVerb.All)]
+[EntityRbac(typeof(V1Alpha1SQLServerSchema), Verbs = RbacVerb.All)]
 public class SQLServerSchemaController(
     ILogger<SQLServerSchemaController> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IEntityController<V1SQLServerSchema>
+) : IEntityController<V1Alpha1SQLServerSchema>
 {
-    public async Task<ReconciliationResult<V1SQLServerSchema>> ReconcileAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServerSchema>> ReconcileAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerSchema: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 throw new Exception($"SQLServer instance '{entity.Spec.InstanceName}' not found.");
@@ -47,7 +47,7 @@ public class SQLServerSchemaController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1SQLServerSchema>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerSchema>.Success(entity);
         }
         catch (Exception ex)
         {
@@ -58,14 +58,14 @@ public class SQLServerSchemaController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1SQLServerSchema>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerSchema>.Failure(entity, ex.Message, ex);
         }
     }
 
-    public Task<ReconciliationResult<V1SQLServerSchema>> DeletedAsync(V1SQLServerSchema entity, CancellationToken cancellationToken)
+    public Task<ReconciliationResult<V1Alpha1SQLServerSchema>> DeletedAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServerSchema: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1SQLServerSchema>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerSchema>.Success(entity));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)

@@ -13,19 +13,19 @@ public class SQLServerUserFinalizer(
     ILogger<SQLServerUserFinalizer> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IEntityFinalizer<V1DatabaseUser>
+) : IEntityFinalizer<V1Alpha1DatabaseUser>
 {
-    public async Task<ReconciliationResult<V1DatabaseUser>> FinalizeAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> FinalizeAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Finalizing SQLServerUser: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", entity.Spec.SqlServerName);
-                return ReconciliationResult<V1DatabaseUser>.Success(entity);
+                return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
             }
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
@@ -34,12 +34,12 @@ public class SQLServerUserFinalizer(
             await DeleteUserAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, server, username, password);
 
             logger.LogInformation("Finalization complete for SQLServerUser: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1DatabaseUser>.Success(entity);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during finalization of SQLServerUser: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1DatabaseUser>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex);
         }
     }
 

@@ -12,10 +12,10 @@ using System.Security.Cryptography;
 
 namespace SqlServerOperator.Controllers;
 
-[EntityRbac(typeof(V1SQLServer), Verbs = RbacVerb.All)]
-public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1SQLServer>
+[EntityRbac(typeof(V1Alpha1SQLServer), Verbs = RbacVerb.All)]
+public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1Alpha1SQLServer>
 {
-    public async Task<ReconciliationResult<V1SQLServer>> ReconcileAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServer>> ReconcileAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServer: {Name}", entity.Metadata.Name);
 
@@ -24,16 +24,16 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         await EnsureStatefulSetAsync(entity);
         await EnsureServiceAsync(entity);
 
-        return ReconciliationResult<V1SQLServer>.Success(entity);
+        return ReconciliationResult<V1Alpha1SQLServer>.Success(entity);
     }
 
-    public Task<ReconciliationResult<V1SQLServer>> DeletedAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    public Task<ReconciliationResult<V1Alpha1SQLServer>> DeletedAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServer: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1SQLServer>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServer>.Success(entity));
     }
 
-    private async Task EnsureConfigMapAsync(V1SQLServer entity)
+    private async Task EnsureConfigMapAsync(V1Alpha1SQLServer entity)
     {
         var configMapName = $"{entity.Metadata.Name}-config";
 
@@ -53,7 +53,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         }
     }
 
-    private async Task EnsureStatefulSetAsync(V1SQLServer entity)
+    private async Task EnsureStatefulSetAsync(V1Alpha1SQLServer entity)
     {
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
 
@@ -172,7 +172,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         }
     }
 
-    private async Task EnsureServiceAsync(V1SQLServer entity)
+    private async Task EnsureServiceAsync(V1Alpha1SQLServer entity)
     {
         var appLabel = entity.Metadata.Name;
         var namespaceName = entity.Metadata.NamespaceProperty;
@@ -258,7 +258,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         }
     }
 
-    private async Task EnsureSaPasswordSecretAsync(V1SQLServer entity)
+    private async Task EnsureSaPasswordSecretAsync(V1Alpha1SQLServer entity)
     {
         var secretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
         var namespaceName = entity.Metadata.NamespaceProperty;

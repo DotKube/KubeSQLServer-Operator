@@ -7,9 +7,9 @@ using SqlServerOperator.Entities;
 
 namespace SqlServerOperator.Finalizers;
 
-public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesClient kubernetesClient) : IEntityFinalizer<V1SQLServer>
+public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesClient kubernetesClient) : IEntityFinalizer<V1Alpha1SQLServer>
 {
-    public async Task<ReconciliationResult<V1SQLServer>> FinalizeAsync(V1SQLServer entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServer>> FinalizeAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Finalizing SQLServer: {Name}", entity.Metadata.Name);
 
@@ -34,12 +34,12 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
             await DeleteConfigMapAsync(configMapName, namespaceName);
 
             logger.LogInformation("Finalization complete for SQLServer: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1SQLServer>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServer>.Success(entity);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while finalizing SQLServer: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1SQLServer>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServer>.Failure(entity, ex.Message, ex);
         }
     }
 
