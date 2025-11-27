@@ -10,7 +10,19 @@ builder.Services.AddSingleton<SqlServerImages>();
 builder.Services.AddSingleton<DefaultMssqlConfig>();
 builder.Services.AddSingleton<SqlServerEndpointService>();
 
-builder.Services.AddKubernetesOperator();
+
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddKubernetesOperator()
+        .AddCrdInstaller()
+        .RegisterComponents();
+}
+else
+{
+    builder.Services.AddKubernetesOperator()
+        .RegisterComponents();
+}
 
 var app = builder.Build();
 
