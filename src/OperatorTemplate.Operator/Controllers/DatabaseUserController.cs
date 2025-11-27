@@ -10,20 +10,20 @@ using System.Text;
 
 namespace SqlServerOperator.Controllers;
 
-[EntityRbac(typeof(V1DatabaseUser), Verbs = RbacVerb.All)]
+[EntityRbac(typeof(V1Alpha1DatabaseUser), Verbs = RbacVerb.All)]
 public class SQLServerUserController(
     ILogger<SQLServerUserController> logger,
     IKubernetesClient kubernetesClient,
     SqlServerEndpointService sqlServerEndpointService
-) : IEntityController<V1DatabaseUser>
+) : IEntityController<V1Alpha1DatabaseUser>
 {
-    public async Task<ReconciliationResult<V1DatabaseUser>> ReconcileAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> ReconcileAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerUser: {Name}", entity.Metadata.Name);
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             if (sqlServer is null)
             {
                 throw new Exception($"SQLServer instance '{entity.Spec.SqlServerName}' not found.");
@@ -40,7 +40,7 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1DatabaseUser>.Success(entity);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
         }
         catch (Exception ex)
         {
@@ -51,14 +51,14 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1DatabaseUser>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex);
         }
     }
 
-    public Task<ReconciliationResult<V1DatabaseUser>> DeletedAsync(V1DatabaseUser entity, CancellationToken cancellationToken)
+    public Task<ReconciliationResult<V1Alpha1DatabaseUser>> DeletedAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServerUser: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1DatabaseUser>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)

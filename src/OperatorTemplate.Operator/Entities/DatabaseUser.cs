@@ -7,11 +7,11 @@ using KubeOps.Abstractions.Entities.Attributes;
 namespace SqlServerOperator.Entities;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServerUser")]
-public class V1DatabaseUser : CustomKubernetesEntity<V1DatabaseUser.UserSpec, V1DatabaseUser.UserStatus>
+public class V1Alpha1DatabaseUser : CustomKubernetesEntity<V1Alpha1DatabaseUser.V1Alpha1DatabaseUserSpec, V1Alpha1DatabaseUser.V1Alpha1DatabaseUserStatus>
 {
 
     [Description("Spec of the database user.")]
-    public class UserSpec
+    public class V1Alpha1DatabaseUserSpec
     {
         [Description("The name of the SQL Server instance.")]
         public string SqlServerName { get; set; } = string.Empty;
@@ -27,7 +27,7 @@ public class V1DatabaseUser : CustomKubernetesEntity<V1DatabaseUser.UserSpec, V1
     }
 
     [Description("Status of the database user.")]
-    public class UserStatus
+    public class V1Alpha1DatabaseUserStatus
     {
         [Description("The current state of the database user.")]
         public string State { get; set; } = "Pending";

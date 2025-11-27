@@ -11,15 +11,15 @@ using System.Text;
 
 namespace SqlServerOperator.Controllers;
 
-[EntityRbac(typeof(V1SQLServerDatabase), Verbs = RbacVerb.All)]
+[EntityRbac(typeof(V1Alpha1SQLServerDatabase), Verbs = RbacVerb.All)]
 public class SQLServerDatabaseController(
     ILogger<SQLServerDatabaseController> logger,
     IKubernetesClient kubernetesClient,
     DefaultMssqlConfig config,
     SqlServerEndpointService sqlServerEndpointService) 
-    : IEntityController<V1SQLServerDatabase>
+    : IEntityController<V1Alpha1SQLServerDatabase>
 {
-    public async Task<ReconciliationResult<V1SQLServerDatabase>> ReconcileAsync(V1SQLServerDatabase entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> ReconcileAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Reconciling SQLServerDatabase: {Name}", entity.Metadata.Name);
 
@@ -29,27 +29,27 @@ public class SQLServerDatabaseController(
             var (server, username, password) = await GetSqlServerCredentialsAsync(entity, secretName);
             await EnsureDatabaseExistsAsync(entity.Spec.DatabaseName, server, username, password);
             await UpdateStatusAsync(entity, "Ready", "Database ensured.", DateTime.UtcNow);
-            return ReconciliationResult<V1SQLServerDatabase>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during reconciliation of SQLServerDatabase: {Name}", entity.Metadata.Name);
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow);
-            return ReconciliationResult<V1SQLServerDatabase>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Failure(entity, ex.Message, ex);
         }
     }
 
-    public Task<ReconciliationResult<V1SQLServerDatabase>> DeletedAsync(V1SQLServerDatabase entity, CancellationToken cancellationToken)
+    public Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> DeletedAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServerDatabase: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1SQLServerDatabase>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity));
     }
 
-    private async Task<string> DetermineSecretNameAsync(V1SQLServerDatabase entity)
+    private async Task<string> DetermineSecretNameAsync(V1Alpha1SQLServerDatabase entity)
     {
         var instanceName = entity.Spec.InstanceName;
         var namespaceName = entity.Metadata.NamespaceProperty;
-        var sqlServer = await kubernetesClient.GetAsync<V1SQLServer>(instanceName, namespaceName);
+        var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(instanceName, namespaceName);
 
         if (sqlServer is null)
         {
@@ -59,7 +59,7 @@ public class SQLServerDatabaseController(
         return sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
     }
 
-    private async Task<(string server, string username, string password)> GetSqlServerCredentialsAsync(V1SQLServerDatabase entity, string secretName)
+    private async Task<(string server, string username, string password)> GetSqlServerCredentialsAsync(V1Alpha1SQLServerDatabase entity, string secretName)
     {
         var namespaceName = entity.Metadata.NamespaceProperty;
         var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
@@ -111,9 +111,9 @@ public class SQLServerDatabaseController(
         }
     }
 
-    private async Task UpdateStatusAsync(V1SQLServerDatabase entity, string state, string message, DateTime? lastChecked)
+    private async Task UpdateStatusAsync(V1Alpha1SQLServerDatabase entity, string state, string message, DateTime? lastChecked)
     {
-        entity.Status ??= new V1SQLServerDatabase.V1SQLServerDatabaseStatus();
+        entity.Status ??= new V1Alpha1SQLServerDatabase.V1Alpha1SQLServerDatabaseStatus();
         entity.Status.State = state;
         entity.Status.Message = message;
         entity.Status.LastChecked = lastChecked;

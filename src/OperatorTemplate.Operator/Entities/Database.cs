@@ -6,11 +6,11 @@ using KubeOps.Abstractions.Entities.Attributes;
 namespace SqlServerOperator.Entities;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "Database")]
-public class V1SQLServerDatabase : CustomKubernetesEntity<V1SQLServerDatabase.V1SQLServerDatabaseSpec, V1SQLServerDatabase.V1SQLServerDatabaseStatus>
+public class V1Alpha1SQLServerDatabase : CustomKubernetesEntity<V1Alpha1SQLServerDatabase.V1Alpha1SQLServerDatabaseSpec, V1Alpha1SQLServerDatabase.V1Alpha1SQLServerDatabaseStatus>
 {
 
     [Description("Spec of the SQL Server database.")]
-    public class V1SQLServerDatabaseSpec
+    public class V1Alpha1SQLServerDatabaseSpec
     {
         [Description("The name of the SQL Server instance where the database will be created.")]
         public string InstanceName { get; set; } = string.Empty;
@@ -20,7 +20,7 @@ public class V1SQLServerDatabase : CustomKubernetesEntity<V1SQLServerDatabase.V1
     }
 
     [Description("Status of the SQL Server database.")]
-    public class V1SQLServerDatabaseStatus
+    public class V1Alpha1SQLServerDatabaseStatus
     {
         [Description("The current state of the database.")]
         public string State { get; set; } = "Pending";

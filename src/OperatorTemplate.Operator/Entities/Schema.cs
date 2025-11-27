@@ -5,10 +5,10 @@ using KubeOps.Abstractions.Entities.Attributes;
 namespace SqlServerOperator.Entities;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServerSchema")]
-public class V1SQLServerSchema : CustomKubernetesEntity<V1SQLServerSchema.V1SQLServerSchemaSpec, V1SQLServerSchema.V1SQLServerSchemaStatus>
+public class V1Alpha1SQLServerSchema : CustomKubernetesEntity<V1Alpha1SQLServerSchema.V1Alpha1SQLServerSchemaSpec, V1Alpha1SQLServerSchema.V1Alpha1SQLServerSchemaStatus>
 {
     [Description("Spec of the SQL Server database schema.")]
-    public class V1SQLServerSchemaSpec
+    public class V1Alpha1SQLServerSchemaSpec
     {
         [Description("The SQL Server instance name where the schema will be created.")]
         public string InstanceName { get; set; } = string.Empty;
@@ -24,7 +24,7 @@ public class V1SQLServerSchema : CustomKubernetesEntity<V1SQLServerSchema.V1SQLS
     }
 
     [Description("Status of the SQL Server database schema.")]
-    public class V1SQLServerSchemaStatus
+    public class V1Alpha1SQLServerSchemaStatus
     {
         [Description("The current state of the schema.")]
         public string State { get; set; } = "Pending";
