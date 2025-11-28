@@ -31,8 +31,8 @@ tasks:
     - rm -rf ./config || true
     - mkdir ./config
     - dotnet clean
-    - dotnet build
-    - rm -rf ./Dockerfile || true
+    - dotnet build -c Release
+    - rm -rf ./config/Dockerfile || true
     desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
 
   copy-to-helm:
@@ -40,8 +40,7 @@ tasks:
     dir: .
     cmds:
     - mkdir -p ./dev/dev-helm-chart/crds
-    - rsync -av --exclude='kustomization.yaml' ./src/OperatorTemplate.Operator/config/crds/ ./dev/dev-helm-chart/crds/
-
+    - find ./src/OperatorTemplate.Operator/config -type f -name "*dotkube_io*" -exec cp {} ./dev/dev-helm-chart/crds/ \;
 
     desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
 
