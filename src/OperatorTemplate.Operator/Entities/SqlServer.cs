@@ -11,8 +11,8 @@ public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alph
     [Description("Spec of the SQL Server deployment.")]
     public class V1Alpha1SQLServerSpec
     {
-        [Description("The version of SQL Server to deploy.")]
-        public string Version { get; set; } = "2022";
+        [Description("The container image to use for SQL Server.")]
+        public string Image { get; set; } = "mcr.microsoft.com/mssql/server:2025-latest";
 
         [Description("The name of the storage class to use for SQL Server storage.")]
         public string StorageClass { get; set; } = "standard";
@@ -25,9 +25,6 @@ public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alph
 
         [Description("The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).")]
         public string? ServiceType { get; set; } = "None";
-
-        [Description("Specifies whether full-text search is enabled in SQL Server.")]
-        public bool EnableFullTextSearch { get; set; } = false;
     }
 
     [Description("Status of the SQL Server deployment.")]
