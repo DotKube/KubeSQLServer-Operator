@@ -105,8 +105,8 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 
 - Manage existing SQL Server instances
 - CLI Tooling
-✅ - Helm Chart in a public repo
-🚧 - Documentation Site
+- ✅ Helm Chart in a public repo
+- 🚧 Documentation Site
 - Data API Integration
 - Testing Strategies
 
