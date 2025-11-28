@@ -5,8 +5,6 @@ using SqlServerOperator.Controllers.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-builder.Services.AddSingleton<SqlServerImages>();
 builder.Services.AddSingleton<DefaultMssqlConfig>();
 builder.Services.AddSingleton<SqlServerEndpointService>();
 

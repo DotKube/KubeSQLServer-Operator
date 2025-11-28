@@ -45,12 +45,11 @@ metadata:
   name: sqlserver-instance
   namespace: sqlserver-example
 spec:
-  version: "2022"
+  image: "mcr.microsoft.com/mssql/server:2022-latest"
   storageClass: "standard"
   storageSize: "6Gi"
   secretName: "sqlserver-secret"
   serviceType: "NodePort"
-  enableFullTextSearch: true
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1

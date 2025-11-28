@@ -13,7 +13,7 @@ using System.Security.Cryptography;
 namespace SqlServerOperator.Controllers;
 
 [EntityRbac(typeof(V1Alpha1SQLServer), Verbs = RbacVerb.All)]
-public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config, SqlServerImages sqlServerImages) : IEntityController<V1Alpha1SQLServer>
+public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config) : IEntityController<V1Alpha1SQLServer>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServer>> ReconcileAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
@@ -56,9 +56,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
     private async Task EnsureStatefulSetAsync(V1Alpha1SQLServer entity)
     {
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
-
-
-        var sqlServerImage = sqlServerImages.UbuntuBasedImage(entity.Spec.Version, entity.Spec.EnableFullTextSearch);
+        var sqlServerImage = entity.Spec.Image;
 
         var statefulSet = new StatefulSetBuilder()
             .WithMetadata(statefulSetName, entity.Metadata.NamespaceProperty, new Dictionary<string, string> { { "app", entity.Metadata.Name } })
@@ -84,7 +82,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
                     {
                         SecurityContext = new V1PodSecurityContext
                         {
-                            FsGroup = 0,
+                            FsGroup = 10001,
                             RunAsGroup = 0,
                             RunAsUser = 10001
                         },
