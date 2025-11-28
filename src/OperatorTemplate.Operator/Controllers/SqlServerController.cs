@@ -82,7 +82,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
                     {
                         SecurityContext = new V1PodSecurityContext
                         {
-                            FsGroup = 0,
+                            FsGroup = 10001,
                             RunAsGroup = 0,
                             RunAsUser = 10001
                         },

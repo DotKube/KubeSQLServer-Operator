@@ -12,7 +12,7 @@ public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alph
     public class V1Alpha1SQLServerSpec
     {
         [Description("The container image to use for SQL Server.")]
-        public string Image { get; set; } = "mcr.microsoft.com/mssql/server:2025-latest";
+        public string Image { get; set; } = "mcr.microsoft.com/mssql/server:2022-latest";
 
         [Description("The name of the storage class to use for SQL Server storage.")]
         public string StorageClass { get; set; } = "standard";

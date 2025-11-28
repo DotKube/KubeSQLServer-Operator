@@ -45,7 +45,7 @@ metadata:
   name: sqlserver-instance
   namespace: sqlserver-example
 spec:
-  image: "mcr.microsoft.com/mssql/server:2025-latest"
+  image: "mcr.microsoft.com/mssql/server:2022-latest"
   storageClass: "standard"
   storageSize: "6Gi"
   secretName: "sqlserver-secret"
