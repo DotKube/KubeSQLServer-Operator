@@ -6,6 +6,8 @@ tasks:
     cmds:
     - kind delete cluster --name sql-server-testing-cluster
     - kind create cluster --config ./kind-config.yaml
+    - docker pull mcr.microsoft.com/mssql/server:2022-latest
+    - kind load docker-image mcr.microsoft.com/mssql/server:2022-latest --name sql-server-testing-cluster
     - task: create-registry
     - bash ./scripts/configure-registry-with-kind.sh
 
