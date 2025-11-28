@@ -88,8 +88,6 @@ tasks:
 
   quick-dev:
     cmds:
-    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu-fts
-    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu
     - task: dev:local-cluster:delete
     - task: dev:local-cluster:create
     - | 
@@ -99,8 +97,6 @@ tasks:
       else
         echo "External IP with LoadBalancer is not enabled."
       fi
-    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
-    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu
     - task: create-crds-and-copy
     - task: dev:helm-chart:apply-crds-from-helm-chart
     - task: dev:local-cluster:apply-crd-instance
