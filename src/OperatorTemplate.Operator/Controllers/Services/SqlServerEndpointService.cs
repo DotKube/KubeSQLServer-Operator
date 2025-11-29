@@ -1,5 +1,6 @@
 using k8s.Models;
 using KubeOps.KubernetesClient;
+using SqlServerOperator.Entities;
 
 namespace SqlServerOperator.Controllers.Services;
 
@@ -8,7 +9,23 @@ public class SqlServerEndpointService(
     IKubernetesClient kubernetesClient,
     IWebHostEnvironment environment)
 {
+    /// <summary>
+    /// Gets the SQL Server endpoint, checking both internal SQLServer and ExternalSQLServer resources.
+    /// </summary>
     public async Task<string> GetSqlServerEndpointAsync(string instanceName, string namespaceName)
+    {
+        // First, try to find an ExternalSQLServer
+        var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(instanceName, namespaceName);
+        if (externalServer != null)
+        {
+            return $"{externalServer.Spec.Host},{externalServer.Spec.Port}";
+        }
+
+        // Fall back to internal SQLServer
+        return await GetInternalSqlServerEndpointAsync(instanceName, namespaceName);
+    }
+
+    private async Task<string> GetInternalSqlServerEndpointAsync(string instanceName, string namespaceName)
     {
         var serviceType = await GetServiceTypeAsync(instanceName, namespaceName);
 

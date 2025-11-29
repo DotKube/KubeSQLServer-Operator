@@ -10,7 +10,7 @@ public class V1Alpha1SQLServerSchema : CustomKubernetesEntity<V1Alpha1SQLServerS
     [Description("Spec of the SQL Server database schema.")]
     public class V1Alpha1SQLServerSchemaSpec
     {
-        [Description("The SQL Server instance name where the schema will be created.")]
+        [Description("The name of the SQLServer or ExternalSQLServer instance where the schema will be created.")]
         public string InstanceName { get; set; } = string.Empty;
 
         [Description("The name of the database to create the schema in.")]
