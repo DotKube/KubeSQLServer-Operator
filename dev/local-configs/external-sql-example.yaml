@@ -1,0 +1,91 @@
+---
+# Example: Managing an External SQL Server (Docker/Podman container)
+# This example shows how to use the operator to manage databases, schemas, logins, and users
+# on SQL Server instances running in Docker/Podman containers outside of the Kubernetes cluster.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-sql-example
+
+---
+# Secret containing credentials for the external SQL Server
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-sql-secret
+  namespace: external-sql-example
+type: Opaque
+stringData:
+  username: sa
+  password: YourStrongPassword123!
+
+---
+# Define an external SQL Server connection pointing to a Docker/Podman container
+# Using host.containers.internal to access containers on the host from within Kind
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: ExternalSQLServer
+metadata:
+  name: docker-sql-server
+  namespace: external-sql-example
+spec:
+  host: host.docker.internal  # Docker Desktop / host.containers.internal for Podman
+  port: 1433
+  secretName: external-sql-secret
+  useEncryption: false
+  trustServerCertificate: true
+
+---
+# Now you can create databases, schemas, logins, and users on the external SQL Server
+# using the same CRDs, just reference the ExternalSQLServer name as the instanceName
+
+# Create a database on the Docker container SQL Server
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: Database
+metadata:
+  name: external-app-database
+  namespace: external-sql-example
+spec:
+  instanceName: docker-sql-server  # References the ExternalSQLServer
+  databaseName: ExternalAppDB
+
+---
+# Create a login on the external SQL Server
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: external-app-login
+  namespace: external-sql-example
+spec:
+  sqlServerName: docker-sql-server
+  loginName: externaluser
+  authenticationType: SQL
+  secretName: external-sql-secret
+
+---
+# Create a user in the database
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: external-app-user
+  namespace: external-sql-example
+spec:
+  sqlServerName: docker-sql-server
+  databaseName: ExternalAppDB
+  loginName: externaluser
+  roles:
+    - db_datareader
+    - db_datawriter
+
+---
+# Create a schema
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: external-app-schema
+  namespace: external-sql-example
+spec:
+  instanceName: docker-sql-server
+  databaseName: ExternalAppDB
+  schemaName: Application
+  schemaOwner: externaluser
