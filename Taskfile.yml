@@ -4,7 +4,6 @@ vars:
   USE_EXTERNAL_IP_WITH_LB: false
 
 includes:
-
   dev:
     taskfile: ./dev/Taskfile.yaml
     dir: ./dev
@@ -13,7 +12,6 @@ includes:
     taskfile: ./deploy/chart/kubesqlserver-operator/Taskfile.yaml
     dir: ./deploy/chart/kubesqlserver-operator
 
-  
   doc-site:
     taskfile: ./docs-site/Taskfile.yaml
     dir: ./docs-site
@@ -21,108 +19,105 @@ includes:
 tasks:
   default:
     cmds:
-    - task --list-all
+      - task --list-all
     desc: "List all available tasks in this Taskfile."
 
   create-crd-files:
     internal: true
     dir: ./src/OperatorTemplate.Operator
     cmds:
-    - rm -rf ./config || true
-    - mkdir ./config
-    - dotnet clean
-    - dotnet build -c Release
-    - rm -rf ./config/Dockerfile || true
+      - rm -rf ./config || true
+      - mkdir ./config
+      - dotnet clean
+      - dotnet build -c Release
+      - rm -rf ./config/Dockerfile || true
     desc: "Internal task: Generate a fresh configuration for the OperatorTemplate.Operator by cleaning and rebuilding the project."
 
   copy-to-helm:
     internal: true
     dir: .
     cmds:
-    - mkdir -p ./dev/dev-helm-chart/crds
-    - find ./src/OperatorTemplate.Operator/config -type f -name "*dotkube_io*" -exec cp {} ./dev/dev-helm-chart/crds/ \;
+      - mkdir -p ./dev/dev-helm-chart/crds
+      - find ./src/OperatorTemplate.Operator/config -type f -name "*dotkube_io*" -exec cp {} ./dev/dev-helm-chart/crds/ \;
 
     desc: "Internal task: Copy configuration and CRD files to the Helm chart directories."
 
   create-crds-and-copy:
     cmds:
-    - task: create-crd-files
-    - task: copy-to-helm
+      - task: create-crd-files
+      - task: copy-to-helm
     desc: "Create the Custom Resource Definitions (CRDs) for the OperatorTemplate.Operator and copy them to the Helm chart directories."
 
   build-operator-image:
     cmds:
-    - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
-    - docker tag operator-template:latest localhost:5000/operator-template:latest
-    - docker push localhost:5000/operator-template:latest
+      - docker build -t operator-template:latest -f ./src/OperatorTemplate.Operator/Containerfile .
+      - docker tag operator-template:latest localhost:5000/operator-template:latest
+      - docker push localhost:5000/operator-template:latest
 
     desc: "Build the Docker image for the OperatorTemplate.Operator."
 
   dev:
     dir: ./src/OperatorTemplate.AppHost
     cmds:
-    - dotnet watch
+      - dotnet watch
     desc: "Start the development environment for the OperatorTemplate.AppHost with live file watching enabled."
 
   quick-deploy:
     cmds:
-    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu-fts
-    - docker pull ghcr.io/dotkube/sql-server:22-ubuntu
-    - task: dev:local-cluster:create-registry
-    - task: dev:local-cluster:delete
-    - task: dev:local-cluster:create
-    - | 
-      if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
-        echo "External IP with LoadBalancer is enabled."
-        task dev:local-cluster:add-metallb
-      else
-        echo "External IP with LoadBalancer is not enabled."
-      fi
-    - task: create-crds-and-copy
-    - task: build-operator-image
-    - task dev:local-cluster:loadimage -- localhost:5000/operator-template:latest
-    - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
-    - task: dev:helm-chart:install-helm-chart
-    - task: dev:local-cluster:apply-crd-instance
+      - docker pull ghcr.io/dotkube/sql-server:22-ubuntu-fts
+      - docker pull ghcr.io/dotkube/sql-server:22-ubuntu
+      - task: dev:local-cluster:create-registry
+      - task: dev:local-cluster:delete
+      - task: dev:local-cluster:create
+      - |
+        if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
+          echo "External IP with LoadBalancer is enabled."
+          task dev:local-cluster:add-metallb
+        else
+          echo "External IP with LoadBalancer is not enabled."
+        fi
+      - task: create-crds-and-copy
+      - task: build-operator-image
+      - task dev:local-cluster:loadimage -- localhost:5000/operator-template:latest
+      - task dev:local-cluster:loadimage -- ghcr.io/dotkube/sql-server:22-ubuntu-fts
+      - task: dev:helm-chart:install-helm-chart
+      - task: dev:local-cluster:apply-crd-instance
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster."
 
   quick-dev:
     cmds:
-    - task: dev:local-cluster:delete
-    - task: dev:local-cluster:create
-    - | 
-      if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
-        echo "External IP with LoadBalancer is enabled."
-        task dev:local-cluster:add-metallb
-      else
-        echo "External IP with LoadBalancer is not enabled."
-      fi
-    - task: create-crds-and-copy
-    - task: dev:helm-chart:apply-crds-from-helm-chart
-    - task: dev:local-cluster:create-external-sql-container
-    - task: dev:local-cluster:apply-crd-instance
-    - task: dev:local-cluster:apply-external-crd-instance
-    - task: dev
+      - task: dev:local-cluster:delete
+      - task: dev:local-cluster:create
+      - |
+        if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
+          echo "External IP with LoadBalancer is enabled."
+          task dev:local-cluster:add-metallb
+        else
+          echo "External IP with LoadBalancer is not enabled."
+        fi
+      - task: create-crds-and-copy
+      - task: dev:helm-chart:apply-crds-from-helm-chart
+      - task: dev:local-cluster:create-external-sql-container
+      - task: dev:local-cluster:apply-crd-instance
+      - task: dev:local-cluster:apply-external-crd-instance
+      - task: dev
 
   quick-dev-tmux:
     cmds:
-    - bash "./dev/local-configs/scripts/tmux-setup.sh"
+      - bash "./dev/local-configs/scripts/tmux-setup.sh"
     desc: "Start the full OperatorTemplate stack in the Kind Kubernetes cluster with a Tmux session."
-  
-
 
   clean:
     cmds:
-    - task: dev:local-cluster:delete
-    - dotnet clean
+      - task: dev:local-cluster:delete
+      - dotnet clean
     desc: "Clean up the Kind Kubernetes cluster."
-
 
   build-release-helm-chart-and-yaml:
     cmds:
-     - task: deployment-helm-chart:clear-out-chart
-     - cp -r ./dev/dev-helm-chart/crds/* ./deploy/chart/kubesqlserver-operator/crds/
-     - cp -r ./dev/dev-helm-chart/templates/* ./deploy/chart/kubesqlserver-operator/templates/
-     - task: deployment-helm-chart:template-output-to-file
-     - cp ./deploy/chart/kubesqlserver-operator/output.yaml ./deploy/yaml/deploy.yaml
-     - task: deployment-helm-chart:template-output-to-file-cleanup
+      - task: deployment-helm-chart:clear-out-chart
+      - cp -r ./dev/dev-helm-chart/crds/* ./deploy/chart/kubesqlserver-operator/crds/
+      - cp -r ./dev/dev-helm-chart/templates/* ./deploy/chart/kubesqlserver-operator/templates/
+      - task: deployment-helm-chart:template-output-to-file
+      - cp ./deploy/chart/kubesqlserver-operator/output.yaml ./deploy/yaml/deploy.yaml
+      - task: deployment-helm-chart:template-output-to-file-cleanup
