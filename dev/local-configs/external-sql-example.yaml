@@ -1,7 +1,7 @@
 ---
 # Example: Managing an External SQL Server (Docker/Podman container)
 # This example shows how to use the operator to manage databases, schemas, logins, and users
-# on SQL Server instances running in Docker/Podman containers outside of the Kubernetes cluster.
+# on SQL Server instances running outside of the Kubernetes cluster.
 
 apiVersion: v1
 kind: Namespace
@@ -29,8 +29,8 @@ metadata:
   name: docker-sql-server
   namespace: external-sql-example
 spec:
-  host: host.docker.internal  # Docker Desktop / host.containers.internal for Podman
-  port: 1433
+  host: host.containers.internal  # host.docker.internal for Docker Desktop / host.containers.internal for Podman
+  port: 1435
   secretName: external-sql-secret
   useEncryption: false
   trustServerCertificate: true
