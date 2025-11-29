@@ -34,7 +34,7 @@ spec:
             description: Spec of the SQL Server database schema.
             properties:
               instanceName:
-                description: The SQL Server instance name where the schema will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created.
                 type: string
               databaseName:
                 description: The name of the database to create the schema in.
