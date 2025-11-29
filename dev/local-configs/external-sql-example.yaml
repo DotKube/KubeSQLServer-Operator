@@ -29,7 +29,7 @@ metadata:
   name: docker-sql-server
   namespace: external-sql-example
 spec:
-  host: host.containers.internal  # host.docker.internal for Docker Desktop / host.containers.internal for Podman
+  host: localhost  # host.docker.internal for Docker Desktop / host.containers.internal for Podman
   port: 1435
   secretName: external-sql-secret
   useEncryption: false
