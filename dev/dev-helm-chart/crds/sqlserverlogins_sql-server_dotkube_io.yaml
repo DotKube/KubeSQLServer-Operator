@@ -34,7 +34,7 @@ spec:
             description: Spec of the SQL Server login.
             properties:
               sqlServerName:
-                description: The name of the SQL Server instance.
+                description: The name of the SQLServer or ExternalSQLServer instance.
                 type: string
               loginName:
                 description: The login name for authentication.

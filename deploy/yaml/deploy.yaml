@@ -36,11 +36,79 @@ spec:
             description: Spec of the SQL Server database.
             properties:
               instanceName:
-                description: The name of the SQL Server instance where the database will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the database will be created.
                 type: string
               databaseName:
                 description: The name of the database to be created.
                 type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+# Source: kubesqlserver-operator/crds/externalsqlservers_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: externalsqlservers.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: ExternalSQLServer
+    listKind: ExternalSQLServerList
+    plural: externalsqlservers
+    singular: externalsqlserver
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the external SQL Server connection.
+            properties:
+              state:
+                description: The current state of the connection.
+                type: string
+              message:
+                description: A message providing details on the current connection status.
+                type: string
+              lastChecked:
+                description: The last time the connection was verified.
+                format: date-time
+                nullable: true
+                type: string
+              isConnected:
+                description: Whether the connection to the external SQL Server is healthy.
+                type: boolean
+            type: object
+          spec:
+            description: Spec of the external SQL Server connection.
+            properties:
+              host:
+                description: The hostname or IP address of the SQL Server instance (e.g., myserver.database.windows.net, 10.0.0.5, mydatabase.rds.amazonaws.com).
+                type: string
+              port:
+                description: The port number for the SQL Server connection.
+                format: int32
+                type: integer
+              secretName:
+                description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'username' and 'password' keys).
+                type: string
+              useEncryption:
+                description: Whether to use SSL/TLS encryption for the connection.
+                type: boolean
+              trustServerCertificate:
+                description: Whether to trust the server certificate (set to true for self-signed certificates).
+                type: boolean
+              additionalConnectionProperties:
+                additionalProperties:
+                  type: string
+                description: Optional connection string parameters as key-value pairs (e.g., for Azure AD authentication, connection timeout, etc.).
+                nullable: true
+                type: object
             type: object
         type: object
     served: true
@@ -85,7 +153,7 @@ spec:
             description: Spec of the SQL Server login.
             properties:
               sqlServerName:
-                description: The name of the SQL Server instance.
+                description: The name of the SQLServer or ExternalSQLServer instance.
                 type: string
               loginName:
                 description: The login name for authentication.
@@ -196,7 +264,7 @@ spec:
             description: Spec of the SQL Server database schema.
             properties:
               instanceName:
-                description: The SQL Server instance name where the schema will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created.
                 type: string
               databaseName:
                 description: The name of the database to create the schema in.
@@ -251,7 +319,7 @@ spec:
             description: Spec of the database user.
             properties:
               sqlServerName:
-                description: The name of the SQL Server instance.
+                description: The name of the SQLServer or ExternalSQLServer instance.
                 type: string
               databaseName:
                 description: The name of the database where this user will be created.

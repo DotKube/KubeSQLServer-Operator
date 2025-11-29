@@ -13,7 +13,7 @@ public class V1Alpha1DatabaseUser : CustomKubernetesEntity<V1Alpha1DatabaseUser.
     [Description("Spec of the database user.")]
     public class V1Alpha1DatabaseUserSpec
     {
-        [Description("The name of the SQL Server instance.")]
+        [Description("The name of the SQLServer or ExternalSQLServer instance.")]
         public string SqlServerName { get; set; } = string.Empty;
 
         [Description("The name of the database where this user will be created.")]
