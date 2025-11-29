@@ -24,13 +24,13 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
         await EnsureStatefulSetAsync(entity);
         await EnsureServiceAsync(entity);
 
-        return ReconciliationResult<V1Alpha1SQLServer>.Success(entity);
+        return ReconciliationResult<V1Alpha1SQLServer>.Success(entity, TimeSpan.FromMinutes(5));
     }
 
     public Task<ReconciliationResult<V1Alpha1SQLServer>> DeletedAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServer: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServer>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServer>.Success(entity, TimeSpan.FromMinutes(5)));
     }
 
     private async Task EnsureConfigMapAsync(V1Alpha1SQLServer entity)

@@ -28,13 +28,13 @@ public class ExternalSQLServerController(
             await VerifyConnectionAsync(connectionString);
             
             await UpdateStatusAsync(entity, "Ready", "Connection verified successfully.", DateTime.UtcNow, true);
-            return ReconciliationResult<V1Alpha1ExternalSQLServer>.Success(entity);
+            return ReconciliationResult<V1Alpha1ExternalSQLServer>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during reconciliation of ExternalSQLServer: {Name}", entity.Metadata.Name);
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow, false);
-            return ReconciliationResult<V1Alpha1ExternalSQLServer>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1ExternalSQLServer>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 

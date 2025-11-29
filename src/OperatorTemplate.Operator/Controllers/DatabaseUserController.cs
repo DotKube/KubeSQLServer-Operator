@@ -52,7 +52,7 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
@@ -63,7 +63,7 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 

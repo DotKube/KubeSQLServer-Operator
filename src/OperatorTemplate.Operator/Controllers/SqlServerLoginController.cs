@@ -26,7 +26,7 @@ public class SQLServerLoginController(
             // Try ExternalSQLServer first
             var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             string secretName;
-            
+
             if (externalServer is not null)
             {
                 secretName = externalServer.Spec.SecretName;
@@ -52,7 +52,7 @@ public class SQLServerLoginController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
@@ -63,7 +63,7 @@ public class SQLServerLoginController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1SQLServerLogin>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 

@@ -29,13 +29,13 @@ public class SQLServerDatabaseController(
             var (server, username, password) = await GetSqlServerCredentialsAsync(entity, secretName);
             await EnsureDatabaseExistsAsync(entity.Spec.DatabaseName, server, username, password);
             await UpdateStatusAsync(entity, "Ready", "Database ensured.", DateTime.UtcNow);
-            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during reconciliation of SQLServerDatabase: {Name}", entity.Metadata.Name);
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow);
-            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 
