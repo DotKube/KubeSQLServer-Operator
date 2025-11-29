@@ -66,14 +66,15 @@ tasks:
 
   create-external-sql-container:
     cmds:
-    - docker run -d --name external-sql-server -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=YourStrongPassword123!' -p 1435:1433 mcr.microsoft.com/mssql/server:2022-latest
+    - docker run -d --name external-sql-server --restart unless-stopped -v external-sql-data:/var/opt/mssql -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=YourStrongPassword123!' -p 1435:1433 mcr.microsoft.com/mssql/server:2022-latest
     desc: "Create a SQL Server container on port 1435 for testing external SQL Server connections."
 
   delete-external-sql-container:
     cmds:
     - docker stop external-sql-server || true
     - docker rm external-sql-server || true
-    desc: "Delete the external SQL Server container."
+    - docker volume rm external-sql-data || true
+    desc: "Delete the external SQL Server container and its volume."
 
   apply-external-crd-instance:
     cmds:

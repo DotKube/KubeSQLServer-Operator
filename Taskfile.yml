@@ -97,6 +97,7 @@ tasks:
         fi
       - task: create-crds-and-copy
       - task: dev:helm-chart:apply-crds-from-helm-chart
+      - task: dev:local-cluster:delete-external-sql-container
       - task: dev:local-cluster:create-external-sql-container
       - task: dev:local-cluster:apply-crd-instance
       - task: dev:local-cluster:apply-external-crd-instance
