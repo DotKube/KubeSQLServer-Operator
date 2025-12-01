@@ -261,7 +261,7 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 
 ### 📋 Planned
 
-- **External Authentication CRD** - Support for managed identities, IAM roles, Entra ID (Azure AD) service principals, and Entra ID users
+- **External User CRD** - CRD for managed identities, IAM roles, Entra ID (Azure AD) service principals, and Entra ID users
 - **CLI Tooling** - Command-line interface for easier operator management and debugging
 - **Data API Integration** - REST API endpoints for database operations
 - **Advanced Testing Strategies** - Comprehensive testing framework and examples
