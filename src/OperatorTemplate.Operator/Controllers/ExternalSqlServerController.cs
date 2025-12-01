@@ -12,7 +12,7 @@ namespace SqlServerOperator.Controllers;
 [EntityRbac(typeof(V1Alpha1ExternalSQLServer), Verbs = RbacVerb.All)]
 public class ExternalSQLServerController(
     ILogger<ExternalSQLServerController> logger,
-    IKubernetesClient kubernetesClient) 
+    IKubernetesClient kubernetesClient)
     : IEntityController<V1Alpha1ExternalSQLServer>
 {
     public async Task<ReconciliationResult<V1Alpha1ExternalSQLServer>> ReconcileAsync(V1Alpha1ExternalSQLServer entity, CancellationToken cancellationToken)
@@ -23,10 +23,10 @@ public class ExternalSQLServerController(
         {
             var (username, password) = await GetCredentialsAsync(entity);
             var connectionString = BuildConnectionString(entity, username, password);
-            
+
             // Verify connection
             await VerifyConnectionAsync(connectionString);
-            
+
             await UpdateStatusAsync(entity, "Ready", "Connection verified successfully.", DateTime.UtcNow, true);
             return ReconciliationResult<V1Alpha1ExternalSQLServer>.Success(entity, TimeSpan.FromMinutes(5));
         }
@@ -89,11 +89,11 @@ public class ExternalSQLServerController(
     {
         using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         // Run a simple query to verify connection
         using var command = new SqlCommand("SELECT @@VERSION", connection);
         var version = await command.ExecuteScalarAsync();
-        
+
         logger.LogInformation("Successfully connected to SQL Server. Version: {Version}", version);
     }
 
@@ -106,7 +106,7 @@ public class ExternalSQLServerController(
         entity.Status.IsConnected = isConnected;
 
         await kubernetesClient.UpdateStatusAsync(entity);
-        logger.LogInformation("Updated status for ExternalSQLServer: {Name} to State: {State}, Message: {Message}", 
+        logger.LogInformation("Updated status for ExternalSQLServer: {Name} to State: {State}, Message: {Message}",
             entity.Metadata.Name, state, message);
     }
 }
