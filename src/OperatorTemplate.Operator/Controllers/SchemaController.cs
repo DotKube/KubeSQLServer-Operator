@@ -23,14 +23,26 @@ public class SQLServerSchemaController(
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
-            if (sqlServer is null)
+            // Try ExternalSQLServer first
+            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+            string secretName;
+            
+            if (externalServer is not null)
             {
-                throw new Exception($"SQLServer instance '{entity.Spec.InstanceName}' not found.");
+                secretName = externalServer.Spec.SecretName;
+            }
+            else
+            {
+                // Fall back to internal SQLServer
+                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+                if (sqlServer is null)
+                {
+                    throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.InstanceName}' not found.");
+                }
+                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             }
 
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
-            var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
             
             await EnsureSchemaExistsAsync(
@@ -47,7 +59,7 @@ public class SQLServerSchemaController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1SQLServerSchema>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerSchema>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
@@ -58,7 +70,7 @@ public class SQLServerSchemaController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1SQLServerSchema>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerSchema>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 

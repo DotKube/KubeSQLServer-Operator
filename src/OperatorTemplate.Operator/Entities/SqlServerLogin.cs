@@ -12,7 +12,7 @@ public class V1Alpha1SQLServerLogin : CustomKubernetesEntity<V1Alpha1SQLServerLo
     [Description("Spec of the SQL Server login.")]
     public class V1Alpha1SQLServerLoginSpec
     {
-        [Description("The name of the SQL Server instance.")]
+        [Description("The name of the SQLServer or ExternalSQLServer instance.")]
         public string SqlServerName { get; set; } = string.Empty;
 
         [Description("The login name for authentication.")]
