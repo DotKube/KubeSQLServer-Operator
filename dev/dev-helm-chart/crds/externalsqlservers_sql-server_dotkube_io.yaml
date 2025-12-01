@@ -44,7 +44,7 @@ spec:
                 format: int32
                 type: integer
               secretName:
-                description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'username' and 'password' keys).
+                description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' keys).
                 type: string
               useEncryption:
                 description: Whether to use SSL/TLS encryption for the connection.
