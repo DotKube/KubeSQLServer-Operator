@@ -103,13 +103,16 @@ public class SQLServerLoginController(
         using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync();
 
-        var commandText = $@"
-        IF NOT EXISTS (SELECT name FROM sys.sql_logins WHERE name = N'{loginName}')
+        var commandText = @"
+        IF NOT EXISTS (SELECT name FROM sys.sql_logins WHERE name = @LoginName)
         BEGIN
-            CREATE LOGIN [{loginName}] WITH PASSWORD = '{password}';
+            DECLARE @sql NVARCHAR(MAX) = N'CREATE LOGIN [' + @LoginName + '] WITH PASSWORD = N''' + @Password + '''';
+            EXEC sp_executesql @sql;
         END";
 
         using var command = new SqlCommand(commandText, connection);
+        command.Parameters.AddWithValue("@LoginName", loginName);
+        command.Parameters.AddWithValue("@Password", password);
         await command.ExecuteNonQueryAsync();
     }
 
