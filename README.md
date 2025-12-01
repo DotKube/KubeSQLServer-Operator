@@ -248,12 +248,26 @@ You're good to go! You should be able to see the effect of the CRDs in your SQL 
 
 Here are the planned features and milestones for KubeSQLServer Operator:
 
-- Manage existing SQL Server instances
-- CLI Tooling
-- ✅ Helm Chart in a public repo
-- 🚧 Documentation Site
-- Data API Integration
-- Testing Strategies
+### ✅ Completed
+
+- **In-Cluster SQL Server Management** - Deploy and manage SQL Server StatefulSets with persistent storage
+- **External SQL Server Support** - Connect to and manage external SQL Server instances (Azure SQL, AWS RDS, on-premises, Docker)
+- **Database Lifecycle Management** - Create and manage databases, schemas, logins, and users
+- **Helm Chart Distribution** - Published to GitHub Container Registry as OCI artifact
+
+### 🚧 In Progress
+
+- **Documentation Site** - Comprehensive documentation using Docusaurus
+
+### 📋 Planned
+
+- **External Authentication CRD** - Support for managed identities, IAM roles, Entra ID (Azure AD) service principals, and Entra ID users
+- **CLI Tooling** - Command-line interface for easier operator management and debugging
+- **Data API Integration** - REST API endpoints for database operations
+- **Advanced Testing Strategies** - Comprehensive testing framework and examples
+- **High Availability** - SQL Server Always On Availability Groups support
+- **Backup and Restore** - Automated backup scheduling and point-in-time recovery
+- **Monitoring and Alerting** - Prometheus metrics and Grafana dashboards
 
 ---
 
