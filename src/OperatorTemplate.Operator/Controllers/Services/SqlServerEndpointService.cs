@@ -73,5 +73,3 @@ public class SqlServerEndpointService(
         return ingress?.Ip ?? ingress?.Hostname;
     }
 }
-
-
