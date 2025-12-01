@@ -1,0 +1,33 @@
+name: Dotnet Format Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Run dotnet format
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+        
+      - name: Check for formatting issues
+        if: failure()
+        run: |
+          echo "❌ Code formatting issues detected!"
+          echo "Please run 'dotnet format' locally and commit the changes."
+          exit 1
