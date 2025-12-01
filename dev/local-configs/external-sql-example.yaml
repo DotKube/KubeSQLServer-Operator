@@ -18,7 +18,7 @@ metadata:
 type: Opaque
 stringData:
   username: sa
-  password: YourStrongPassword123!
+  password: SuperSecretPassword123!
 
 ---
 # Define an external SQL Server connection pointing to a Docker/Podman container
