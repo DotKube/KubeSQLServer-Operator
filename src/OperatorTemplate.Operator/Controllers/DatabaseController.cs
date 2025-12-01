@@ -16,7 +16,7 @@ public class SQLServerDatabaseController(
     ILogger<SQLServerDatabaseController> logger,
     IKubernetesClient kubernetesClient,
     DefaultMssqlConfig config,
-    SqlServerEndpointService sqlServerEndpointService) 
+    SqlServerEndpointService sqlServerEndpointService)
     : IEntityController<V1Alpha1SQLServerDatabase>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> ReconcileAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
@@ -49,7 +49,7 @@ public class SQLServerDatabaseController(
     {
         var instanceName = entity.Spec.InstanceName;
         var namespaceName = entity.Metadata.NamespaceProperty;
-        
+
         // Try ExternalSQLServer first
         var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(instanceName, namespaceName);
         if (externalServer is not null)

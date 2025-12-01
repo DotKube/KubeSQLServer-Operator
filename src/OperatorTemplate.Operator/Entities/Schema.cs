@@ -36,4 +36,3 @@ public class V1Alpha1SQLServerSchema : CustomKubernetesEntity<V1Alpha1SQLServerS
         public DateTime? LastChecked { get; set; }
     }
 }
-
