@@ -106,7 +106,12 @@ public class SQLServerDatabaseController(
             using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
 
-            var commandText = $"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName) CREATE DATABASE [{databaseName}]";
+            var commandText = @"
+            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName)
+            BEGIN
+                DECLARE @sql NVARCHAR(MAX) = N'CREATE DATABASE [' + @DatabaseName + ']';
+                EXEC sp_executesql @sql;
+            END";
             using var command = new SqlCommand(commandText, connection);
             command.Parameters.AddWithValue("@DatabaseName", databaseName);
 

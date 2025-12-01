@@ -109,18 +109,20 @@ public class SQLServerSchemaController(
         using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync();
 
-        var schemaExistsCommandText = $@"
+        var schemaExistsCommandText = @"
             IF NOT EXISTS (
                 SELECT schema_name 
                 FROM information_schema.schemata 
-                WHERE schema_name = @schemaName
+                WHERE schema_name = @SchemaName
             )
             BEGIN
-                EXEC('CREATE SCHEMA [{schemaName}] AUTHORIZATION [{schemaOwner}]');
+                DECLARE @sql NVARCHAR(MAX) = N'CREATE SCHEMA [' + @SchemaName + '] AUTHORIZATION [' + @SchemaOwner + ']';
+                EXEC sp_executesql @sql;
             END";
 
         using var command = new SqlCommand(schemaExistsCommandText, connection);
-        command.Parameters.AddWithValue("@schemaName", schemaName);
+        command.Parameters.AddWithValue("@SchemaName", schemaName);
+        command.Parameters.AddWithValue("@SchemaOwner", schemaOwner);
         await command.ExecuteNonQueryAsync();
     }
 }

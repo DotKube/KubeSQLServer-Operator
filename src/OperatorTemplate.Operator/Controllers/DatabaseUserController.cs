@@ -103,19 +103,23 @@ public class SQLServerUserController(
         using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync();
 
-        var commandText = $@"
-        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = N'{loginName}')
+        var commandText = @"
+        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
         BEGIN
-            CREATE USER [{loginName}] FOR LOGIN [{loginName}];
+            DECLARE @sql NVARCHAR(MAX) = N'CREATE USER [' + @LoginName + '] FOR LOGIN [' + @LoginName + ']';
+            EXEC sp_executesql @sql;
         END";
 
         using var command = new SqlCommand(commandText, connection);
+        command.Parameters.AddWithValue("@LoginName", loginName);
         await command.ExecuteNonQueryAsync();
 
         foreach (var role in roles)
         {
-            var roleCommandText = $@"EXEC sp_addrolemember N'{role}', N'{loginName}';";
-            using var roleCommand = new SqlCommand(roleCommandText, connection);
+            using var roleCommand = new SqlCommand("sp_addrolemember", connection);
+            roleCommand.CommandType = System.Data.CommandType.StoredProcedure;
+            roleCommand.Parameters.AddWithValue("@rolename", role);
+            roleCommand.Parameters.AddWithValue("@membername", loginName);
             await roleCommand.ExecuteNonQueryAsync();
         }
     }
