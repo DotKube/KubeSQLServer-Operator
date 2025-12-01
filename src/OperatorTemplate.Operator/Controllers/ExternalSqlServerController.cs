@@ -49,12 +49,12 @@ public class ExternalSQLServerController(
         var namespaceName = entity.Metadata.NamespaceProperty;
         var secret = await kubernetesClient.GetAsync<V1Secret>(entity.Spec.SecretName, namespaceName);
 
-        if (secret?.Data is null || !secret.Data.ContainsKey("username") || !secret.Data.ContainsKey("password"))
+        if (secret?.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{entity.Spec.SecretName}' does not contain required 'username' and 'password' keys.");
         }
 
-        var username = Encoding.UTF8.GetString(secret.Data["username"]);
+        var username = secret.Data.ContainsKey("username") ? Encoding.UTF8.GetString(secret.Data["username"]) : "sa";
         var password = Encoding.UTF8.GetString(secret.Data["password"]);
 
         return (username, password);
