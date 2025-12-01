@@ -123,3 +123,10 @@ tasks:
       - task: deployment-helm-chart:template-output-to-file
       - cp ./deploy/chart/kubesqlserver-operator/output.yaml ./deploy/yaml/deploy.yaml
       - task: deployment-helm-chart:template-output-to-file-cleanup
+
+
+
+  format:
+    cmds:
+      - dotnet format
+    desc: "Format the code using dotnet format."

@@ -26,7 +26,7 @@ public class SQLServerSchemaController(
             // Try ExternalSQLServer first
             var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
             string secretName;
-            
+
             if (externalServer is not null)
             {
                 secretName = externalServer.Spec.SecretName;
@@ -44,13 +44,13 @@ public class SQLServerSchemaController(
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            
+
             await EnsureSchemaExistsAsync(
-                entity.Spec.DatabaseName, 
-                entity.Spec.SchemaName, 
-                entity.Spec.SchemaOwner, 
-                server, 
-                username, 
+                entity.Spec.DatabaseName,
+                entity.Spec.SchemaName,
+                entity.Spec.SchemaOwner,
+                server,
+                username,
                 password);
 
             entity.Status ??= new();

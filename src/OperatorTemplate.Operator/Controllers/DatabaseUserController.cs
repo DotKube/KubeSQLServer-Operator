@@ -26,7 +26,7 @@ public class SQLServerUserController(
             // Try ExternalSQLServer first
             var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             string secretName;
-            
+
             if (externalServer is not null)
             {
                 secretName = externalServer.Spec.SecretName;
