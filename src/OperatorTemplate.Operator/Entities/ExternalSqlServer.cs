@@ -16,7 +16,7 @@ public class V1Alpha1ExternalSQLServer : CustomKubernetesEntity<V1Alpha1External
         [Description("The port number for the SQL Server connection.")]
         public int Port { get; set; } = 1433;
 
-        [Description("The name of the Kubernetes secret containing SQL Server credentials (must contain 'username' and 'password' keys).")]
+        [Description("The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' keys).")]
         public string SecretName { get; set; } = string.Empty;
 
         [Description("Whether to use SSL/TLS encryption for the connection.")]
