@@ -359,6 +359,7 @@ rules:
   - sql-server.dotkube.io
   resources:
   - sqlservers
+  - externalsqlservers
   - databases
   - sqlserverlogins
   - sqlserverusers
@@ -377,6 +378,7 @@ rules:
   - sql-server.dotkube.io
   resources:
   - sqlservers/status
+  - externalsqlservers/status
   - databases/status
   - sqlserverlogins/status
   - sqlserverusers/status
