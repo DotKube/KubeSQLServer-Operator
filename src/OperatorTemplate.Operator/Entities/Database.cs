@@ -17,6 +17,9 @@ public class V1Alpha1SQLServerDatabase : CustomKubernetesEntity<V1Alpha1SQLServe
 
         [Description("The name of the database to be created.")]
         public string DatabaseName { get; set; } = string.Empty;
+        
+        [Description("Policy that controls what happens to the physical database when the CR is deleted. Either 'Retain' or 'Delete'. Default: 'Retain'.")]
+        public string DatabaseReclaimPolicy { get; set; } = "Retain";
     }
 
     [Description("Status of the SQL Server database.")]
