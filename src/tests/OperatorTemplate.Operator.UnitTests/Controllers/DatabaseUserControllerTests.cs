@@ -58,14 +58,14 @@ public class DatabaseUserControllerTests
         Assert.NotNull(result);
         Assert.Equal("Ready", entity.Status?.State);
         Assert.Equal("Database user ensured.", entity.Status?.Message);
-        
+
         // Verify user creation
         _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
             It.IsAny<string>(),
             It.Is<string>(cmd => cmd.Contains("CREATE USER")),
             It.Is<Dictionary<string, object>>(p => p.ContainsKey("@LoginName"))),
             Times.Once);
-        
+
         // Verify role assignment (should be called once per role)
         _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
             It.IsAny<string>(),

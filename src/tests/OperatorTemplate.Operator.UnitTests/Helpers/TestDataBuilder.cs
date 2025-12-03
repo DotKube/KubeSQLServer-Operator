@@ -83,10 +83,10 @@ public static class TestDataBuilder
     }
 
     public static V1Alpha1DatabaseUser CreateDatabaseUser(
-        string name = "test-user", 
+        string name = "test-user",
         string loginName = "testuser",
         string databaseName = "TestDB",
-        string sqlServerName = "test-sqlserver", 
+        string sqlServerName = "test-sqlserver",
         string namespaceName = "default")
     {
         return new V1Alpha1DatabaseUser

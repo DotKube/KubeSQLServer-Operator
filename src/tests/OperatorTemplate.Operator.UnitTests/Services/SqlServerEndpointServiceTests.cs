@@ -23,7 +23,7 @@ public class SqlServerEndpointServiceTests
         _mockLogger = new Mock<ILogger<SqlServerEndpointService>>();
         _mockK8sClient = new Mock<IKubernetesClient>();
         _mockEnvironment = new Mock<IWebHostEnvironment>();
-        
+
         _service = new SqlServerEndpointService(_mockLogger.Object, _mockK8sClient.Object, _mockEnvironment.Object);
     }
 
