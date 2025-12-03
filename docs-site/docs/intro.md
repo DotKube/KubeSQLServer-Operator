@@ -2,46 +2,41 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Introduction
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Welcome to the **KubeSQLServer Operator** documentation!
 
-## Getting Started
+KubeSQLServer Operator is a completely free and open-source (MIT licensed) Kubernetes operator designed to help you run and manage Microsoft SQL Server seamlessly in Kubernetes.
 
-Get started by **creating a new site**.
+## What is KubeSQLServer Operator?
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+KubeSQLServer Operator automates the deployment, configuration, and management of SQL Server instances in Kubernetes clusters. Whether you need to run SQL Server inside your cluster or manage external SQL Server instances, this operator has you covered.
 
-### What you'll need
+## Key Features
 
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+- 🚀 **In-Cluster SQL Server** - Deploy SQL Server as StatefulSets with persistent storage
+- 🔗 **External SQL Server Support** - Manage external instances (Azure SQL, AWS RDS, on-premises)
+- 🗄️ **Database Management** - Declaratively manage databases, schemas, logins, and users
+- 📦 **Helm Distribution** - Easy installation via Helm charts
+- 🔓 **Completely Free** - MIT licensed, no restrictions
 
-## Generate a new site
+## Intended Use
 
-Generate a new Docusaurus site using the **classic template**.
+**⚠️ This operator is designed for development, QA, and local testing environments only.**
 
-The classic template will automatically be added to your project after you run the command:
+It is **NOT intended for production use**. For production workloads, consider:
 
-```bash
-npm init docusaurus@latest my-website classic
-```
+- Managed database services (Azure SQL, AWS RDS)
+- Enterprise-grade database operators
+- SQL Server Always On Availability Groups
+- Professional database administration
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+## Why Use This Operator?
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+This project is an open-source alternative to commercial SQL Server operators for non-production environments. It provides:
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+- Declarative database management using Kubernetes CRDs
+- Automated database provisioning and user management
+- Support for both in-cluster and external SQL Server instances
+- Easy setup for development and testing workflows
+- Clean resource cleanup with finalizers
