@@ -14,7 +14,8 @@ namespace SqlServerOperator.Controllers;
 public class SQLServerLoginController(
     ILogger<SQLServerLoginController> logger,
     IKubernetesClient kubernetesClient,
-    SqlServerEndpointService sqlServerEndpointService
+    ISqlServerEndpointService sqlServerEndpointService,
+    ISqlExecutor sqlExecutor
 ) : IEntityController<V1Alpha1SQLServerLogin>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerLogin>> ReconcileAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
@@ -100,9 +101,6 @@ public class SQLServerLoginController(
             Encrypt = false,
         };
 
-        using var connection = new SqlConnection(builder.ConnectionString);
-        await connection.OpenAsync();
-
         var commandText = @"
         IF NOT EXISTS (SELECT name FROM sys.sql_logins WHERE name = @LoginName)
         BEGIN
@@ -110,10 +108,13 @@ public class SQLServerLoginController(
             EXEC sp_executesql @sql;
         END";
 
-        using var command = new SqlCommand(commandText, connection);
-        command.Parameters.AddWithValue("@LoginName", loginName);
-        command.Parameters.AddWithValue("@Password", password);
-        await command.ExecuteNonQueryAsync();
+        var parameters = new Dictionary<string, object>
+        {
+            ["@LoginName"] = loginName,
+            ["@Password"] = password
+        };
+
+        await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, commandText, parameters);
     }
 
 

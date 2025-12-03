@@ -4,6 +4,7 @@ using KubeOps.Abstractions.Reconciliation;
 using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
+using SqlServerOperator.Controllers.Services;
 using SqlServerOperator.Entities;
 using System.Text;
 
@@ -12,7 +13,8 @@ namespace SqlServerOperator.Controllers;
 [EntityRbac(typeof(V1Alpha1ExternalSQLServer), Verbs = RbacVerb.All)]
 public class ExternalSQLServerController(
     ILogger<ExternalSQLServerController> logger,
-    IKubernetesClient kubernetesClient)
+    IKubernetesClient kubernetesClient,
+    ISqlExecutor sqlExecutor)
     : IEntityController<V1Alpha1ExternalSQLServer>
 {
     public async Task<ReconciliationResult<V1Alpha1ExternalSQLServer>> ReconcileAsync(V1Alpha1ExternalSQLServer entity, CancellationToken cancellationToken)
@@ -87,13 +89,7 @@ public class ExternalSQLServerController(
 
     private async Task VerifyConnectionAsync(string connectionString)
     {
-        using var connection = new SqlConnection(connectionString);
-        await connection.OpenAsync();
-
-        // Run a simple query to verify connection
-        using var command = new SqlCommand("SELECT @@VERSION", connection);
-        var version = await command.ExecuteScalarAsync();
-
+        var version = await sqlExecutor.ExecuteScalarAsync<string>(connectionString, "SELECT @@VERSION");
         logger.LogInformation("Successfully connected to SQL Server. Version: {Version}", version);
     }
 

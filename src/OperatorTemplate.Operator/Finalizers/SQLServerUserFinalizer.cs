@@ -12,7 +12,7 @@ namespace SqlServerOperator.Finalizers;
 public class SQLServerUserFinalizer(
     ILogger<SQLServerUserFinalizer> logger,
     IKubernetesClient kubernetesClient,
-    SqlServerEndpointService sqlServerEndpointService
+    ISqlServerEndpointService sqlServerEndpointService
 ) : IEntityFinalizer<V1Alpha1DatabaseUser>
 {
     public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> FinalizeAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)

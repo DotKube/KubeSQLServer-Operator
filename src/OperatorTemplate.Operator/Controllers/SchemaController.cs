@@ -14,7 +14,8 @@ namespace SqlServerOperator.Controllers;
 public class SQLServerSchemaController(
     ILogger<SQLServerSchemaController> logger,
     IKubernetesClient kubernetesClient,
-    SqlServerEndpointService sqlServerEndpointService
+    ISqlServerEndpointService sqlServerEndpointService,
+    ISqlExecutor sqlExecutor
 ) : IEntityController<V1Alpha1SQLServerSchema>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerSchema>> ReconcileAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
@@ -106,9 +107,6 @@ public class SQLServerSchemaController(
             Encrypt = false,
         };
 
-        using var connection = new SqlConnection(builder.ConnectionString);
-        await connection.OpenAsync();
-
         var schemaExistsCommandText = @"
             IF NOT EXISTS (
                 SELECT schema_name 
@@ -120,9 +118,12 @@ public class SQLServerSchemaController(
                 EXEC sp_executesql @sql;
             END";
 
-        using var command = new SqlCommand(schemaExistsCommandText, connection);
-        command.Parameters.AddWithValue("@SchemaName", schemaName);
-        command.Parameters.AddWithValue("@SchemaOwner", schemaOwner);
-        await command.ExecuteNonQueryAsync();
+        var parameters = new Dictionary<string, object>
+        {
+            ["@SchemaName"] = schemaName,
+            ["@SchemaOwner"] = schemaOwner
+        };
+
+        await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, schemaExistsCommandText, parameters);
     }
 }

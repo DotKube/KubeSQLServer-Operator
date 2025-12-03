@@ -14,7 +14,8 @@ namespace SqlServerOperator.Controllers;
 public class SQLServerUserController(
     ILogger<SQLServerUserController> logger,
     IKubernetesClient kubernetesClient,
-    SqlServerEndpointService sqlServerEndpointService
+    ISqlServerEndpointService sqlServerEndpointService,
+    ISqlExecutor sqlExecutor
 ) : IEntityController<V1Alpha1DatabaseUser>
 {
     public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> ReconcileAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
@@ -100,9 +101,6 @@ public class SQLServerUserController(
             Encrypt = false,
         };
 
-        using var connection = new SqlConnection(builder.ConnectionString);
-        await connection.OpenAsync();
-
         var commandText = @"
         IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
         BEGIN
@@ -110,17 +108,22 @@ public class SQLServerUserController(
             EXEC sp_executesql @sql;
         END";
 
-        using var command = new SqlCommand(commandText, connection);
-        command.Parameters.AddWithValue("@LoginName", loginName);
-        await command.ExecuteNonQueryAsync();
+        var parameters = new Dictionary<string, object>
+        {
+            ["@LoginName"] = loginName
+        };
+
+        await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, commandText, parameters);
 
         foreach (var role in roles)
         {
-            using var roleCommand = new SqlCommand("sp_addrolemember", connection);
-            roleCommand.CommandType = System.Data.CommandType.StoredProcedure;
-            roleCommand.Parameters.AddWithValue("@rolename", role);
-            roleCommand.Parameters.AddWithValue("@membername", loginName);
-            await roleCommand.ExecuteNonQueryAsync();
+            var roleCommandText = "EXEC sp_addrolemember @rolename, @membername";
+            var roleParameters = new Dictionary<string, object>
+            {
+                ["@rolename"] = role,
+                ["@membername"] = loginName
+            };
+            await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, roleCommandText, roleParameters);
         }
     }
 

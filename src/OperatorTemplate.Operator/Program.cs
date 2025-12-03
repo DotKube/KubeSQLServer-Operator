@@ -6,7 +6,8 @@ using SqlServerOperator.Controllers.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<DefaultMssqlConfig>();
-builder.Services.AddSingleton<SqlServerEndpointService>();
+builder.Services.AddSingleton<ISqlServerEndpointService, SqlServerEndpointService>();
+builder.Services.AddSingleton<ISqlExecutor, SqlExecutor>();
 
 
 

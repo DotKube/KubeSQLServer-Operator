@@ -7,11 +7,8 @@ namespace SqlServerOperator.Controllers.Services;
 public class SqlServerEndpointService(
     ILogger<SqlServerEndpointService> logger,
     IKubernetesClient kubernetesClient,
-    IWebHostEnvironment environment)
+    IWebHostEnvironment environment) : ISqlServerEndpointService
 {
-    /// <summary>
-    /// Gets the SQL Server endpoint, checking both internal SQLServer and ExternalSQLServer resources.
-    /// </summary>
     public async Task<string> GetSqlServerEndpointAsync(string instanceName, string namespaceName)
     {
         // First, try to find an ExternalSQLServer
