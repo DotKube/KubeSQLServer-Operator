@@ -11,32 +11,32 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: 'Declarative Management',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Define SQL Server instances, databases, logins, users, and schemas using Kubernetes Custom Resources.
+        The operator handles the rest automatically.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Dev & Testing Ready',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Spin up SQL Server environments in seconds for local development, CI/CD pipelines, and QA testing.
+        Perfect for rapid iteration and automated testing.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'External Server Support',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Manage databases on external SQL Server instances (Azure SQL, AWS RDS, on-premises) using the same
+        declarative approach as in-cluster resources.
       </>
     ),
   },
