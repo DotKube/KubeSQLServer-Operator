@@ -16,7 +16,8 @@ public class SQLServerDatabaseController(
     ILogger<SQLServerDatabaseController> logger,
     IKubernetesClient kubernetesClient,
     DefaultMssqlConfig config,
-    SqlServerEndpointService sqlServerEndpointService)
+    ISqlServerEndpointService sqlServerEndpointService,
+    ISqlExecutor sqlExecutor)
     : IEntityController<V1Alpha1SQLServerDatabase>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> ReconcileAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
@@ -103,19 +104,19 @@ public class SQLServerDatabaseController(
 
         try
         {
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-
             var commandText = @"
             IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName)
             BEGIN
                 DECLARE @sql NVARCHAR(MAX) = N'CREATE DATABASE [' + @DatabaseName + ']';
                 EXEC sp_executesql @sql;
             END";
-            using var command = new SqlCommand(commandText, connection);
-            command.Parameters.AddWithValue("@DatabaseName", databaseName);
 
-            await command.ExecuteNonQueryAsync();
+            var parameters = new Dictionary<string, object>
+            {
+                ["@DatabaseName"] = databaseName
+            };
+
+            await sqlExecutor.ExecuteNonQueryAsync(connectionString, commandText, parameters);
             logger.LogInformation("Database '{DatabaseName}' ensured on server '{Server}'.", databaseName, server);
         }
         catch (Exception ex)
