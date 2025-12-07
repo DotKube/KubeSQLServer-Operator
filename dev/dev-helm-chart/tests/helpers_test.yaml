@@ -1,0 +1,351 @@
+suite: test helper templates
+templates:
+  - deployment.yaml
+tests:
+  # Test label merging
+  - it: should merge labels correctly with component override
+    set:
+      global.labels:
+        env: production
+        team: platform
+        version: "1.0"
+      controller.labels:
+        app: sqlserver-operator
+        version: "2.0"
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            env: production
+            team: platform
+            version: "2.0"
+
+  - it: should handle empty global labels
+    set:
+      global.labels: {}
+      controller.labels:
+        app: sqlserver-operator
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+
+  - it: should handle empty controller labels
+    set:
+      global.labels:
+        env: production
+      controller.labels: {}
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            env: production
+
+  # Test annotation merging
+  - it: should merge annotations with component override
+    set:
+      global.annotations:
+        annotation1: value1
+        annotation2: value2
+      controller.annotations:
+        annotation2: overridden
+        annotation3: value3
+    asserts:
+      - equal:
+          path: metadata.annotations.annotation1
+          value: value1
+      - equal:
+          path: metadata.annotations.annotation2
+          value: overridden
+      - equal:
+          path: metadata.annotations.annotation3
+          value: value3
+
+  # Test pod label merging
+  - it: should merge pod labels with component override
+    set:
+      global.podLabels:
+        monitoring: enabled
+        logging: enabled
+      controller.podLabels:
+        logging: disabled
+        custom: label
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.monitoring
+          value: enabled
+      - equal:
+          path: spec.template.metadata.labels.logging
+          value: disabled
+      - equal:
+          path: spec.template.metadata.labels.custom
+          value: label
+
+  # Test pod annotation merging - the example from requirements
+  - it: should merge pod annotations exactly as specified in requirements
+    set:
+      global.podAnnotations:
+        x: y
+        a: b
+        e: i
+      controller.podAnnotations:
+        x: z
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.x
+          value: z
+      - equal:
+          path: spec.template.metadata.annotations.a
+          value: b
+      - equal:
+          path: spec.template.metadata.annotations.e
+          value: i
+
+  # Test security context merging
+  - it: should merge podSecurityContext with deep merge
+    set:
+      global.podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      controller.podSecurityContext:
+        runAsUser: 2000
+        seccompProfile:
+          type: RuntimeDefault
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+
+  - it: should merge container securityContext
+    set:
+      global.securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+      controller.securityContext:
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+
+  # Test node selector merging
+  - it: should merge nodeSelector
+    set:
+      global.nodeSelector:
+        kubernetes.io/os: linux
+        region: us-west
+      controller.nodeSelector:
+        region: us-east
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+            region: us-east
+            disktype: ssd
+
+  # Test tolerations concatenation
+  - it: should concatenate tolerations not merge them
+    set:
+      global.tolerations:
+        - key: key1
+          operator: Exists
+          effect: NoSchedule
+        - key: key2
+          operator: Equal
+          value: value2
+          effect: NoExecute
+      controller.tolerations:
+        - key: key3
+          operator: Equal
+          value: value3
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: key1
+      - equal:
+          path: spec.template.spec.tolerations[1].key
+          value: key2
+      - equal:
+          path: spec.template.spec.tolerations[2].key
+          value: key3
+
+  # Test affinity merging
+  - it: should merge affinity with component override
+    set:
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      controller.affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.affinity.nodeAffinity
+      - isNotEmpty:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  # Test priorityClassName override
+  - it: should use global priorityClassName when controller is empty
+    set:
+      global.priorityClassName: global-priority
+      controller.priorityClassName: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: global-priority
+
+  - it: should override global priorityClassName with controller value
+    set:
+      global.priorityClassName: global-priority
+      controller.priorityClassName: controller-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: controller-priority
+
+  # Test imagePullPolicy override
+  - it: should use global imagePullPolicy when controller is empty
+    set:
+      global.imagePullPolicy: Always
+      controller.image.pullPolicy: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should override global imagePullPolicy with controller value
+    set:
+      global.imagePullPolicy: Always
+      controller.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  - it: should use default imagePullPolicy when both are empty
+    set:
+      global.imagePullPolicy: ""
+      controller.image.pullPolicy: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+
+  # Test complex scenario with multiple overrides
+  - it: should handle complex multi-level merge scenario
+    set:
+      global:
+        labels:
+          env: production
+          team: platform
+          managed-by: helm
+        podAnnotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8080"
+          prometheus.io/path: "/metrics"
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+        nodeSelector:
+          kubernetes.io/os: linux
+        tolerations:
+          - key: global-taint
+            operator: Exists
+      controller:
+        labels:
+          app: sqlserver-operator
+          env: staging
+        podAnnotations:
+          prometheus.io/port: "9090"
+          custom-annotation: value
+        podSecurityContext:
+          runAsUser: 2000
+          fsGroup: 2000
+        nodeSelector:
+          disktype: ssd
+        tolerations:
+          - key: controller-taint
+            operator: Equal
+            value: dedicated
+    asserts:
+      # Labels should merge with controller override
+      - equal:
+          path: metadata.labels.app
+          value: sqlserver-operator
+      - equal:
+          path: metadata.labels.env
+          value: staging
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.managed-by
+          value: helm
+      # Pod annotations should merge with controller override
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: "9090"
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/path"]
+          value: "/metrics"
+      - equal:
+          path: spec.template.metadata.annotations.custom-annotation
+          value: value
+      # Pod security context should merge with controller override
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+      # Node selector should merge
+      - equal:
+          path: spec.template.spec.nodeSelector["kubernetes.io/os"]
+          value: linux
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+      # Tolerations should concatenate
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: global-taint
+      - equal:
+          path: spec.template.spec.tolerations[1].key
+          value: controller-taint

@@ -1,10 +1,187 @@
-replicaCount: 1
+# Global configuration - these values are inherited by all components
+# and can be overridden at the component level
+global:
+  # Global labels applied to all resources
+  labels: {}
+    # environment: production
+    # team: platform
+  
+  # Global annotations applied to all resources
+  annotations: {}
+    # managed-by: helm
+  
+  # Global pod labels applied to all pods
+  podLabels: {}
+    # app.kubernetes.io/part-of: sqlserver-operator
+  
+  # Global pod annotations applied to all pods
+  podAnnotations: {}
+    # prometheus.io/scrape: "true"
+    # prometheus.io/port: "80"
+  
+  # Global security context for pods
+  podSecurityContext: {}
+    # runAsNonRoot: true
+    # runAsUser: 1000
+    # fsGroup: 1000
+  
+  # Global security context for containers
+  securityContext: {}
+    # allowPrivilegeEscalation: false
+    # capabilities:
+    #   drop:
+    #     - ALL
+  
+  # Global node selector
+  nodeSelector: {}
+    # kubernetes.io/os: linux
+  
+  # Global tolerations
+  tolerations: []
+    # - key: "node-role.kubernetes.io/control-plane"
+    #   operator: "Exists"
+    #   effect: "NoSchedule"
+  
+  # Global affinity rules
+  affinity: {}
+  
+  # Global priority class name
+  priorityClassName: ""
+  
+  # Global image pull policy
+  imagePullPolicy: ""
 
-image:
-  repository: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller
-  tag: latest
-  pullPolicy: IfNotPresent
-
-environment: Production
-
-resources: {}
+# Controller configuration
+controller:
+  replicaCount: 1
+  
+  image:
+    repository: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  # Deployment labels and annotations
+  labels:
+    app: sqlserver-operator
+    # custom-label: value
+  
+  annotations: {}
+    # custom-annotation: value
+  
+  # Pod labels and annotations
+  podLabels: {}
+    # custom-pod-label: value
+  
+  podAnnotations: {}
+    # custom-pod-annotation: value
+  
+  # Service account
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+  
+  # Environment variables
+  environment: Production
+  
+  # Additional environment variables
+  extraEnv: []
+    # - name: LOG_LEVEL
+    #   value: Debug
+  
+  # Ports configuration
+  ports:
+    http:
+      containerPort: 80
+      protocol: TCP
+  
+  # Health checks
+  livenessProbe: {}
+    # enabled: true
+    # httpGet:
+    #   path: /alive
+    #   port: http
+    # initialDelaySeconds: 30
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+    # successThreshold: 1
+    # failureThreshold: 3
+  
+  readinessProbe: {}
+    # enabled: true
+    # httpGet:
+    #   path: /health
+    #   port: http
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+    # successThreshold: 1
+    # failureThreshold: 3
+  
+  startupProbe: {}
+    # enabled: false
+    # httpGet:
+    #   path: /alive
+    #   port: http
+    # initialDelaySeconds: 0
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+    # successThreshold: 1
+    # failureThreshold: 30
+  
+  # Resource limits and requests
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  
+  # Security context for the pod
+  podSecurityContext: {}
+    # runAsNonRoot: true
+    # runAsUser: 1000
+    # fsGroup: 1000
+    # seccompProfile:
+    #   type: RuntimeDefault
+  
+  # Security context for the container
+  securityContext: {}
+    # allowPrivilegeEscalation: false
+    # capabilities:
+    #   drop:
+    #     - ALL
+    # readOnlyRootFilesystem: false
+    # runAsNonRoot: true
+    # runAsUser: 1000
+  
+  # Node selector
+  nodeSelector: {}
+  
+  # Tolerations
+  tolerations: []
+  
+  # Affinity rules
+  affinity: {}
+  
+  # Priority class name
+  priorityClassName: ""
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+    # maxUnavailable: 1
+  
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80

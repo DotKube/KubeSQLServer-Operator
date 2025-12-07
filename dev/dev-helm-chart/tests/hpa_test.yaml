@@ -1,0 +1,140 @@
+suite: test horizontal pod autoscaler
+templates:
+  - hpa.yaml
+tests:
+  - it: should not create HPA when disabled
+    set:
+      controller.autoscaling.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create HPA when enabled
+    set:
+      controller.autoscaling.enabled: true
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-operator
+
+  - it: should apply controller labels to HPA
+    set:
+      controller.autoscaling.enabled: true
+      controller.labels:
+        app: sqlserver-operator
+        component: autoscaler
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            component: autoscaler
+
+  - it: should merge global and controller labels in HPA
+    set:
+      controller.autoscaling.enabled: true
+      global.labels:
+        environment: production
+      controller.labels:
+        app: sqlserver-operator
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            environment: production
+
+  - it: should set HPA target reference
+    set:
+      controller.autoscaling.enabled: true
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: apps/v1
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: RELEASE-NAME-operator
+
+  - it: should set min and max replicas
+    set:
+      controller.autoscaling.enabled: true
+      controller.autoscaling.minReplicas: 2
+      controller.autoscaling.maxReplicas: 20
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 20
+
+  - it: should set CPU target utilization
+    set:
+      controller.autoscaling.enabled: true
+      controller.autoscaling.targetCPUUtilizationPercentage: 75
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 75
+
+  - it: should set memory target utilization
+    set:
+      controller.autoscaling.enabled: true
+      controller.autoscaling.targetMemoryUtilizationPercentage: 85
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 85
+
+  - it: should set both CPU and memory targets
+    set:
+      controller.autoscaling.enabled: true
+      controller.autoscaling.targetCPUUtilizationPercentage: 70
+      controller.autoscaling.targetMemoryUtilizationPercentage: 80
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 70
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 80
+
+  - it: should reference correct deployment
+    set:
+      controller.autoscaling.enabled: true
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: RELEASE-NAME-operator
