@@ -57,7 +57,7 @@ controller:
   
   image:
     repository: ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller
-    tag: latest
+    tag: 2025-12-07
     pullPolicy: IfNotPresent
   
   # Deployment labels and annotations
