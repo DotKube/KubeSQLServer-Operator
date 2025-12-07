@@ -3,7 +3,7 @@ name: Helm Chart Unit Tests
 on:
   pull_request:
     paths:
-      - 'dev/dev-helm-chart/**'
+      - 'deploy/chart/kubesqlserver-operator/**'
       - '.github/workflows/helm-tests.yml'
 
     branches:
@@ -29,5 +29,5 @@ jobs:
         uses: go-task/setup-task@v1
 
       - name: Run Helm tests
-        run: task dev:helm-chart:unit-test
+        run: task deployment-helm-chart:unit-test
 
