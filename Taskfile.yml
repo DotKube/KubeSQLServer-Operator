@@ -120,6 +120,7 @@ tasks:
       - task: deployment-helm-chart:clear-out-chart
       - cp -r ./dev/dev-helm-chart/crds/* ./deploy/chart/kubesqlserver-operator/crds/
       - cp -r ./dev/dev-helm-chart/templates/* ./deploy/chart/kubesqlserver-operator/templates/
+      - cp -r ./dev/dev-helm-chart/tests/* ./deploy/chart/kubesqlserver-operator/tests/
       - task: deployment-helm-chart:template-output-to-file
       - cp ./deploy/chart/kubesqlserver-operator/output.yaml ./deploy/yaml/deploy.yaml
       - task: deployment-helm-chart:template-output-to-file-cleanup
