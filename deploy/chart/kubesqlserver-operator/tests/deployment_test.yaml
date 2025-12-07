@@ -12,6 +12,12 @@ tests:
       - equal:
           path: spec.replicas
           value: 1
+      - isNull:
+          path: spec.template.spec.containers[0].livenessProbe
+      - isNull:
+          path: spec.template.spec.containers[0].readinessProbe
+      - isNull:
+          path: spec.template.spec.containers[0].startupProbe
 
 
   - it: should apply controller labels
@@ -270,27 +276,49 @@ tests:
 
   - it: should apply health probes when enabled
     set:
-      controller.livenessProbe.enabled: true
-      controller.readinessProbe.enabled: true
+      controller.livenessProbe:
+        enabled: true
+        httpGet:
+          path: /alive
+          port: http
+      controller.readinessProbe:
+        enabled: true
+        httpGet:
+          path: /health
+          port: http
     asserts:
       - isNotEmpty:
           path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /alive
       - isNotEmpty:
           path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
 
   - it: should not apply startup probe when disabled
     set:
-      controller.startupProbe.enabled: false
+      controller.startupProbe:
+        enabled: false
     asserts:
       - isNull:
           path: spec.template.spec.containers[0].startupProbe
 
   - it: should apply startup probe when enabled
     set:
-      controller.startupProbe.enabled: true
+      controller.startupProbe:
+        enabled: true
+        httpGet:
+          path: /alive
+          port: http
     asserts:
       - isNotEmpty:
           path: spec.template.spec.containers[0].startupProbe
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /alive
 
   - it: should set custom resource limits
     set:
