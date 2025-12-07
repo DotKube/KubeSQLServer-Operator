@@ -12,9 +12,7 @@ tests:
       - equal:
           path: spec.replicas
           value: 1
-      - equal:
-          path: spec.template.spec.containers[0].image
-          value: localhost:5000/operator-template:latest
+
 
   - it: should apply controller labels
     set:

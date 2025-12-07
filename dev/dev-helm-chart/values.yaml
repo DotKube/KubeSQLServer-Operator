@@ -134,13 +134,13 @@ controller:
     failureThreshold: 30
   
   # Resource limits and requests
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
   
   # Security context for the pod
   podSecurityContext: {}
