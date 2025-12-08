@@ -28,7 +28,8 @@ jobs:
           docker build \
             --file docs-site/Containerfile \
             --tag ghcr.io/dotkube/kubesqlserver-operator-docs/kubesql-controller:latest \
-            --tag ghcr.io/dotkube/kubesqlserver-operator-docs/kubesql-controller:${{ inputs.image_tag }} .
+            --tag ghcr.io/dotkube/kubesqlserver-operator-docs/kubesql-controller:${{ inputs.image_tag }} \
+            docs-site
 
           docker push ghcr.io/dotkube/kubesqlserver-operator-docs/kubesql-controller:latest
           docker push ghcr.io/dotkube/kubesqlserver-operator-docs/kubesql-controller:${{ inputs.image_tag }}
