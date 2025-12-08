@@ -32,7 +32,7 @@ helm upgrade -i kubesqlserver-operator \
   oci://ghcr.io/dotkube/chart/kubesqlserver-operator \
   --namespace sql-server \
   --create-namespace \
-  --version 0.3.1
+  --version 0.3.2
 ```
 
 ### Option 2: Install via kubectl
