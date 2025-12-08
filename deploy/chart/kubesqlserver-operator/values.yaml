@@ -63,13 +63,15 @@ controller:
   # Deployment labels and annotations
   labels:
     app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
     # custom-label: value
   
   annotations: {}
     # custom-annotation: value
   
   # Pod labels and annotations
-  podLabels: {}
+  podLabels:
+    app.openshift.io/runtime: dotnet
     # custom-pod-label: value
   
   podAnnotations: {}
