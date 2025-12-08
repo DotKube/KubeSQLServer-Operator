@@ -31,11 +31,11 @@ jobs:
 
       - name: Build and push
         run: |
-          docker buildx build \
-            --platform linux/amd64,linux/arm64 \
+          docker build \
             --file src/OperatorTemplate.Operator/Containerfile \
             --tag ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest \
-            --tag ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:${{ inputs.image_tag }} \
-            --push \
-            .
+            --tag ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:${{ inputs.image_tag }} .
+
+          docker push ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:latest
+          docker push ghcr.io/dotkube/kubesqlserver-operator/kubesql-controller:${{ inputs.image_tag }}
 
