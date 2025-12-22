@@ -12,11 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="KubeOps.Generator" Version="10.0.1">
+    <PackageReference Include="KubeOps.Generator" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="KubeOps.Operator" Version="10.0.1" />
+    <PackageReference Include="KubeOps.Operator" Version="10.0.3" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
   </ItemGroup>
 
