@@ -29,7 +29,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
 
     public Task<ReconciliationResult<V1Alpha1SQLServer>> DeletedAsync(V1Alpha1SQLServer entity, CancellationToken cancellationToken)
     {
-        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServer>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServer>.Success(entity, TimeSpan.FromMinutes(5)));
     }
 
     private async Task EnsureConfigMapAsync(V1Alpha1SQLServer entity)
