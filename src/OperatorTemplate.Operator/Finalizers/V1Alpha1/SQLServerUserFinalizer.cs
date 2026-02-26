@@ -75,11 +75,17 @@ public class SQLServerUserFinalizer(
         var commandText = $@"
             IF EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
             BEGIN
-                DROP USER [{loginName}];
+                DROP USER {QuoteName(loginName)};
             END";
 
         using var command = new SqlCommand(commandText, connection);
         command.Parameters.AddWithValue("@LoginName", loginName);
         await command.ExecuteNonQueryAsync();
+    }
+
+    private static string QuoteName(string name)
+    {
+        // Escape any existing square brackets and wrap the name in square brackets
+        return $"[{name.Replace("]", "]]")}]";
     }
 }
