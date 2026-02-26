@@ -70,7 +70,6 @@ public class SQLServerLoginController(
 
     public Task<ReconciliationResult<V1Alpha1SQLServerLogin>> DeletedAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleted SQLServerLogin: {Name}", entity.Metadata.Name);
         return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity));
     }
 
