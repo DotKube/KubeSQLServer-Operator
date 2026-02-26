@@ -52,7 +52,7 @@
 	"forwardPorts": [],
 	
 	// Run commands after container creation to install additional tools
-	"postCreateCommand": "bash -c 'curl -Lo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.24.0/kind-linux-amd64 && chmod +x /usr/local/bin/kind && curl -fsSL https://github.com/go-task/task/releases/download/v3.40.1/task_linux_amd64.tar.gz | tar -xz && sudo mv task /usr/local/bin/task && sudo apt-get update && sudo apt-get install -y tmux && dotnet --version && task --version && kubectl version --client && helm version && kind version && docker --version && tmux -V'",
+	"postCreateCommand": "bash .devcontainer/setup.sh",
 	
 	// Use 'postStartCommand' to run commands after the container starts
 	"postStartCommand": "",

@@ -19,7 +19,7 @@ The Dev Container provides a fully configured development environment with:
 ### Kubernetes Tools
 - **kubectl** - Kubernetes command-line tool (latest stable)
 - **Helm** - Kubernetes package manager (latest stable)
-- **Kind** - Kubernetes IN Docker (v0.24.0, installed via postCreateCommand)
+- **Kind** - Kubernetes in Docker (v0.24.0, installed via postCreateCommand)
 
 ### Development Tools
 - **Go-Task** - Task automation tool (v3.40.1, installed via postCreateCommand)
@@ -120,13 +120,19 @@ Note that Docker images and containers created inside the dev container are isol
 The first time you open the project in a Dev Container, it will:
 1. Pull the base image (~2GB)
 2. Install Docker-in-Docker and kubectl/Helm features
-3. Run the postCreateCommand to install Kind, Task, and Tmux
+3. Run `.devcontainer/setup.sh` to install Kind, Task, and Tmux
 
 This process typically takes 3-5 minutes depending on your internet connection.
 
 ### Tool Installation
 
-Additional tools (Kind, Task, Tmux) are installed via the `postCreateCommand` after the container is created. If this fails for any reason, you can manually install them:
+Additional tools (Kind, Task, Tmux) are installed via the `.devcontainer/setup.sh` script after the container is created. The script includes error handling and will exit if any installation fails. If you need to re-run the setup, execute:
+
+```bash
+bash .devcontainer/setup.sh
+```
+
+Or manually install individual tools:
 
 ```bash
 # Install Kind
