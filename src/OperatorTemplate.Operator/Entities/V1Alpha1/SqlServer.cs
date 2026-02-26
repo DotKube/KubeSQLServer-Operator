@@ -3,7 +3,7 @@ using k8s.Models;
 using KubeOps.Abstractions.Entities;
 using KubeOps.Abstractions.Entities.Attributes;
 
-namespace SqlServerOperator.Entities;
+namespace SqlServerOperator.Entities.V1Alpha1;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServer")]
 public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alpha1SQLServerSpec, V1Alpha1SQLServer.V1Alpha1SQLServerStatus>
