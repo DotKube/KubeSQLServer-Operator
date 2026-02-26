@@ -1,0 +1,62 @@
+{
+	"name": "KubeSQLServer Operator Dev Container",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:1-10.0",
+	
+	// Features to add to the dev container
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest",
+			"moby": true
+		},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+			"version": "latest",
+			"helm": "latest",
+			"minikube": "none"
+		}
+	},
+	
+	// Configure tool-specific properties
+	"customizations": {
+		"vscode": {
+			// VS Code extensions to install
+			"extensions": [
+				// C# Dev Kit and related extensions
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscode-dotnet-runtime",
+				
+				// Kubernetes support
+				"ms-kubernetes-tools.vscode-kubernetes-tools",
+				
+				// Docker support
+				"ms-azuretools.vscode-docker",
+				
+				// YAML and JSON support
+				"redhat.vscode-yaml",
+				"esbenp.prettier-vscode",
+				
+				// Additional helpful extensions
+				"editorconfig.editorconfig",
+				"ms-vscode.makefile-tools"
+			],
+			
+			// VS Code settings
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"dotnet.defaultSolution": "OperatorTemplate.sln"
+			}
+		}
+	},
+	
+	// Use 'forwardPorts' to make a list of ports inside the container available locally
+	"forwardPorts": [],
+	
+	// Run commands after container creation to install additional tools
+	"postCreateCommand": "bash .devcontainer/setup.sh",
+	
+	// Use 'postStartCommand' to run commands after the container starts
+	"postStartCommand": "",
+	
+	// Set the remote user to vscode (non-root user)
+	"remoteUser": "vscode"
+}
