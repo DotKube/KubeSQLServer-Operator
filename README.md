@@ -244,6 +244,25 @@ You're good to go! You should be able to see the effect of the CRDs in your SQL 
 
 ![Azure Data Studio](assets/ads-screenshot.png)
 
+### Delete database when deleting the crd
+
+By default, if you delete the CRD of you database, the database is not deleted.
+
+If you want to delete the database when deleting the CRD, use the directive databaseReclaimPolicy with the value Delete, Retain being the default value if not specified.
+
+```yaml
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: Database
+metadata:
+  name: bar
+  namespace: sqlserver-example
+spec:
+  instanceName: sqlserver-instance
+  databaseName: Bar
+  databaseReclaimPolicy: Delete
+```
+
 ## Planned Features and Roadmap
 
 Here are the planned features and milestones for KubeSQLServer Operator:

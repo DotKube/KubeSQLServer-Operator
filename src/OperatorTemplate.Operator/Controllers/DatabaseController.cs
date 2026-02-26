@@ -40,10 +40,33 @@ public class SQLServerDatabaseController(
         }
     }
 
-    public Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> DeletedAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> DeletedAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
     {
         logger.LogInformation("Deleted SQLServerDatabase: {Name}", entity.Metadata.Name);
-        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity));
+
+        try
+        {
+            // Respect reclaim policy (default: Retain)
+            var reclaimPolicy = entity.Spec.DatabaseReclaimPolicy ?? "Retain";
+            if (!string.Equals(reclaimPolicy, "Delete", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Database reclaim policy is '{Policy}'; skipping physical database deletion for: {Name}", reclaimPolicy, entity.Metadata.Name);
+                return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity);
+            }
+
+            var secretName = await DetermineSecretNameAsync(entity);
+            var (server, username, password) = await GetSqlServerCredentialsAsync(entity, secretName);
+
+            await EnsureDatabaseDeletedAsync(entity.Spec.DatabaseName, server, username, password);
+
+            logger.LogInformation("Database '{DatabaseName}' deletion attempted for SQLServerDatabase: {Name}", entity.Spec.DatabaseName, entity.Metadata.Name);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error while deleting database for SQLServerDatabase: {Name}", entity.Metadata.Name);
+        }
+
+        return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity);
     }
 
     private async Task<string> DetermineSecretNameAsync(V1Alpha1SQLServerDatabase entity)
@@ -122,6 +145,40 @@ public class SQLServerDatabaseController(
         catch (Exception ex)
         {
             throw new Exception($"Failed to ensure database '{databaseName}': {ex.Message}", ex);
+        }
+    }
+
+    private async Task EnsureDatabaseDeletedAsync(string databaseName, string server, string username, string password)
+    {
+        var builder = new SqlConnectionStringBuilder
+        {
+            DataSource = server,
+            UserID = username,
+            Password = password,
+            InitialCatalog = "master",
+            TrustServerCertificate = true,
+            Encrypt = false,
+        };
+
+        var connectionString = builder.ConnectionString;
+
+        logger.LogInformation("Ensuring database '{DatabaseName}' is deleted on server '{Server}'.", databaseName, server);
+
+        try
+        {
+            using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            var commandText = $"IF EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName) DROP DATABASE [{databaseName}]";
+            using var command = new SqlCommand(commandText, connection);
+            command.Parameters.AddWithValue("@DatabaseName", databaseName);
+
+            await command.ExecuteNonQueryAsync();
+            logger.LogInformation("Database '{DatabaseName}' dropped on server '{Server}'.", databaseName, server);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to delete database '{databaseName}': {ex.Message}", ex);
         }
     }
 

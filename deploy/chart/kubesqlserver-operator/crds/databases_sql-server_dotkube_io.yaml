@@ -39,6 +39,9 @@ spec:
               databaseName:
                 description: The name of the database to be created.
                 type: string
+              databaseReclaimPolicy:
+                description: Policy that controls what happens to the physical database when the CR is deleted. Either 'Retain' or 'Delete'. Default 'Retain'.
+                type: string
             type: object
         type: object
     served: true
