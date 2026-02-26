@@ -77,7 +77,6 @@ public class SQLServerSchemaController(
 
     public Task<ReconciliationResult<V1Alpha1SQLServerSchema>> DeletedAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleted SQLServerSchema: {Name}", entity.Metadata.Name);
         return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerSchema>.Success(entity));
     }
 
