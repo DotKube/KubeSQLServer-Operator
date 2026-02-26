@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OperatorTemplate.Operator.UnitTests.Helpers;
 using SqlServerOperator.Configuration;
-using SqlServerOperator.Controllers.V1Alpha1;
 using SqlServerOperator.Controllers.Services;
+using SqlServerOperator.Controllers.V1Alpha1;
 using SqlServerOperator.Entities.V1Alpha1;
 using Xunit;
 
