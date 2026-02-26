@@ -1,0 +1,64 @@
+{
+	"name": "KubeSQLServer Operator Dev Container",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	
+	// Features to add to the dev container
+	"features": {},
+	
+	// Configure tool-specific properties
+	"customizations": {
+		"vscode": {
+			// VS Code extensions to install
+			"extensions": [
+				// C# Dev Kit and related extensions
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscode-dotnet-runtime",
+				
+				// Kubernetes support
+				"ms-kubernetes-tools.vscode-kubernetes-tools",
+				
+				// Docker support
+				"ms-azuretools.vscode-docker",
+				
+				// YAML and JSON support
+				"redhat.vscode-yaml",
+				"esbenp.prettier-vscode",
+				
+				// Additional helpful extensions
+				"editorconfig.editorconfig",
+				"ms-vscode.makefile-tools"
+			],
+			
+			// VS Code settings
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"dotnet.defaultSolution": "OperatorTemplate.sln"
+			}
+		}
+	},
+	
+	// Mount the Docker socket from the host to enable Docker CLI usage
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	
+	// Use 'forwardPorts' to make a list of ports inside the container available locally
+	"forwardPorts": [],
+	
+	// Run commands after container creation
+	"postCreateCommand": "bash -c 'if ! command -v helm &> /dev/null; then curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash; fi && dotnet --version && task --version && kubectl version --client && helm version && kind version && docker --version && tmux -V'",
+	
+	// Use 'postStartCommand' to run commands after the container starts
+	"postStartCommand": "",
+	
+	// Set the remote user to vscode (non-root user)
+	"remoteUser": "vscode",
+	
+	// Ensure the container runs with proper privileges for Docker access
+	"runArgs": [
+		"--privileged"
+	]
+}

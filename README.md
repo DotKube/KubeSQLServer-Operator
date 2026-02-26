@@ -273,6 +273,17 @@ Here are the planned features and milestones for KubeSQLServer Operator:
 
 ## Local Development - Key Commands
 
+### Quick Start with Dev Container
+
+The easiest way to get started is using the VS Code Dev Container, which provides a fully configured development environment with all required tools:
+
+1. Install [VS Code](https://code.visualstudio.com/) and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+2. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+3. Open the project in VS Code
+4. Click "Reopen in Container" when prompted
+
+For more information, see [.devcontainer/README.md](.devcontainer/README.md).
+
 ### Local Development (`task quick-dev`)
 
 Run the operator **locally** on your laptop while applying necessary CRDs and creating an instance in a Kind cluster.  
