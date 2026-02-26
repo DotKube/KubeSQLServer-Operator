@@ -6,19 +6,25 @@ This directory contains the VS Code Dev Container configuration for the KubeSQLS
 
 The Dev Container provides a fully configured development environment with:
 
+### Base Image & Features
+
+- **Base Image**: `mcr.microsoft.com/devcontainers/dotnet:1-10.0` - Official Microsoft Dev Container image for .NET 10.0
+- **Docker-in-Docker**: Official dev container feature providing isolated Docker daemon
+- **kubectl & Helm**: Official dev container feature for Kubernetes tooling
+
 ### Runtime & SDKs
 - **.NET 10.0 SDK** - Core runtime for the operator and related services
 - **Bash** - Shell environment
 
 ### Kubernetes Tools
-- **kubectl** - Kubernetes command-line tool
-- **Helm** - Kubernetes package manager
-- **Kind** - Kubernetes IN Docker (local cluster)
+- **kubectl** - Kubernetes command-line tool (latest stable)
+- **Helm** - Kubernetes package manager (latest stable)
+- **Kind** - Kubernetes IN Docker (v0.24.0, installed via postCreateCommand)
 
 ### Development Tools
-- **Go-Task** - Task automation tool for running tasks defined in `Taskfile.yml`
-- **Docker CLI** - Configured to use the host's Docker daemon
-- **Tmux** - Terminal multiplexer (required for `quick-dev-tmux` task)
+- **Go-Task** - Task automation tool (v3.40.1, installed via postCreateCommand)
+- **Docker** - Docker-in-Docker for isolated container operations
+- **Tmux** - Terminal multiplexer (installed via postCreateCommand)
 - **Git** - Version control
 
 ### VS Code Extensions
@@ -52,12 +58,12 @@ After the container starts, all tools should be available. You can verify by run
 
 ```bash
 dotnet --version      # Should show .NET 10.0.x
-task --version        # Should show Task v3.40.1 or later
+task --version        # Should show Task v3.40.1
 kubectl version --client  # Should show kubectl client version
 helm version          # Should show Helm v3.x.x
 kind version          # Should show kind v0.24.0
-docker --version      # Should show Docker 27.5.1
-tmux -V              # Should show tmux 3.4
+docker --version      # Should show Docker version
+tmux -V              # Should show tmux version
 ```
 
 ## Using the Dev Container
@@ -97,33 +103,43 @@ task create-crds-and-copy
 task quick-deploy
 ```
 
-## Docker Socket Access
+## Docker-in-Docker
 
-The Dev Container is configured to mount the host's Docker socket, allowing you to:
+The Dev Container uses Docker-in-Docker (DinD) instead of mounting the host's Docker socket. This provides:
 
-- Build Docker images
-- Run Docker containers
-- Use Kind to create local Kubernetes clusters
+- **Isolation**: Container operations don't affect the host's Docker environment
+- **Consistency**: Same Docker environment across all development machines
+- **Security**: Better isolation between dev container and host system
 
-All Docker operations run on the host's Docker daemon, so images and containers persist even after the Dev Container is stopped.
+Note that Docker images and containers created inside the dev container are isolated from the host. If you need to share images between the dev container and host, you can use a container registry or export/import images.
 
 ## Troubleshooting
 
-### Helm Installation
+### First-Time Setup
 
-If Helm fails to install during the initial container build, it will be automatically installed after the container starts via the `postCreateCommand`. If you still encounter issues, you can manually install it:
+The first time you open the project in a Dev Container, it will:
+1. Pull the base image (~2GB)
+2. Install Docker-in-Docker and kubectl/Helm features
+3. Run the postCreateCommand to install Kind, Task, and Tmux
+
+This process typically takes 3-5 minutes depending on your internet connection.
+
+### Tool Installation
+
+Additional tools (Kind, Task, Tmux) are installed via the `postCreateCommand` after the container is created. If this fails for any reason, you can manually install them:
 
 ```bash
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# Install Kind
+curl -Lo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.24.0/kind-linux-amd64
+chmod +x /usr/local/bin/kind
+
+# Install Task
+curl -fsSL https://github.com/go-task/task/releases/download/v3.40.1/task_linux_amd64.tar.gz | tar -xz
+sudo mv task /usr/local/bin/task
+
+# Install Tmux
+sudo apt-get update && sudo apt-get install -y tmux
 ```
-
-### Docker Socket Permission Issues
-
-If you encounter Docker socket permission errors, ensure:
-
-1. Docker Desktop is running (on Windows/Mac)
-2. Your user has permission to access the Docker socket
-3. The container has mounted the Docker socket correctly
 
 ### Rebuilding the Container
 
@@ -136,8 +152,9 @@ If you need to rebuild the Dev Container (e.g., after updating dependencies):
 
 You can customize the Dev Container by modifying:
 
-- **`.devcontainer/devcontainer.json`** - VS Code settings, extensions, and container configuration
-- **`.devcontainer/Dockerfile`** - Base image and tool installations
+- **`.devcontainer/devcontainer.json`** - VS Code settings, extensions, features, and container configuration
+
+The configuration uses official dev container features, which can be customized by adding options to the `features` section. See the [dev container features documentation](https://containers.dev/features) for available options.
 
 ## Support
 
