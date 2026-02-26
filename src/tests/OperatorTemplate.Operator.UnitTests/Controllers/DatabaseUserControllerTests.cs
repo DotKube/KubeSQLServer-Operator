@@ -3,9 +3,9 @@ using KubeOps.KubernetesClient;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OperatorTemplate.Operator.UnitTests.Helpers;
-using SqlServerOperator.Controllers;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Controllers.V1Alpha1;
+using SqlServerOperator.Entities.V1Alpha1;
 using Xunit;
 
 namespace OperatorTemplate.Operator.UnitTests.Controllers;

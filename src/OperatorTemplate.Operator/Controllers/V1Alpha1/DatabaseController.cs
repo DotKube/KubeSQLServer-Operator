@@ -6,10 +6,10 @@ using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Configuration;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using System.Text;
 
-namespace SqlServerOperator.Controllers;
+namespace SqlServerOperator.Controllers.V1Alpha1;
 
 [EntityRbac(typeof(V1Alpha1SQLServerDatabase), Verbs = RbacVerb.All)]
 public class SQLServerDatabaseController(

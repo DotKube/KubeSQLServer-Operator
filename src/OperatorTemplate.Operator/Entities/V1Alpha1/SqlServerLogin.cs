@@ -4,7 +4,7 @@ using k8s.Models;
 using KubeOps.Abstractions.Entities;
 using KubeOps.Abstractions.Entities.Attributes;
 
-namespace SqlServerOperator.Entities;
+namespace SqlServerOperator.Entities.V1Alpha1;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServerLogin")]
 public class V1Alpha1SQLServerLogin : CustomKubernetesEntity<V1Alpha1SQLServerLogin.V1Alpha1SQLServerLoginSpec, V1Alpha1SQLServerLogin.V1Alpha1SQLServerLoginStatus>

@@ -2,7 +2,7 @@ using k8s.Models;
 using KubeOps.Abstractions.Entities;
 using KubeOps.Abstractions.Entities.Attributes;
 
-namespace SqlServerOperator.Entities;
+namespace SqlServerOperator.Entities.V1Alpha1;
 
 [KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "ExternalSQLServer")]
 public class V1Alpha1ExternalSQLServer : CustomKubernetesEntity<V1Alpha1ExternalSQLServer.V1Alpha1ExternalSQLServerSpec, V1Alpha1ExternalSQLServer.V1Alpha1ExternalSQLServerStatus>

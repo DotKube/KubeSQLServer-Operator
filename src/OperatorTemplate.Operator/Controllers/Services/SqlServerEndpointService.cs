@@ -1,6 +1,6 @@
 using k8s.Models;
 using KubeOps.KubernetesClient;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 
 namespace SqlServerOperator.Controllers.Services;
 

@@ -6,11 +6,11 @@ using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using SqlServerOperator.Builders;
 using SqlServerOperator.Configuration;
-using SqlServerOperator.Entities;
-using SqlServerOperator.Finalizers;
+using SqlServerOperator.Entities.V1Alpha1;
+using SqlServerOperator.Finalizers.V1Alpha1;
 using System.Security.Cryptography;
 
-namespace SqlServerOperator.Controllers;
+namespace SqlServerOperator.Controllers.V1Alpha1;
 
 [EntityRbac(typeof(V1Alpha1SQLServer), Verbs = RbacVerb.All)]
 public class SQLServerController(ILogger<SQLServerController> logger, IKubernetesClient kubernetesClient, DefaultMssqlConfig config) : IEntityController<V1Alpha1SQLServer>

@@ -5,22 +5,22 @@ using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using System.Text;
 
-namespace SqlServerOperator.Controllers;
+namespace SqlServerOperator.Controllers.V1Alpha1;
 
-[EntityRbac(typeof(V1Alpha1DatabaseUser), Verbs = RbacVerb.All)]
-public class SQLServerUserController(
-    ILogger<SQLServerUserController> logger,
+[EntityRbac(typeof(V1Alpha1SQLServerLogin), Verbs = RbacVerb.All)]
+public class SQLServerLoginController(
+    ILogger<SQLServerLoginController> logger,
     IKubernetesClient kubernetesClient,
     ISqlServerEndpointService sqlServerEndpointService,
     ISqlExecutor sqlExecutor
-) : IEntityController<V1Alpha1DatabaseUser>
+) : IEntityController<V1Alpha1SQLServerLogin>
 {
-    public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> ReconcileAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServerLogin>> ReconcileAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Reconciling SQLServerUser: {Name}", entity.Metadata.Name);
+        logger.LogInformation("Reconciling SQLServerLogin: {Name}", entity.Metadata.Name);
 
         try
         {
@@ -45,32 +45,32 @@ public class SQLServerUserController(
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password);
+            await EnsureLoginExistsAsync(entity.Spec.LoginName, entity.Spec.AuthenticationType, server, username, password);
 
             entity.Status ??= new();
             entity.Status.State = "Ready";
-            entity.Status.Message = "Database user ensured.";
+            entity.Status.Message = "Login ensured.";
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity, TimeSpan.FromMinutes(5));
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during reconciliation of SQLServerUser: {Name}", entity.Metadata.Name);
+            logger.LogError(ex, "Error during reconciliation of SQLServerLogin: {Name}", entity.Metadata.Name);
             entity.Status ??= new();
             entity.Status.State = "Error";
             entity.Status.Message = ex.Message;
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 
-    public Task<ReconciliationResult<V1Alpha1DatabaseUser>> DeletedAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
+    public Task<ReconciliationResult<V1Alpha1SQLServerLogin>> DeletedAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
     {
-        return Task.FromResult(ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity));
+        return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity));
     }
 
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
@@ -88,42 +88,34 @@ public class SQLServerUserController(
     }
 
 
-    private async Task EnsureUserExistsAsync(string databaseName, string loginName, List<string> roles, string server, string username, string password)
+    private async Task EnsureLoginExistsAsync(string loginName, string authenticationType, string server, string username, string password)
     {
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = server,
             UserID = username,
             Password = password,
-            InitialCatalog = databaseName,
+            InitialCatalog = "master",
             TrustServerCertificate = true,
             Encrypt = false,
         };
 
         var commandText = @"
-        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
+        IF NOT EXISTS (SELECT name FROM sys.sql_logins WHERE name = @LoginName)
         BEGIN
-            DECLARE @sql NVARCHAR(MAX) = N'CREATE USER [' + @LoginName + '] FOR LOGIN [' + @LoginName + ']';
+            DECLARE @sql NVARCHAR(MAX) = N'CREATE LOGIN [' + @LoginName + '] WITH PASSWORD = N''' + @Password + '''';
             EXEC sp_executesql @sql;
         END";
 
         var parameters = new Dictionary<string, object>
         {
-            ["@LoginName"] = loginName
+            ["@LoginName"] = loginName,
+            ["@Password"] = password
         };
 
         await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, commandText, parameters);
-
-        foreach (var role in roles)
-        {
-            var roleCommandText = "EXEC sp_addrolemember @rolename, @membername";
-            var roleParameters = new Dictionary<string, object>
-            {
-                ["@rolename"] = role,
-                ["@membername"] = loginName
-            };
-            await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, roleCommandText, roleParameters);
-        }
     }
+
+
 
 }
