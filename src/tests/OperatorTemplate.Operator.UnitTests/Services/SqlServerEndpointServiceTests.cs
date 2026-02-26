@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using OperatorTemplate.Operator.UnitTests.Helpers;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using Xunit;
 
 namespace OperatorTemplate.Operator.UnitTests.Services;

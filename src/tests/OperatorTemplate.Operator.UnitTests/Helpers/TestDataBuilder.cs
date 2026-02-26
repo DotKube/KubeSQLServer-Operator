@@ -1,5 +1,5 @@
 using k8s.Models;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using System.Text;
 
 namespace OperatorTemplate.Operator.UnitTests.Helpers;

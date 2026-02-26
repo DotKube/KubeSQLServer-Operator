@@ -4,20 +4,20 @@ using KubeOps.Abstractions.Reconciliation.Finalizer;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using System.Text;
 
-namespace SqlServerOperator.Finalizers;
+namespace SqlServerOperator.Finalizers.V1Alpha1;
 
-public class SQLServerUserFinalizer(
-    ILogger<SQLServerUserFinalizer> logger,
+public class SQLServerLoginFinalizer(
+    ILogger<SQLServerLoginFinalizer> logger,
     IKubernetesClient kubernetesClient,
     ISqlServerEndpointService sqlServerEndpointService
-) : IEntityFinalizer<V1Alpha1DatabaseUser>
+) : IEntityFinalizer<V1Alpha1SQLServerLogin>
 {
-    public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> FinalizeAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
+    public async Task<ReconciliationResult<V1Alpha1SQLServerLogin>> FinalizeAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Finalizing SQLServerUser: {Name}", entity.Metadata.Name);
+        logger.LogInformation("Finalizing SQLServerLogin: {Name}", entity.Metadata.Name);
 
         try
         {
@@ -25,21 +25,21 @@ public class SQLServerUserFinalizer(
             if (sqlServer is null)
             {
                 logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", entity.Spec.SqlServerName);
-                return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
+                return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
             }
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
             var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await DeleteUserAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, server, username, password);
+            await DeleteLoginAsync(entity.Spec.LoginName, server, username, password);
 
-            logger.LogInformation("Finalization complete for SQLServerUser: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
+            logger.LogInformation("Finalization complete for SQLServerLogin: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during finalization of SQLServerUser: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex);
+            logger.LogError(ex, "Error during finalization of SQLServerLogin: {Name}", entity.Metadata.Name);
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Failure(entity, ex.Message, ex);
         }
     }
 
@@ -57,14 +57,14 @@ public class SQLServerUserFinalizer(
         return (username, password);
     }
 
-    private async Task DeleteUserAsync(string databaseName, string loginName, string server, string username, string password)
+    private async Task DeleteLoginAsync(string loginName, string server, string username, string password)
     {
         var builder = new SqlConnectionStringBuilder
         {
             DataSource = server,
             UserID = username,
             Password = password,
-            InitialCatalog = databaseName,
+            InitialCatalog = "master",
             TrustServerCertificate = true,
             Encrypt = false,
         };
@@ -73,9 +73,9 @@ public class SQLServerUserFinalizer(
         await connection.OpenAsync();
 
         var commandText = $@"
-            IF EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
+            IF EXISTS (SELECT name FROM sys.sql_logins WHERE name = @LoginName)
             BEGIN
-                DROP USER [{loginName}];
+                DROP LOGIN [{loginName}];
             END";
 
         using var command = new SqlCommand(commandText, connection);

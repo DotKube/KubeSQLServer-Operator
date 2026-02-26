@@ -5,10 +5,10 @@ using KubeOps.Abstractions.Reconciliation.Controller;
 using KubeOps.KubernetesClient;
 using Microsoft.Data.SqlClient;
 using SqlServerOperator.Controllers.Services;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 using System.Text;
 
-namespace SqlServerOperator.Controllers;
+namespace SqlServerOperator.Controllers.V1Alpha1;
 
 [EntityRbac(typeof(V1Alpha1SQLServerSchema), Verbs = RbacVerb.All)]
 public class SQLServerSchemaController(

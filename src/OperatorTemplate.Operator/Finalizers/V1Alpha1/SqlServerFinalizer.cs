@@ -3,9 +3,9 @@ using k8s.Models;
 using KubeOps.Abstractions.Reconciliation;
 using KubeOps.Abstractions.Reconciliation.Finalizer;
 using KubeOps.KubernetesClient;
-using SqlServerOperator.Entities;
+using SqlServerOperator.Entities.V1Alpha1;
 
-namespace SqlServerOperator.Finalizers;
+namespace SqlServerOperator.Finalizers.V1Alpha1;
 
 public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesClient kubernetesClient) : IEntityFinalizer<V1Alpha1SQLServer>
 {
