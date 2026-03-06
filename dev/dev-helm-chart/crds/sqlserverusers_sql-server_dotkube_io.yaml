@@ -34,7 +34,7 @@ spec:
             description: Spec of the database user.
             properties:
               sqlServerName:
-                description: The name of the SQL Server instance.
+                description: The name of the SQLServer or ExternalSQLServer instance.
                 type: string
               databaseName:
                 description: The name of the database where this user will be created.

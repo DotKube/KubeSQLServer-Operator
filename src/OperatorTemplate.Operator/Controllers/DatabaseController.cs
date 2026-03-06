@@ -16,7 +16,7 @@ public class SQLServerDatabaseController(
     ILogger<SQLServerDatabaseController> logger,
     IKubernetesClient kubernetesClient,
     DefaultMssqlConfig config,
-    SqlServerEndpointService sqlServerEndpointService) 
+    SqlServerEndpointService sqlServerEndpointService)
     : IEntityController<V1Alpha1SQLServerDatabase>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> ReconcileAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
@@ -29,13 +29,13 @@ public class SQLServerDatabaseController(
             var (server, username, password) = await GetSqlServerCredentialsAsync(entity, secretName);
             await EnsureDatabaseExistsAsync(entity.Spec.DatabaseName, server, username, password);
             await UpdateStatusAsync(entity, "Ready", "Database ensured.", DateTime.UtcNow);
-            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during reconciliation of SQLServerDatabase: {Name}", entity.Metadata.Name);
             await UpdateStatusAsync(entity, "Error", ex.Message, DateTime.UtcNow);
-            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1SQLServerDatabase>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 
@@ -72,14 +72,22 @@ public class SQLServerDatabaseController(
     {
         var instanceName = entity.Spec.InstanceName;
         var namespaceName = entity.Metadata.NamespaceProperty;
-        var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(instanceName, namespaceName);
 
-        if (sqlServer is null)
+        // Try ExternalSQLServer first
+        var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(instanceName, namespaceName);
+        if (externalServer is not null)
         {
-            throw new Exception($"SQLServer instance '{instanceName}' not found in namespace '{namespaceName}'.");
+            return externalServer.Spec.SecretName;
         }
 
-        return sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+        // Fall back to internal SQLServer
+        var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(instanceName, namespaceName);
+        if (sqlServer is not null)
+        {
+            return sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+        }
+
+        throw new Exception($"SQLServer or ExternalSQLServer instance '{instanceName}' not found in namespace '{namespaceName}'.");
     }
 
     private async Task<(string server, string username, string password)> GetSqlServerCredentialsAsync(V1Alpha1SQLServerDatabase entity, string secretName)
@@ -121,7 +129,12 @@ public class SQLServerDatabaseController(
             using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
 
-            var commandText = $"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName) CREATE DATABASE [{databaseName}]";
+            var commandText = @"
+            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @DatabaseName)
+            BEGIN
+                DECLARE @sql NVARCHAR(MAX) = N'CREATE DATABASE [' + @DatabaseName + ']';
+                EXEC sp_executesql @sql;
+            END";
             using var command = new SqlCommand(commandText, connection);
             command.Parameters.AddWithValue("@DatabaseName", databaseName);
 

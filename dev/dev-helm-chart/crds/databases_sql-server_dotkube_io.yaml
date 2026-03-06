@@ -34,7 +34,7 @@ spec:
             description: Spec of the SQL Server database.
             properties:
               instanceName:
-                description: The name of the SQL Server instance where the database will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the database will be created.
                 type: string
               databaseName:
                 description: The name of the database to be created.

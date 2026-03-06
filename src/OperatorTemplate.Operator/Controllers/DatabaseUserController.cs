@@ -23,14 +23,26 @@ public class SQLServerUserController(
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
-            if (sqlServer is null)
+            // Try ExternalSQLServer first
+            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+            string secretName;
+
+            if (externalServer is not null)
             {
-                throw new Exception($"SQLServer instance '{entity.Spec.SqlServerName}' not found.");
+                secretName = externalServer.Spec.SecretName;
+            }
+            else
+            {
+                // Fall back to internal SQLServer
+                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
+                if (sqlServer is null)
+                {
+                    throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.SqlServerName}' not found.");
+                }
+                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             }
 
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
-            var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
             await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password);
 
@@ -40,7 +52,7 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity, TimeSpan.FromMinutes(5));
         }
         catch (Exception ex)
         {
@@ -51,7 +63,7 @@ public class SQLServerUserController(
             entity.Status.LastChecked = DateTime.UtcNow;
 
             await kubernetesClient.UpdateStatusAsync(entity);
-            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex);
+            return ReconciliationResult<V1Alpha1DatabaseUser>.Failure(entity, ex.Message, ex, TimeSpan.FromMinutes(1));
         }
     }
 
@@ -91,19 +103,23 @@ public class SQLServerUserController(
         using var connection = new SqlConnection(builder.ConnectionString);
         await connection.OpenAsync();
 
-        var commandText = $@"
-        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = N'{loginName}')
+        var commandText = @"
+        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
         BEGIN
-            CREATE USER [{loginName}] FOR LOGIN [{loginName}];
+            DECLARE @sql NVARCHAR(MAX) = N'CREATE USER [' + @LoginName + '] FOR LOGIN [' + @LoginName + ']';
+            EXEC sp_executesql @sql;
         END";
 
         using var command = new SqlCommand(commandText, connection);
+        command.Parameters.AddWithValue("@LoginName", loginName);
         await command.ExecuteNonQueryAsync();
 
         foreach (var role in roles)
         {
-            var roleCommandText = $@"EXEC sp_addrolemember N'{role}', N'{loginName}';";
-            using var roleCommand = new SqlCommand(roleCommandText, connection);
+            using var roleCommand = new SqlCommand("sp_addrolemember", connection);
+            roleCommand.CommandType = System.Data.CommandType.StoredProcedure;
+            roleCommand.Parameters.AddWithValue("@rolename", role);
+            roleCommand.Parameters.AddWithValue("@membername", loginName);
             await roleCommand.ExecuteNonQueryAsync();
         }
     }
