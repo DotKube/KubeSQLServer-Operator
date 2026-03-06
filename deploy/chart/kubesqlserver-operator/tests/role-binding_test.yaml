@@ -1,0 +1,71 @@
+suite: test role binding
+templates:
+  - role-binding.yaml
+tests:
+  - it: should create ClusterRoleBinding
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-operator-rb
+
+  - it: should apply controller labels
+    set:
+      controller.labels:
+        app: sqlserver-operator
+        component: rbac
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            component: rbac
+
+  - it: should merge global and controller labels
+    set:
+      global.labels:
+        environment: production
+        managed-by: helm
+      controller.labels:
+        app: sqlserver-operator
+        environment: staging
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            environment: staging
+            managed-by: helm
+
+  - it: should reference correct role
+    asserts:
+      - equal:
+          path: roleRef.apiGroup
+          value: rbac.authorization.k8s.io
+      - equal:
+          path: roleRef.kind
+          value: ClusterRole
+      - equal:
+          path: roleRef.name
+          value: RELEASE-NAME-operator-role
+
+  - it: should bind to default service account
+    asserts:
+      - equal:
+          path: subjects[0].kind
+          value: ServiceAccount
+      - equal:
+          path: subjects[0].name
+          value: RELEASE-NAME-operator-sa
+      - equal:
+          path: subjects[0].namespace
+          value: NAMESPACE
+
+  - it: should bind to custom service account
+    set:
+      controller.serviceAccount.name: custom-sa
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: custom-sa

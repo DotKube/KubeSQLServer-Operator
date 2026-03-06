@@ -20,3 +20,19 @@ tasks:
     cmds:
     - kubectl delete -f ./crds
     desc: "Delete the Custom Resource Definition (CRD) for the OperatorTemplate.Operator from the Kubernetes cluster."
+
+  unit-test:
+    cmds:
+    - helm unittest .
+    desc: "Run Helm chart unit tests using helm-unittest plugin."
+
+  lint:
+    cmds:
+    - helm lint .
+    desc: "Lint the Helm chart for potential issues."
+
+  test-all:
+    deps:
+    - lint
+    - unit-test
+    desc: "Run both lint and unit tests for the Helm chart."

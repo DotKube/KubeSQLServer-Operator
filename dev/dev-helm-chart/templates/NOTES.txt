@@ -1,0 +1,52 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }} -n {{ .Release.Namespace }}
+  $ helm get all {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+The SQL Server Operator has been deployed with the following configuration:
+
+- Replicas: {{ .Values.controller.replicaCount }}
+- Image: {{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}
+- Namespace: {{ .Release.Namespace }}
+{{- if .Values.controller.serviceAccount.create }}
+- Service Account: {{ include "kubesqlserver-operator.serviceAccountName" . }}
+{{- end }}
+
+{{- if .Values.controller.autoscaling.enabled }}
+
+Horizontal Pod Autoscaler is ENABLED:
+- Min Replicas: {{ .Values.controller.autoscaling.minReplicas }}
+- Max Replicas: {{ .Values.controller.autoscaling.maxReplicas }}
+{{- if .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
+- Target CPU: {{ .Values.controller.autoscaling.targetCPUUtilizationPercentage }}%
+{{- end }}
+{{- if .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
+- Target Memory: {{ .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}%
+{{- end }}
+{{- end }}
+
+{{- if .Values.controller.podDisruptionBudget.enabled }}
+
+Pod Disruption Budget is ENABLED:
+{{- if .Values.controller.podDisruptionBudget.minAvailable }}
+- Min Available: {{ .Values.controller.podDisruptionBudget.minAvailable }}
+{{- end }}
+{{- if .Values.controller.podDisruptionBudget.maxUnavailable }}
+- Max Unavailable: {{ .Values.controller.podDisruptionBudget.maxUnavailable }}
+{{- end }}
+{{- end }}
+
+To check the operator deployment status:
+
+  $ kubectl get deployment {{ .Release.Name }}-operator -n {{ .Release.Namespace }}
+
+To view the operator logs:
+
+  $ kubectl logs -l app=sqlserver-operator -n {{ .Release.Namespace }} -f
+
+For more information about using the SQL Server Operator, visit:
+  https://github.com/DotKube/KubeSQLServer-Operator

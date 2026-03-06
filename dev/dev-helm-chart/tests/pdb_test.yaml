@@ -1,0 +1,81 @@
+suite: test pod disruption budget
+templates:
+  - pdb.yaml
+tests:
+  - it: should not create PDB when disabled
+    set:
+      controller.podDisruptionBudget.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create PDB when enabled
+    set:
+      controller.podDisruptionBudget.enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-operator
+
+  - it: should apply controller labels to PDB
+    set:
+      controller.podDisruptionBudget.enabled: true
+      controller.labels:
+        app: sqlserver-operator
+        component: pdb
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            component: pdb
+
+  - it: should merge global and controller labels in PDB
+    set:
+      controller.podDisruptionBudget.enabled: true
+      global.labels:
+        environment: production
+        team: platform
+      controller.labels:
+        app: sqlserver-operator
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            environment: production
+            team: platform
+
+  - it: should set minAvailable
+    set:
+      controller.podDisruptionBudget.enabled: true
+      controller.podDisruptionBudget.minAvailable: 2
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+
+  - it: should set maxUnavailable
+    set:
+      controller.podDisruptionBudget.enabled: true
+      controller.podDisruptionBudget.minAvailable: null
+      controller.podDisruptionBudget.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+
+  - it: should match labels in selector
+    set:
+      controller.podDisruptionBudget.enabled: true
+      controller.labels:
+        app: sqlserver-operator
+        version: v1
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app: sqlserver-operator
+            version: v1

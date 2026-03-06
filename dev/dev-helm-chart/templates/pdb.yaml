@@ -1,0 +1,19 @@
+{{- if .Values.controller.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-operator
+  labels:
+    {{- include "kubesqlserver-operator.labels" (dict "global" .Values.global.labels "component" .Values.controller.labels) | nindent 4 }}
+spec:
+  {{- if .Values.controller.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.controller.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.controller.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.controller.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.controller.labels | nindent 6 }}
+{{- end }}

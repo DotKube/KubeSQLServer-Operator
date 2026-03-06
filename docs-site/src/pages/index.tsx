@@ -21,7 +21,13 @@ function HomepageHeader() {
           <Link
             className="button button--secondary button--lg"
             to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
+            Get Started
+          </Link>
+          <Link
+            className="button button--outline button--secondary button--lg"
+            to="/docs/getting-started/quick-start"
+            style={{marginLeft: '1rem'}}>
+            Quick Start Guide
           </Link>
         </div>
       </div>
@@ -33,8 +39,8 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`Kubernetes Operator for SQL Server`}
+      description="Declarative SQL Server management for Kubernetes development and testing environments">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

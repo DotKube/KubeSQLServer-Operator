@@ -1,0 +1,33 @@
+{{- if .Values.controller.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-operator
+  labels:
+    {{- include "kubesqlserver-operator.labels" (dict "global" .Values.global.labels "component" .Values.controller.labels) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-operator
+  minReplicas: {{ .Values.controller.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.controller.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.controller.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.controller.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

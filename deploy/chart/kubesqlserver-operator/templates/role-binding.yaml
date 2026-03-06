@@ -5,13 +5,12 @@ kind: ClusterRoleBinding
 metadata:
   name: {{ .Release.Name }}-operator-rb
   labels:
-    app: operator
-    release: "{{ .Release.Name }}"
+    {{- include "kubesqlserver-operator.labels" (dict "global" .Values.global.labels "component" .Values.controller.labels) | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ .Release.Name }}-operator-role
 subjects:
   - kind: ServiceAccount
-    name: {{ .Release.Name }}-operator-sa
+    name: {{ include "kubesqlserver-operator.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}

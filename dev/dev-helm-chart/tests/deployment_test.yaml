@@ -1,0 +1,400 @@
+suite: test deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should create deployment with default values
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-operator
+      - equal:
+          path: spec.replicas
+          value: 1
+      - isNull:
+          path: spec.template.spec.containers[0].livenessProbe
+      - isNull:
+          path: spec.template.spec.containers[0].readinessProbe
+      - isNull:
+          path: spec.template.spec.containers[0].startupProbe
+
+
+  - it: should apply controller labels
+    set:
+      controller.labels:
+        app: sqlserver-operator
+        custom: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            custom: value
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app: sqlserver-operator
+            custom: value
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            app: sqlserver-operator
+            custom: value
+
+  - it: should merge global and controller labels
+    set:
+      global.labels:
+        environment: production
+        team: platform
+      controller.labels:
+        app: sqlserver-operator
+        environment: staging
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app: sqlserver-operator
+            environment: staging
+            team: platform
+
+  - it: should merge global and controller podLabels
+    set:
+      global.podLabels:
+        globalLabel1: value1
+        globalLabel2: value2
+      controller.podLabels:
+        controllerLabel: controllerValue
+        globalLabel1: overridden
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            globalLabel1: overridden
+            globalLabel2: value2
+            controllerLabel: controllerValue
+
+  - it: should apply global and controller annotations
+    set:
+      global.annotations:
+        globalAnnotation: value1
+      controller.annotations:
+        controllerAnnotation: value2
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            globalAnnotation: value1
+            controllerAnnotation: value2
+
+  - it: should merge global and controller podAnnotations with override
+    set:
+      global.podAnnotations:
+        x: y
+        a: b
+        e: i
+      controller.podAnnotations:
+        x: z
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.x
+          value: z
+      - equal:
+          path: spec.template.metadata.annotations.a
+          value: b
+      - equal:
+          path: spec.template.metadata.annotations.e
+          value: i
+
+  - it: should apply global podSecurityContext
+    set:
+      global.podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
+        fsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+
+  - it: should override global podSecurityContext with controller values
+    set:
+      global.podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
+        fsGroup: 2000
+      controller.podSecurityContext:
+        runAsUser: 3000
+        fsGroup: 3000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 3000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 3000
+
+  - it: should apply global securityContext to container
+    set:
+      global.securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: should override global securityContext with controller values
+    set:
+      global.securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+      controller.securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+
+  - it: should apply global nodeSelector
+    set:
+      global.nodeSelector:
+        kubernetes.io/os: linux
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+            disktype: ssd
+
+  - it: should merge global and controller nodeSelector
+    set:
+      global.nodeSelector:
+        kubernetes.io/os: linux
+      controller.nodeSelector:
+        disktype: ssd
+    asserts:
+      - isSubset:
+          path: spec.template.spec.nodeSelector
+          content:
+            kubernetes.io/os: linux
+            disktype: ssd
+
+  - it: should concatenate global and controller tolerations
+    set:
+      global.tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      controller.tolerations:
+        - key: app
+          operator: Equal
+          value: sqlserver-operator
+          effect: NoSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+            - key: app
+              operator: Equal
+              value: sqlserver-operator
+              effect: NoSchedule
+
+  - it: should apply global affinity
+    set:
+      global.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.affinity
+
+  - it: should use global priorityClassName
+    set:
+      global.priorityClassName: high-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  - it: should override global priorityClassName with controller value
+    set:
+      global.priorityClassName: high-priority
+      controller.priorityClassName: critical-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: critical-priority
+
+  - it: should use global imagePullPolicy
+    set:
+      global.imagePullPolicy: Always
+      controller.image.pullPolicy: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should override global imagePullPolicy with controller value
+    set:
+      global.imagePullPolicy: Always
+      controller.image.pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  - it: should apply health probes when enabled
+    set:
+      controller.livenessProbe:
+        enabled: true
+        httpGet:
+          path: /alive
+          port: http
+      controller.readinessProbe:
+        enabled: true
+        httpGet:
+          path: /health
+          port: http
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /alive
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+
+  - it: should not apply startup probe when disabled
+    set:
+      controller.startupProbe:
+        enabled: false
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[0].startupProbe
+
+  - it: should apply startup probe when enabled
+    set:
+      controller.startupProbe:
+        enabled: true
+        httpGet:
+          path: /alive
+          port: http
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].startupProbe
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /alive
+
+  - it: should set custom resource limits
+    set:
+      controller.resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 250m
+          memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 1000m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 1Gi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 250m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+
+  - it: should use custom service account name
+    set:
+      controller.serviceAccount.name: custom-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: custom-sa
+
+  - it: should set environment variables
+    set:
+      controller.environment: Development
+      controller.extraEnv:
+        - name: LOG_LEVEL
+          value: Debug
+        - name: FEATURE_FLAG
+          value: "true"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ASPNETCORE_ENVIRONMENT
+            value: Development
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: Debug
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FEATURE_FLAG
+            value: "true"
+
+  - it: should configure ports
+    set:
+      controller.ports:
+        http:
+          containerPort: 8080
+          protocol: TCP
+        https:
+          containerPort: 8443
+          protocol: TCP
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            containerPort: 8080
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            containerPort: 8443
+            protocol: TCP

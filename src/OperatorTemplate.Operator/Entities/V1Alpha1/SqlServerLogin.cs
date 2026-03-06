@@ -1,0 +1,40 @@
+
+
+using k8s.Models;
+using KubeOps.Abstractions.Entities;
+using KubeOps.Abstractions.Entities.Attributes;
+
+namespace SqlServerOperator.Entities.V1Alpha1;
+
+[KubernetesEntity(Group = "sql-server.dotkube.io", ApiVersion = "v1alpha1", Kind = "SQLServerLogin")]
+public class V1Alpha1SQLServerLogin : CustomKubernetesEntity<V1Alpha1SQLServerLogin.V1Alpha1SQLServerLoginSpec, V1Alpha1SQLServerLogin.V1Alpha1SQLServerLoginStatus>
+{
+    [Description("Spec of the SQL Server login.")]
+    public class V1Alpha1SQLServerLoginSpec
+    {
+        [Description("The name of the SQLServer or ExternalSQLServer instance.")]
+        public string SqlServerName { get; set; } = string.Empty;
+
+        [Description("The login name for authentication.")]
+        public string LoginName { get; set; } = string.Empty;
+
+        [Description("The authentication type for the login (e.g., SQL, Windows).")]
+        public string AuthenticationType { get; set; } = "SQL";
+
+        [Description("The name of the Kubernetes secret storing authentication credentials.")]
+        public string? SecretName { get; set; }
+    }
+
+    [Description("Status of the SQL Server login.")]
+    public class V1Alpha1SQLServerLoginStatus
+    {
+        [Description("The current state of the SQL Server login.")]
+        public string State { get; set; } = "Pending";
+
+        [Description("A message indicating the current status of the SQL Server login.")]
+        public string Message { get; set; } = "Awaiting reconciliation.";
+
+        [Description("The last time the login status was checked.")]
+        public DateTime? LastChecked { get; set; }
+    }
+}

@@ -1,36 +1,90 @@
-
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "{{ .Release.Name }}-operator"
+  name: {{ .Release.Name }}-operator
   labels:
-    app: operator
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    {{- include "kubesqlserver-operator.labels" (dict "global" .Values.global.labels "component" .Values.controller.labels) | nindent 4 }}
+  {{- $annotations := include "kubesqlserver-operator.annotations" (dict "global" .Values.global.annotations "component" .Values.controller.annotations) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.controller.replicaCount }}
   selector:
     matchLabels:
-      app: operator
-      release: "{{ .Release.Name }}"
+      {{- toYaml .Values.controller.labels | nindent 6 }}
   template:
     metadata:
       labels:
-        app: operator
-        release: "{{ .Release.Name }}"
+        {{- toYaml .Values.controller.labels | nindent 8 }}
+        {{- with include "kubesqlserver-operator.podLabels" (dict "global" .Values.global.podLabels "component" .Values.controller.podLabels) }}
+        {{- . | nindent 8 }}
+        {{- end }}
+      {{- $podAnnotations := include "kubesqlserver-operator.podAnnotations" (dict "global" .Values.global.podAnnotations "component" .Values.controller.podAnnotations) }}
+      {{- if $podAnnotations }}
+      annotations:
+        {{- $podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
-      serviceAccountName: {{ .Release.Name }}-operator-sa
+      serviceAccountName: {{ include "kubesqlserver-operator.serviceAccountName" . }}
+      {{- $podSecurityContext := include "kubesqlserver-operator.podSecurityContext" (dict "global" .Values.global.podSecurityContext "component" .Values.controller.podSecurityContext) }}
+      {{- if $podSecurityContext }}
+      securityContext:
+        {{- $podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- $priorityClassName := include "kubesqlserver-operator.priorityClassName" (dict "global" .Values.global.priorityClassName "component" .Values.controller.priorityClassName) }}
+      {{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName }}
+      {{- end }}
+      {{- $nodeSelector := include "kubesqlserver-operator.nodeSelector" (dict "global" .Values.global.nodeSelector "component" .Values.controller.nodeSelector) }}
+      {{- if $nodeSelector }}
+      nodeSelector:
+        {{- $nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- $affinity := include "kubesqlserver-operator.affinity" (dict "global" .Values.global.affinity "component" .Values.controller.affinity) }}
+      {{- if $affinity }}
+      affinity:
+        {{- $affinity | nindent 8 }}
+      {{- end }}
+      {{- $tolerations := include "kubesqlserver-operator.tolerations" (dict "global" .Values.global.tolerations "component" .Values.controller.tolerations) }}
+      {{- if $tolerations }}
+      tolerations:
+        {{- $tolerations | nindent 8 }}
+      {{- end }}
       containers:
         - name: operator
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}
+          imagePullPolicy: {{ include "kubesqlserver-operator.imagePullPolicy" (dict "global" .Values.global.imagePullPolicy "component" .Values.controller.image.pullPolicy) }}
+          {{- $securityContext := include "kubesqlserver-operator.securityContext" (dict "global" .Values.global.securityContext "component" .Values.controller.securityContext) }}
+          {{- if $securityContext }}
+          securityContext:
+            {{- $securityContext | nindent 12 }}
+          {{- end }}
           ports:
-            - containerPort: 80
+            {{- range $name, $port := .Values.controller.ports }}
+            - name: {{ $name }}
+              containerPort: {{ $port.containerPort }}
+              protocol: {{ $port.protocol }}
+            {{- end }}
           env:
             - name: ASPNETCORE_ENVIRONMENT
-              value: "{{ .Values.environment }}"
+              value: {{ .Values.controller.environment | quote }}
+            {{- with .Values.controller.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.controller.livenessProbe.enabled }}
+          livenessProbe:
+            {{- omit .Values.controller.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.controller.readinessProbe.enabled }}
+          readinessProbe:
+            {{- omit .Values.controller.readinessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.controller.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.controller.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.controller.resources | nindent 12 }}
