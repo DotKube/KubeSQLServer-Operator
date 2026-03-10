@@ -42,7 +42,6 @@ public class SQLServerDatabaseController(
 
     public Task<ReconciliationResult<V1Alpha1SQLServerDatabase>> DeletedAsync(V1Alpha1SQLServerDatabase entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleted SQLServerDatabase: {Name}", entity.Metadata.Name);
         return Task.FromResult(ReconciliationResult<V1Alpha1SQLServerDatabase>.Success(entity));
     }
 
