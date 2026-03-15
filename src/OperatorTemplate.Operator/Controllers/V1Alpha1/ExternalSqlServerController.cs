@@ -42,7 +42,6 @@ public class ExternalSQLServerController(
 
     public Task<ReconciliationResult<V1Alpha1ExternalSQLServer>> DeletedAsync(V1Alpha1ExternalSQLServer entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleted ExternalSQLServer: {Name}", entity.Metadata.Name);
         return Task.FromResult(ReconciliationResult<V1Alpha1ExternalSQLServer>.Success(entity));
     }
 

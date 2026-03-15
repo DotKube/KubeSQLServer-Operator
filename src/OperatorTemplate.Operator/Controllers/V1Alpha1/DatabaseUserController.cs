@@ -70,7 +70,6 @@ public class SQLServerUserController(
 
     public Task<ReconciliationResult<V1Alpha1DatabaseUser>> DeletedAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deleted SQLServerUser: {Name}", entity.Metadata.Name);
         return Task.FromResult(ReconciliationResult<V1Alpha1DatabaseUser>.Success(entity));
     }
 
