@@ -31,16 +31,18 @@ tests:
           content:
             app: sqlserver-operator
             custom: value
+            app.kubernetes.io/name: kubesqlserver-operator
+            app.kubernetes.io/instance: RELEASE-NAME
       - isSubset:
           path: spec.selector.matchLabels
           content:
-            app: sqlserver-operator
-            custom: value
+            app.kubernetes.io/name: kubesqlserver-operator
+            app.kubernetes.io/instance: RELEASE-NAME
       - isSubset:
           path: spec.template.metadata.labels
           content:
-            app: sqlserver-operator
-            custom: value
+            app.kubernetes.io/name: kubesqlserver-operator
+            app.kubernetes.io/instance: RELEASE-NAME
 
   - it: should merge global and controller labels
     set:
@@ -57,6 +59,8 @@ tests:
             app: sqlserver-operator
             environment: staging
             team: platform
+            app.kubernetes.io/name: kubesqlserver-operator
+            app.kubernetes.io/instance: RELEASE-NAME
 
   - it: should merge global and controller podLabels
     set:

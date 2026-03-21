@@ -48,6 +48,101 @@ spec:
     subresources:
       status: {}
 ---
+# Source: kubesqlserver-operator/crds/externaldatabases_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: externaldatabases.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: ExternalDatabase
+    listKind: ExternalDatabaseList
+    plural: externaldatabases
+    singular: externaldatabase
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the external database.
+            properties:
+              state:
+                description: The current state of the connection.
+                type: string
+              message:
+                description: A message providing details on the current connection status.
+                type: string
+              lastChecked:
+                description: The last time the database status was checked.
+                format: date-time
+                nullable: true
+                type: string
+              isConnected:
+                description: Whether the connection to the external database is healthy.
+                type: boolean
+            type: object
+          spec:
+            description: Spec of the external database.
+            properties:
+              host:
+                description: The hostname or IP address of the SQL Server instance (e.g., myserver.database.windows.net, 10.0.0.5, mydatabase.rds.amazonaws.com).
+                type: string
+              port:
+                description: The port number for the SQL Server connection.
+                format: int32
+                type: integer
+              databaseName:
+                description: The name of the database to be managed.
+                type: string
+              useEncryption:
+                description: Whether to use SSL/TLS encryption for the connection.
+                type: boolean
+              trustServerCertificate:
+                description: Whether to trust the server certificate (set to true for self-signed certificates).
+                type: boolean
+              identity:
+                description: The identity configuration for connecting to the external database.
+                properties:
+                  authType:
+                    description: The type of authentication to use for the SQL Server connection. Valid values are SqlLogin, WorkloadIdentity, and AppRegistration.
+                    enum:
+                    - SqlLogin
+                    - WorkloadIdentity
+                    - AppRegistration
+                    type: string
+                  secretName:
+                    description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' and 'username' keys).
+                    nullable: true
+                    type: string
+                  serviceAccountName:
+                    description: The name of the ServiceAccount to use for Workload Identity.
+                    nullable: true
+                    type: string
+                  clientId:
+                    description: The Client ID of the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                  tenantId:
+                    description: The Tenant ID for the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                type: object
+              additionalConnectionProperties:
+                additionalProperties:
+                  type: string
+                description: Optional connection string parameters as key-value pairs (e.g., for Azure AD authentication, connection timeout, etc.).
+                nullable: true
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
 # Source: kubesqlserver-operator/crds/externalsqlservers_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -94,15 +189,39 @@ spec:
                 description: The port number for the SQL Server connection.
                 format: int32
                 type: integer
-              secretName:
-                description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' keys).
-                type: string
               useEncryption:
                 description: Whether to use SSL/TLS encryption for the connection.
                 type: boolean
               trustServerCertificate:
                 description: Whether to trust the server certificate (set to true for self-signed certificates).
                 type: boolean
+              identity:
+                description: The identity configuration for connecting to the SQL Server.
+                properties:
+                  authType:
+                    description: The type of authentication to use for the SQL Server connection. Valid values are SqlLogin, WorkloadIdentity, and AppRegistration.
+                    enum:
+                    - SqlLogin
+                    - WorkloadIdentity
+                    - AppRegistration
+                    type: string
+                  secretName:
+                    description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' and 'username' keys).
+                    nullable: true
+                    type: string
+                  serviceAccountName:
+                    description: The name of the ServiceAccount to use for Workload Identity.
+                    nullable: true
+                    type: string
+                  clientId:
+                    description: The Client ID of the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                  tenantId:
+                    description: The Tenant ID for the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                type: object
               additionalConnectionProperties:
                 additionalProperties:
                   type: string
@@ -212,10 +331,33 @@ spec:
               storageSize:
                 description: The size of the persistent storage volume.
                 type: string
-              secretName:
-                description: The name of the Kubernetes secret containing SQL Server credentials.
-                nullable: true
-                type: string
+              identity:
+                description: The identity configuration for the SQL Server.
+                properties:
+                  authType:
+                    description: The type of authentication to use for the SQL Server connection. Valid values are SqlLogin, WorkloadIdentity, and AppRegistration.
+                    enum:
+                    - SqlLogin
+                    - WorkloadIdentity
+                    - AppRegistration
+                    type: string
+                  secretName:
+                    description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' and 'username' keys).
+                    nullable: true
+                    type: string
+                  serviceAccountName:
+                    description: The name of the ServiceAccount to use for Workload Identity.
+                    nullable: true
+                    type: string
+                  clientId:
+                    description: The Client ID of the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                  tenantId:
+                    description: The Tenant ID for the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                type: object
               serviceType:
                 description: The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).
                 nullable: true
@@ -494,6 +636,11 @@ kind: Deployment
 metadata:
   name: sql-server-operator
   labels:
+    helm.sh/chart: kubesqlserver-operator-0.3.2
+    app.kubernetes.io/name: kubesqlserver-operator
+    app.kubernetes.io/instance: sql-server
+    app.kubernetes.io/version: "0.1.2"
+    app.kubernetes.io/managed-by: Helm
     
     app: "sqlserver-operator"
     app.openshift.io/runtime: "dotnet"
@@ -501,13 +648,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sqlserver-operator
-      app.openshift.io/runtime: dotnet
+      app.kubernetes.io/name: kubesqlserver-operator
+      app.kubernetes.io/instance: sql-server
   template:
     metadata:
       labels:
-        app: sqlserver-operator
-        app.openshift.io/runtime: dotnet
+        app.kubernetes.io/name: kubesqlserver-operator
+        app.kubernetes.io/instance: sql-server
         
         app.openshift.io/runtime: "dotnet"
     spec:

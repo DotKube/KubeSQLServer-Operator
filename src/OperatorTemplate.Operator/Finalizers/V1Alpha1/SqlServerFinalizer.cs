@@ -16,7 +16,7 @@ public class SQLServerFinalizer(ILogger<SQLServerFinalizer> logger, IKubernetesC
         var namespaceName = entity.Metadata.NamespaceProperty;
         var statefulSetName = $"{entity.Metadata.Name}-statefulset";
         var serviceName = $"{entity.Metadata.Name}-service";
-        var secretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
+        var secretName = entity.Spec.Identity.SecretName ?? $"{entity.Metadata.Name}-secret";
         var configMapName = $"{entity.Metadata.Name}-config";
 
         try

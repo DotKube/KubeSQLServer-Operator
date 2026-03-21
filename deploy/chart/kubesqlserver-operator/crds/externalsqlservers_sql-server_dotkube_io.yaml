@@ -43,15 +43,39 @@ spec:
                 description: The port number for the SQL Server connection.
                 format: int32
                 type: integer
-              secretName:
-                description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' keys).
-                type: string
               useEncryption:
                 description: Whether to use SSL/TLS encryption for the connection.
                 type: boolean
               trustServerCertificate:
                 description: Whether to trust the server certificate (set to true for self-signed certificates).
                 type: boolean
+              identity:
+                description: The identity configuration for connecting to the SQL Server.
+                properties:
+                  authType:
+                    description: The type of authentication to use for the SQL Server connection. Valid values are SqlLogin, WorkloadIdentity, and AppRegistration.
+                    enum:
+                    - SqlLogin
+                    - WorkloadIdentity
+                    - AppRegistration
+                    type: string
+                  secretName:
+                    description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' and 'username' keys).
+                    nullable: true
+                    type: string
+                  serviceAccountName:
+                    description: The name of the ServiceAccount to use for Workload Identity.
+                    nullable: true
+                    type: string
+                  clientId:
+                    description: The Client ID of the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                  tenantId:
+                    description: The Tenant ID for the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                type: object
               additionalConnectionProperties:
                 additionalProperties:
                   type: string

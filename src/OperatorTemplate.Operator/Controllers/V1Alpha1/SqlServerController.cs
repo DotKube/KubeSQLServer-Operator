@@ -106,7 +106,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
                                     {
                                         SecretKeyRef = new V1SecretKeySelector
                                         {
-                                            Name = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret",
+                                            Name = entity.Spec.Identity.SecretName ?? $"{entity.Metadata.Name}-secret",
                                             Key = "password"
                                         }
                                     }
@@ -150,7 +150,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
                                 Name = "mssql-secret-volume",
                                 Secret = new V1SecretVolumeSource
                                 {
-                                    SecretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret"
+                                    SecretName = entity.Spec.Identity.SecretName ?? $"{entity.Metadata.Name}-secret"
                                 }
                             }
                         ]
@@ -258,7 +258,7 @@ public class SQLServerController(ILogger<SQLServerController> logger, IKubernete
 
     private async Task EnsureSaPasswordSecretAsync(V1Alpha1SQLServer entity)
     {
-        var secretName = entity.Spec.SecretName ?? $"{entity.Metadata.Name}-secret";
+        var secretName = entity.Spec.Identity.SecretName ?? $"{entity.Metadata.Name}-secret";
         var namespaceName = entity.Metadata.NamespaceProperty;
 
         try

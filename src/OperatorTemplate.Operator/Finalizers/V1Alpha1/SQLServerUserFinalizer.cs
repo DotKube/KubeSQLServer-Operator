@@ -29,7 +29,7 @@ public class SQLServerUserFinalizer(
             }
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
-            var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+            var secretName = sqlServer.Spec.Identity.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
             await DeleteUserAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, server, username, password);
 

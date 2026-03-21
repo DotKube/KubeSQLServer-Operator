@@ -20,7 +20,7 @@ public static class TestDataBuilder
                 Image = "mcr.microsoft.com/mssql/server:2022-latest",
                 StorageClass = "standard",
                 StorageSize = "1Gi",
-                SecretName = $"{name}-secret",
+                Identity = new IdentitySpec { SecretName = $"{name}-secret" },
                 ServiceType = "NodePort"
             }
         };
@@ -39,7 +39,7 @@ public static class TestDataBuilder
             {
                 Host = "localhost",
                 Port = 1433,
-                SecretName = "external-secret",
+                Identity = new IdentitySpec { SecretName = "external-secret" },
                 UseEncryption = false,
                 TrustServerCertificate = true
             }

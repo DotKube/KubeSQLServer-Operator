@@ -36,7 +36,7 @@ Usage: {{ include "kubesqlserver-operator.labels" (dict "global" .Values.global.
 {{- define "kubesqlserver-operator.labels" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -50,7 +50,7 @@ Usage: {{ include "kubesqlserver-operator.annotations" (dict "global" .Values.gl
 {{- define "kubesqlserver-operator.annotations" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -64,7 +64,7 @@ Usage: {{ include "kubesqlserver-operator.podLabels" (dict "global" .Values.glob
 {{- define "kubesqlserver-operator.podLabels" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -78,7 +78,7 @@ Usage: {{ include "kubesqlserver-operator.podAnnotations" (dict "global" .Values
 {{- define "kubesqlserver-operator.podAnnotations" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -120,7 +120,7 @@ Usage: {{ include "kubesqlserver-operator.nodeSelector" (dict "global" .Values.g
 {{- define "kubesqlserver-operator.nodeSelector" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- if $merged }}
 {{- toYaml $merged }}
 {{- end }}
@@ -148,7 +148,7 @@ Usage: {{ include "kubesqlserver-operator.affinity" (dict "global" .Values.globa
 {{- define "kubesqlserver-operator.affinity" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMerge (deepCopy $component) $global }}
 {{- if $merged }}
 {{- toYaml $merged }}
 {{- end }}

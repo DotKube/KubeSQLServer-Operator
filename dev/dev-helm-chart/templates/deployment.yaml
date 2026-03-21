@@ -4,6 +4,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-operator
   labels:
+    {{- include "kubesqlserver-operator.commonLabels" . | nindent 4 }}
     {{- include "kubesqlserver-operator.labels" (dict "global" .Values.global.labels "component" .Values.controller.labels) | nindent 4 }}
   {{- $annotations := include "kubesqlserver-operator.annotations" (dict "global" .Values.global.annotations "component" .Values.controller.annotations) }}
   {{- if $annotations }}
@@ -14,14 +15,12 @@ spec:
   replicas: {{ .Values.controller.replicaCount }}
   selector:
     matchLabels:
-      {{- toYaml .Values.controller.labels | nindent 6 }}
+      {{- include "kubesqlserver-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- toYaml .Values.controller.labels | nindent 8 }}
-        {{- with include "kubesqlserver-operator.podLabels" (dict "global" .Values.global.podLabels "component" .Values.controller.podLabels) }}
-        {{- . | nindent 8 }}
-        {{- end }}
+        {{- include "kubesqlserver-operator.selectorLabels" . | nindent 8 }}
+        {{- include "kubesqlserver-operator.podLabels" (dict "global" .Values.global.podLabels "component" .Values.controller.podLabels) | nindent 8 }}
       {{- $podAnnotations := include "kubesqlserver-operator.podAnnotations" (dict "global" .Values.global.podAnnotations "component" .Values.controller.podAnnotations) }}
       {{- if $podAnnotations }}
       annotations:

@@ -37,10 +37,33 @@ spec:
               storageSize:
                 description: The size of the persistent storage volume.
                 type: string
-              secretName:
-                description: The name of the Kubernetes secret containing SQL Server credentials.
-                nullable: true
-                type: string
+              identity:
+                description: The identity configuration for the SQL Server.
+                properties:
+                  authType:
+                    description: The type of authentication to use for the SQL Server connection. Valid values are SqlLogin, WorkloadIdentity, and AppRegistration.
+                    enum:
+                    - SqlLogin
+                    - WorkloadIdentity
+                    - AppRegistration
+                    type: string
+                  secretName:
+                    description: The name of the Kubernetes secret containing SQL Server credentials (must contain 'password' and 'username' keys).
+                    nullable: true
+                    type: string
+                  serviceAccountName:
+                    description: The name of the ServiceAccount to use for Workload Identity.
+                    nullable: true
+                    type: string
+                  clientId:
+                    description: The Client ID of the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                  tenantId:
+                    description: The Tenant ID for the Managed Identity or App Registration.
+                    nullable: true
+                    type: string
+                type: object
               serviceType:
                 description: The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).
                 nullable: true

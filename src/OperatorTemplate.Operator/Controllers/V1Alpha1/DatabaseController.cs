@@ -55,14 +55,14 @@ public class SQLServerDatabaseController(
         var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(instanceName, namespaceName);
         if (externalServer is not null)
         {
-            return externalServer.Spec.SecretName;
+            return externalServer.Spec.Identity.SecretName;
         }
 
         // Fall back to internal SQLServer
         var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(instanceName, namespaceName);
         if (sqlServer is not null)
         {
-            return sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+            return sqlServer.Spec.Identity.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
         }
 
         throw new Exception($"SQLServer or ExternalSQLServer instance '{instanceName}' not found in namespace '{namespaceName}'.");

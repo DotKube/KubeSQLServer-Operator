@@ -30,7 +30,7 @@ public class SQLServerLoginController(
 
             if (externalServer is not null)
             {
-                secretName = externalServer.Spec.SecretName;
+                secretName = externalServer.Spec.Identity.SecretName;
             }
             else
             {
@@ -40,7 +40,7 @@ public class SQLServerLoginController(
                 {
                     throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.SqlServerName}' not found.");
                 }
-                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+                secretName = sqlServer.Spec.Identity.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             }
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);

@@ -20,8 +20,8 @@ public class V1Alpha1SQLServer : CustomKubernetesEntity<V1Alpha1SQLServer.V1Alph
         [Description("The size of the persistent storage volume.")]
         public string StorageSize { get; set; } = "20Gi";
 
-        [Description("The name of the Kubernetes secret containing SQL Server credentials.")]
-        public string? SecretName { get; set; }
+        [Description("The identity configuration for the SQL Server.")]
+        public IdentitySpec Identity { get; set; } = new();
 
         [Description("The type of Kubernetes service to expose SQL Server (e.g., ClusterIP, NodePort, LoadBalancer).")]
         public string? ServiceType { get; set; } = "None";
