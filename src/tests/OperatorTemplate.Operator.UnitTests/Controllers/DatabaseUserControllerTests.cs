@@ -109,6 +109,40 @@ public class DatabaseUserControllerTests
     }
 
     [Fact]
+    public async Task ReconcileAsync_WithEntraIdProvider_CreatesUserFromExternalProvider()
+    {
+        // Arrange
+        var entity = TestDataBuilder.CreateDatabaseUser("test-user", "test-login", "test-db", "external-sql", "default", entraIdProvider: true);
+        var externalServer = TestDataBuilder.CreateExternalSqlServer("external-sql", "default");
+        var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("external-sql", "default"))
+            .ReturnsAsync(externalServer);
+        _mockK8sClient.Setup(x => x.GetAsync<V1Secret>("external-secret", "default"))
+            .ReturnsAsync(secret);
+        _mockEndpointService.Setup(x => x.GetSqlServerEndpointAsync("external-sql", "default"))
+            .ReturnsAsync("localhost,1433");
+        _mockSqlExecutor.Setup(x => x.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .Returns(Task.CompletedTask);
+        _mockK8sClient.Setup(x => x.UpdateStatusAsync(It.IsAny<V1Alpha1DatabaseUser>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((V1Alpha1DatabaseUser e, CancellationToken ct) => e);
+
+        // Act
+        var result = await _controller.ReconcileAsync(entity, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Ready", entity.Status?.State);
+
+        // Verify user creation with FROM EXTERNAL PROVIDER
+        _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
+            It.IsAny<string>(),
+            It.Is<string>(cmd => cmd.Contains("CREATE USER [" + entity.Spec.LoginName + "] FROM EXTERNAL PROVIDER")),
+            It.IsAny<Dictionary<string, object>>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task ReconcileAsync_WhenServerNotFound_ReturnsFailure()
     {
         // Arrange

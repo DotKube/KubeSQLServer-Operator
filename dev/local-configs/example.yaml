@@ -151,6 +151,20 @@ spec:
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: external-user
+  namespace: sqlserver-example
+spec:
+  sqlServerName: sqlserver-instance
+  databaseName: HelloWorld1
+  loginName: "bobtheburger@example.com"
+  entraIdProvider: true
+  roles:
+    - db_datareader
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerSchema
 metadata:
   name: reporting-schema
