@@ -36,7 +36,7 @@ Usage: {{ include "kubesqlserver-operator.labels" (dict "global" .Values.global.
 {{- define "kubesqlserver-operator.labels" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -50,7 +50,7 @@ Usage: {{ include "kubesqlserver-operator.annotations" (dict "global" .Values.gl
 {{- define "kubesqlserver-operator.annotations" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -64,7 +64,22 @@ Usage: {{ include "kubesqlserver-operator.podLabels" (dict "global" .Values.glob
 {{- define "kubesqlserver-operator.podLabels" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
+{{- range $key, $value := $merged }}
+{{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Full pod labels merging global labels, global pod labels, controller labels, and controller pod labels.
+Usage: {{ include "kubesqlserver-operator.fullPodLabels" . }}
+*/}}
+{{- define "kubesqlserver-operator.fullPodLabels" -}}
+{{- $globalLabels := .Values.global.labels | default dict -}}
+{{- $globalPodLabels := .Values.global.podLabels | default dict -}}
+{{- $controllerLabels := .Values.controller.labels | default dict -}}
+{{- $controllerPodLabels := .Values.controller.podLabels | default dict -}}
+{{- $merged := mustMergeOverwrite (deepCopy $globalLabels) $globalPodLabels $controllerLabels $controllerPodLabels -}}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -78,7 +93,7 @@ Usage: {{ include "kubesqlserver-operator.podAnnotations" (dict "global" .Values
 {{- define "kubesqlserver-operator.podAnnotations" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
 {{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -120,7 +135,7 @@ Usage: {{ include "kubesqlserver-operator.nodeSelector" (dict "global" .Values.g
 {{- define "kubesqlserver-operator.nodeSelector" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
 {{- if $merged }}
 {{- toYaml $merged }}
 {{- end }}
@@ -148,7 +163,7 @@ Usage: {{ include "kubesqlserver-operator.affinity" (dict "global" .Values.globa
 {{- define "kubesqlserver-operator.affinity" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
-{{- $merged := merge $component $global }}
+{{- $merged := mustMergeOverwrite (deepCopy $global) $component }}
 {{- if $merged }}
 {{- toYaml $merged }}
 {{- end }}

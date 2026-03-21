@@ -18,10 +18,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- toYaml .Values.controller.labels | nindent 8 }}
-        {{- with include "kubesqlserver-operator.podLabels" (dict "global" .Values.global.podLabels "component" .Values.controller.podLabels) }}
-        {{- . | nindent 8 }}
-        {{- end }}
+        {{- include "kubesqlserver-operator.fullPodLabels" . | nindent 8 }}
       {{- $podAnnotations := include "kubesqlserver-operator.podAnnotations" (dict "global" .Values.global.podAnnotations "component" .Values.controller.podAnnotations) }}
       {{- if $podAnnotations }}
       annotations:
