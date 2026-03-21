@@ -48,7 +48,7 @@ tasks:
   
   create-registry:
     cmds:
-    - docker compose -f ./registry.yaml up -d
+    - docker run -d --name kind-registry --restart always -p 5000:5000 -v kind-registry-data:/var/lib/registry docker.io/registry:2 || true
 
   
   add-metallb:
