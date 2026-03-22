@@ -15,7 +15,6 @@ namespace SqlServerOperator.Controllers.V1Alpha1;
 public class SQLServerDatabaseController(
     ILogger<SQLServerDatabaseController> logger,
     IKubernetesClient kubernetesClient,
-    DefaultMssqlConfig config,
     ISqlServerEndpointService sqlServerEndpointService,
     ISqlExecutor sqlExecutor)
     : IEntityController<V1Alpha1SQLServerDatabase>

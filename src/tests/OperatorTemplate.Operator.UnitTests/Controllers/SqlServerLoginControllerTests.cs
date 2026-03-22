@@ -16,6 +16,7 @@ public class SqlServerLoginControllerTests
     private readonly Mock<IKubernetesClient> _mockK8sClient;
     private readonly Mock<ISqlServerEndpointService> _mockEndpointService;
     private readonly Mock<ISqlExecutor> _mockSqlExecutor;
+    private readonly Mock<IDatabaseReferenceResolver> _mockDatabaseReferenceResolver;
     private readonly SQLServerLoginController _controller;
 
     public SqlServerLoginControllerTests()
@@ -24,12 +25,13 @@ public class SqlServerLoginControllerTests
         _mockK8sClient = new Mock<IKubernetesClient>();
         _mockEndpointService = new Mock<ISqlServerEndpointService>();
         _mockSqlExecutor = new Mock<ISqlExecutor>();
+        _mockDatabaseReferenceResolver = new Mock<IDatabaseReferenceResolver>();
 
         _controller = new SQLServerLoginController(
             _mockLogger.Object,
             _mockK8sClient.Object,
-            _mockEndpointService.Object,
-            _mockSqlExecutor.Object);
+            _mockSqlExecutor.Object,
+            _mockDatabaseReferenceResolver.Object);
     }
 
     [Fact]
@@ -39,6 +41,9 @@ public class SqlServerLoginControllerTests
         var entity = TestDataBuilder.CreateLogin("test-login", "external-sql", "default");
         var externalServer = TestDataBuilder.CreateExternalSqlServer("external-sql", "default");
         var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
+
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "external-sql", null, "default"))
+            .ReturnsAsync(new ResolvedDatabase("localhost,1433", null, "external-secret"));
 
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("external-sql", "default"))
             .ReturnsAsync(externalServer);
@@ -71,9 +76,15 @@ public class SqlServerLoginControllerTests
         // Arrange
         var entity = TestDataBuilder.CreateLogin("test-login", "missing-server", "default");
 
-        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("missing-server", "default"))
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "missing-server", null, "default"))
+            .ReturnsAsync(new ResolvedDatabase("missing-host", null, "missing-secret"));
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Secret>("missing-secret", "default", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((V1Secret?)null);
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("missing-server", "default", It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1ExternalSQLServer?)null);
-        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("missing-server", "default"))
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("missing-server", "default", It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1SQLServer?)null);
         _mockK8sClient.Setup(x => x.UpdateStatusAsync(It.IsAny<V1Alpha1SQLServerLogin>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1SQLServerLogin e, CancellationToken ct) => e);
@@ -83,7 +94,7 @@ public class SqlServerLoginControllerTests
 
         // Assert
         Assert.Equal("Error", entity.Status?.State);
-        Assert.Contains("not found", entity.Status?.Message);
+        Assert.Contains("Secret 'missing-secret' not found", entity.Status?.Message);
         _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
             It.IsAny<string>(),
             It.IsAny<string>(),

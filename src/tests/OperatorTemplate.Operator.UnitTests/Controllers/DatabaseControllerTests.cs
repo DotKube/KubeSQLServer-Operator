@@ -15,7 +15,6 @@ public class DatabaseControllerTests
 {
     private readonly Mock<ILogger<SQLServerDatabaseController>> _mockLogger;
     private readonly Mock<IKubernetesClient> _mockK8sClient;
-    private readonly Mock<DefaultMssqlConfig> _mockConfig;
     private readonly Mock<ISqlServerEndpointService> _mockEndpointService;
     private readonly Mock<ISqlExecutor> _mockSqlExecutor;
     private readonly SQLServerDatabaseController _controller;
@@ -24,14 +23,12 @@ public class DatabaseControllerTests
     {
         _mockLogger = new Mock<ILogger<SQLServerDatabaseController>>();
         _mockK8sClient = new Mock<IKubernetesClient>();
-        _mockConfig = new Mock<DefaultMssqlConfig>();
         _mockEndpointService = new Mock<ISqlServerEndpointService>();
         _mockSqlExecutor = new Mock<ISqlExecutor>();
 
         _controller = new SQLServerDatabaseController(
             _mockLogger.Object,
             _mockK8sClient.Object,
-            _mockConfig.Object,
             _mockEndpointService.Object,
             _mockSqlExecutor.Object);
     }

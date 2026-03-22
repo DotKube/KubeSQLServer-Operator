@@ -14,8 +14,8 @@ namespace SqlServerOperator.Controllers.V1Alpha1;
 public class SQLServerUserController(
     ILogger<SQLServerUserController> logger,
     IKubernetesClient kubernetesClient,
-    ISqlServerEndpointService sqlServerEndpointService,
-    ISqlExecutor sqlExecutor
+    ISqlExecutor sqlExecutor,
+    IDatabaseReferenceResolver databaseReferenceResolver
 ) : IEntityController<V1Alpha1DatabaseUser>
 {
     public async Task<ReconciliationResult<V1Alpha1DatabaseUser>> ReconcileAsync(V1Alpha1DatabaseUser entity, CancellationToken cancellationToken)
@@ -24,28 +24,14 @@ public class SQLServerUserController(
 
         try
         {
-            // Try ExternalSQLServer first
-            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
-            string secretName;
+            var resolvedDb = await databaseReferenceResolver.ResolveAsync(
+                entity.Spec.DatabaseRef,
+                entity.Spec.SqlServerName,
+                entity.Spec.DatabaseName,
+                entity.Metadata.NamespaceProperty);
 
-            if (externalServer is not null)
-            {
-                secretName = externalServer.Spec.SecretName;
-            }
-            else
-            {
-                // Fall back to internal SQLServer
-                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
-                if (sqlServer is null)
-                {
-                    throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.SqlServerName}' not found.");
-                }
-                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
-            }
-
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
-            var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password);
+            var (username, password) = await GetSqlServerCredentialsAsync(resolvedDb.SecretName, entity.Metadata.NamespaceProperty);
+            await EnsureUserExistsAsync(resolvedDb.DatabaseName!, entity.Spec.LoginName, entity.Spec.Roles, resolvedDb.Host, username, password);
 
             entity.Status ??= new();
             entity.Status.State = "Ready";
@@ -77,13 +63,18 @@ public class SQLServerUserController(
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
         var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
-        if (secret?.Data is null || !secret.Data.ContainsKey("password"))
+        if (secret is null)
+        {
+            throw new Exception($"Secret '{secretName}' not found in namespace '{namespaceName}'.");
+        }
+
+        if (secret.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["password"]);
-        var username = "sa";
+        var username = secret.Data.ContainsKey("username") ? Encoding.UTF8.GetString(secret.Data["username"]) : "sa";
 
         return (username, password);
     }

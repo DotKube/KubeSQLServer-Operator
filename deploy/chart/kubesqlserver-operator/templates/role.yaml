@@ -12,6 +12,7 @@ rules:
   - sqlservers
   - externalsqlservers
   - databases
+  - externaldatabases
   - sqlserverlogins
   - sqlserverusers
   - sqlserverschemas
@@ -31,6 +32,7 @@ rules:
   - sqlservers/status
   - externalsqlservers/status
   - databases/status
+  - externaldatabases/status
   - sqlserverlogins/status
   - sqlserverusers/status
   - sqlserverschemas/status

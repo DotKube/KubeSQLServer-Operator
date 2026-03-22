@@ -14,8 +14,8 @@ namespace SqlServerOperator.Controllers.V1Alpha1;
 public class SQLServerSchemaController(
     ILogger<SQLServerSchemaController> logger,
     IKubernetesClient kubernetesClient,
-    ISqlServerEndpointService sqlServerEndpointService,
-    ISqlExecutor sqlExecutor
+    ISqlExecutor sqlExecutor,
+    IDatabaseReferenceResolver databaseReferenceResolver
 ) : IEntityController<V1Alpha1SQLServerSchema>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerSchema>> ReconcileAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
@@ -24,33 +24,19 @@ public class SQLServerSchemaController(
 
         try
         {
-            // Try ExternalSQLServer first
-            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
-            string secretName;
+            var resolvedDb = await databaseReferenceResolver.ResolveAsync(
+                entity.Spec.DatabaseRef,
+                entity.Spec.InstanceName,
+                entity.Spec.DatabaseName,
+                entity.Metadata.NamespaceProperty);
 
-            if (externalServer is not null)
-            {
-                secretName = externalServer.Spec.SecretName;
-            }
-            else
-            {
-                // Fall back to internal SQLServer
-                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
-                if (sqlServer is null)
-                {
-                    throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.InstanceName}' not found.");
-                }
-                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
-            }
-
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
-            var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
+            var (username, password) = await GetSqlServerCredentialsAsync(resolvedDb.SecretName, entity.Metadata.NamespaceProperty);
 
             await EnsureSchemaExistsAsync(
-                entity.Spec.DatabaseName,
+                resolvedDb.DatabaseName!,
                 entity.Spec.SchemaName,
                 entity.Spec.SchemaOwner,
-                server,
+                resolvedDb.Host,
                 username,
                 password);
 
@@ -84,13 +70,18 @@ public class SQLServerSchemaController(
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
         var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
-        if (secret?.Data is null || !secret.Data.ContainsKey("password"))
+        if (secret is null)
+        {
+            throw new Exception($"Secret '{secretName}' not found in namespace '{namespaceName}'.");
+        }
+
+        if (secret.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["password"]);
-        var username = "sa";
+        var username = secret.Data.ContainsKey("username") ? Encoding.UTF8.GetString(secret.Data["username"]) : "sa";
 
         return (username, password);
     }
@@ -108,6 +99,15 @@ public class SQLServerSchemaController(
         };
 
         var schemaExistsCommandText = @"
+            IF @SchemaOwner <> 'dbo' AND NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @SchemaOwner)
+            BEGIN
+                IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @SchemaOwner)
+                BEGIN
+                    DECLARE @createUserSql NVARCHAR(MAX) = N'CREATE USER [' + @SchemaOwner + '] FOR LOGIN [' + @SchemaOwner + ']';
+                    EXEC sp_executesql @createUserSql;
+                END
+            END
+
             IF NOT EXISTS (
                 SELECT schema_name 
                 FROM information_schema.schemata 
