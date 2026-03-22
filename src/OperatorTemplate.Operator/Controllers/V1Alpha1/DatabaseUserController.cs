@@ -45,7 +45,7 @@ public class SQLServerUserController(
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Metadata.Name, entity.Spec.LoginName, entity.Spec.Roles, server, username, password, entity.Spec.EntraIdProvider);
+            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password, entity.Spec.EntraIdProvider);
 
             entity.Status ??= new();
             entity.Status.State = "Ready";
@@ -89,7 +89,7 @@ public class SQLServerUserController(
     }
 
 
-    private async Task EnsureUserExistsAsync(string databaseName, string userName, string loginName, List<string> roles, string server, string username, string password, bool entraIdProvider)
+    private async Task EnsureUserExistsAsync(string databaseName, string loginName, List<string> roles, string server, string username, string password, bool entraIdProvider)
     {
         var builder = new SqlConnectionStringBuilder
         {
@@ -102,13 +102,13 @@ public class SQLServerUserController(
         };
 
         var createUserSql = entraIdProvider
-            ? $"CREATE USER [{userName}] FROM EXTERNAL PROVIDER"
+            ? $"CREATE USER [{loginName}] FROM EXTERNAL PROVIDER"
             : $"CREATE USER [{loginName}] FOR LOGIN [{loginName}]";
 
-        var targetName = entraIdProvider ? userName : loginName;
+        var targetName = loginName;
 
         var commandText = $@"
-        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @TargetName)
+        IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
         BEGIN
             DECLARE @sql NVARCHAR(MAX) = N'{createUserSql.Replace("'", "''")}';
             EXEC sp_executesql @sql;
@@ -116,7 +116,7 @@ public class SQLServerUserController(
 
         var parameters = new Dictionary<string, object>
         {
-            ["@TargetName"] = targetName
+            ["@LoginName"] = targetName
         };
 
         await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, commandText, parameters);
