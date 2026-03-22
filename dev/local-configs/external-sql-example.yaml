@@ -95,12 +95,11 @@ spec:
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerUser
 metadata:
-  name: external-user
+  name: kubesql-dev
   namespace: external-sql-example
 spec:
   sqlServerName: docker-sql-server
   databaseName: ExternalAppDB
-  loginName: "bobtheburger@example.com"
   entraIdProvider: true
   roles:
     - db_datareader

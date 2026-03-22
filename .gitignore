@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+!.env.sample
 
 # User-specific files
 *.rsuser
@@ -242,6 +243,8 @@ ClientBin/
 *.dbmdl
 *.dbproj.schemaview
 *.jfm
+*.key
+*.pem
 *.pfx
 *.publishsettings
 orleans.codegen.cs
@@ -488,3 +491,4 @@ $RECYCLE.BIN/
 # Github Actions workflow files
 .secrets
 *.env
+!.env.sample
