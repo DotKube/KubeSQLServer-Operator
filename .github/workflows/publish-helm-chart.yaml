@@ -27,7 +27,6 @@ jobs:
     outputs:
       owner_lc: ${{ steps.vars.outputs.owner_lc }}
       chart_version: ${{ steps.vars.outputs.chart_version }}
-      push_latest: ${{ steps.vars.outputs.push_latest }}
       chart_name: ${{ steps.vars.outputs.chart_name }}
     steps:
       - uses: actions/checkout@v6
@@ -39,10 +38,8 @@ jobs:
           # Use manual version if provided, otherwise generate one based on datetime: 0.0.0-YYYYMMDDHHMMSS
           if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "chart_version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "push_latest=false" >> "$GITHUB_OUTPUT"
           else
             echo "chart_version=0.0.0-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
-            echo "push_latest=true" >> "$GITHUB_OUTPUT"
           fi
           
           # Extract chart name from Chart.yaml
@@ -69,25 +66,3 @@ jobs:
           echo "Packaging chart with version: ${{ needs.prepare.outputs.chart_version }}"
           helm package . --version "${{ needs.prepare.outputs.chart_version }}" --destination .artifacts
           helm push ".artifacts/${{ needs.prepare.outputs.chart_name }}-${{ needs.prepare.outputs.chart_version }}.tgz" "oci://$REGISTRY/${{ needs.prepare.outputs.owner_lc }}/chart"
-
-  publish-latest:
-    needs: [prepare, publish-versioned]
-    if: needs.prepare.outputs.push_latest == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: azure/setup-helm@v4
-        with:
-          version: v3.15.2
-
-      - name: Login to GHCR for Helm
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
-
-      - name: Package and Push Latest Chart
-        run: |
-          mkdir -p "$CHART_DIR/.artifacts"
-          cd "$CHART_DIR"
-          echo "Packaging chart with version: latest"
-          helm package . --version "latest" --destination .artifacts
-          helm push ".artifacts/${{ needs.prepare.outputs.chart_name }}-latest.tgz" "oci://$REGISTRY/${{ needs.prepare.outputs.owner_lc }}/chart"
