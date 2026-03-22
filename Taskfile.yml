@@ -4,7 +4,7 @@ dotenv: ['.env']
 
 vars:
   USE_EXTERNAL_IP_WITH_LB: false
-  USE_ENTRA_ID_BASED_CONTAINER: true
+  USE_ENTRA_ID_BASED_CONTAINER: false
 
 includes:
   dev:
