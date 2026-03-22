@@ -15,7 +15,8 @@ public class SQLServerSchemaController(
     ILogger<SQLServerSchemaController> logger,
     IKubernetesClient kubernetesClient,
     ISqlServerEndpointService sqlServerEndpointService,
-    ISqlExecutor sqlExecutor
+    ISqlExecutor sqlExecutor,
+    IDatabaseReferenceResolver databaseReferenceResolver
 ) : IEntityController<V1Alpha1SQLServerSchema>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerSchema>> ReconcileAsync(V1Alpha1SQLServerSchema entity, CancellationToken cancellationToken)
@@ -24,8 +25,14 @@ public class SQLServerSchemaController(
 
         try
         {
+            var resolvedDb = await databaseReferenceResolver.ResolveAsync(
+                entity.Spec.DatabaseRef,
+                entity.Spec.InstanceName,
+                entity.Spec.DatabaseName,
+                entity.Metadata.NamespaceProperty);
+
             // Try ExternalSQLServer first
-            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
             string secretName;
 
             if (externalServer is not null)
@@ -35,19 +42,19 @@ public class SQLServerSchemaController(
             else
             {
                 // Fall back to internal SQLServer
-                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
                 if (sqlServer is null)
                 {
-                    throw new Exception($"SQLServer or ExternalSQLServer instance '{entity.Spec.InstanceName}' not found.");
+                    throw new Exception($"SQLServer or ExternalSQLServer instance '{resolvedDb.InstanceName}' not found.");
                 }
                 secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             }
 
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, entity.Metadata.NamespaceProperty);
+            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
 
             await EnsureSchemaExistsAsync(
-                entity.Spec.DatabaseName,
+                resolvedDb.DatabaseName!,
                 entity.Spec.SchemaName,
                 entity.Spec.SchemaOwner,
                 server,

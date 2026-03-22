@@ -10,11 +10,14 @@ public class V1Alpha1SQLServerSchema : CustomKubernetesEntity<V1Alpha1SQLServerS
     [Description("Spec of the SQL Server database schema.")]
     public class V1Alpha1SQLServerSchemaSpec
     {
-        [Description("The name of the SQLServer or ExternalSQLServer instance where the schema will be created.")]
-        public string InstanceName { get; set; } = string.Empty;
+        [Description("Reference to a Database or ExternalDatabase resource. If provided, InstanceName and DatabaseName are ignored.")]
+        public string? DatabaseRef { get; set; }
 
-        [Description("The name of the database to create the schema in.")]
-        public string DatabaseName { get; set; } = string.Empty;
+        [Description("The name of the SQLServer or ExternalSQLServer instance where the schema will be created. Required if DatabaseRef is not provided.")]
+        public string? InstanceName { get; set; }
+
+        [Description("The name of the database to create the schema in. Required if DatabaseRef is not provided.")]
+        public string? DatabaseName { get; set; }
 
         [Description("The name of the schema to be created.")]
         public string SchemaName { get; set; } = string.Empty;

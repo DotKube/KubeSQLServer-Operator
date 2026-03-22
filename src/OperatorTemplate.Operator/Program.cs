@@ -10,6 +10,7 @@ builder.AddServiceDefaults();
 builder.Services.AddSingleton<DefaultMssqlConfig>();
 builder.Services.AddSingleton<ISqlServerEndpointService, SqlServerEndpointService>();
 builder.Services.AddSingleton<ISqlExecutor, SqlExecutor>();
+builder.Services.AddSingleton<IDatabaseReferenceResolver, DatabaseReferenceResolver>();
 
 
 

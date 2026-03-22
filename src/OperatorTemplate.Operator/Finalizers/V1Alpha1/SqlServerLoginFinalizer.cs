@@ -12,7 +12,8 @@ namespace SqlServerOperator.Finalizers.V1Alpha1;
 public class SQLServerLoginFinalizer(
     ILogger<SQLServerLoginFinalizer> logger,
     IKubernetesClient kubernetesClient,
-    ISqlServerEndpointService sqlServerEndpointService
+    ISqlServerEndpointService sqlServerEndpointService,
+    IDatabaseReferenceResolver databaseReferenceResolver
 ) : IEntityFinalizer<V1Alpha1SQLServerLogin>
 {
     public async Task<ReconciliationResult<V1Alpha1SQLServerLogin>> FinalizeAsync(V1Alpha1SQLServerLogin entity, CancellationToken cancellationToken)
@@ -21,15 +22,33 @@ public class SQLServerLoginFinalizer(
 
         try
         {
-            var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
-            if (sqlServer is null)
+            var resolvedDb = await databaseReferenceResolver.ResolveAsync(
+                entity.Spec.DatabaseRef,
+                entity.Spec.SqlServerName,
+                null,
+                entity.Metadata.NamespaceProperty);
+
+            // Try ExternalSQLServer first
+            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
+            string secretName;
+
+            if (externalServer is not null)
             {
-                logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", entity.Spec.SqlServerName);
-                return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
+                secretName = externalServer.Spec.SecretName;
+            }
+            else
+            {
+                // Fall back to internal SQLServer
+                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
+                if (sqlServer is null)
+                {
+                    logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", resolvedDb.InstanceName);
+                    return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
+                }
+                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
             }
 
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(sqlServer.Metadata.Name, sqlServer.Metadata.NamespaceProperty);
-            var secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
+            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
             await DeleteLoginAsync(entity.Spec.LoginName, server, username, password);
 
@@ -39,7 +58,8 @@ public class SQLServerLoginFinalizer(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during finalization of SQLServerLogin: {Name}", entity.Metadata.Name);
-            return ReconciliationResult<V1Alpha1SQLServerLogin>.Failure(entity, ex.Message, ex);
+            // If the instance is gone, we can't do much, so we allow deletion to proceed
+            return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
         }
     }
 

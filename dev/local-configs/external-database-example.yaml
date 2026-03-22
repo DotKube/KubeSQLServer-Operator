@@ -1,0 +1,37 @@
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: ExternalDatabase
+metadata:
+  name: external-db-sample
+spec:
+  instanceName: external-sql-server-sample
+  databaseName: ExistingBusinessDb
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: sample-login-with-db-ref
+spec:
+  databaseRef: external-db-sample
+  loginName: app-user
+  authenticationType: SQL
+  secretName: app-user-secret
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: sample-user-with-db-ref
+spec:
+  databaseRef: external-db-sample
+  loginName: app-user
+  roles:
+    - db_datareader
+    - db_datawriter
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: sample-schema-with-db-ref
+spec:
+  databaseRef: external-db-sample
+  schemaName: application
+  schemaOwner: app-user

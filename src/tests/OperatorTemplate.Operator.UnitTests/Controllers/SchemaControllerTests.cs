@@ -16,6 +16,7 @@ public class SchemaControllerTests
     private readonly Mock<IKubernetesClient> _mockK8sClient;
     private readonly Mock<ISqlServerEndpointService> _mockEndpointService;
     private readonly Mock<ISqlExecutor> _mockSqlExecutor;
+    private readonly Mock<IDatabaseReferenceResolver> _mockDatabaseReferenceResolver;
     private readonly SQLServerSchemaController _controller;
 
     public SchemaControllerTests()
@@ -24,12 +25,14 @@ public class SchemaControllerTests
         _mockK8sClient = new Mock<IKubernetesClient>();
         _mockEndpointService = new Mock<ISqlServerEndpointService>();
         _mockSqlExecutor = new Mock<ISqlExecutor>();
+        _mockDatabaseReferenceResolver = new Mock<IDatabaseReferenceResolver>();
 
         _controller = new SQLServerSchemaController(
             _mockLogger.Object,
             _mockK8sClient.Object,
             _mockEndpointService.Object,
-            _mockSqlExecutor.Object);
+            _mockSqlExecutor.Object,
+            _mockDatabaseReferenceResolver.Object);
     }
 
     [Fact]
@@ -39,6 +42,9 @@ public class SchemaControllerTests
         var entity = TestDataBuilder.CreateSchema("test-schema", "external-sql", "default");
         var externalServer = TestDataBuilder.CreateExternalSqlServer("external-sql", "default");
         var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
+
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "external-sql", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("external-sql", "TestDB"));
 
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("external-sql", "default"))
             .ReturnsAsync(externalServer);
@@ -73,6 +79,9 @@ public class SchemaControllerTests
         var internalServer = TestDataBuilder.CreateSqlServer("internal-sql", "default");
         var secret = TestDataBuilder.CreateSecret("internal-sql-secret", "default", "TestPass123!");
 
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "internal-sql", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("internal-sql", "TestDB"));
+
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("internal-sql", "default"))
             .ReturnsAsync((V1Alpha1ExternalSQLServer?)null);
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("internal-sql", "default"))
@@ -104,6 +113,9 @@ public class SchemaControllerTests
     {
         // Arrange
         var entity = TestDataBuilder.CreateSchema("test-schema", "missing-server", "default");
+
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "missing-server", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("missing-server", "TestDB"));
 
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("missing-server", "default"))
             .ReturnsAsync((V1Alpha1ExternalSQLServer?)null);
