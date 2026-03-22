@@ -345,9 +345,8 @@ kind: ServiceAccount
 metadata:
   name: sql-server-operator-sa
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 ---
 # Source: kubesqlserver-operator/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -476,9 +475,8 @@ kind: ClusterRoleBinding
 metadata:
   name: sql-server-operator-rb
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -494,9 +492,8 @@ kind: Deployment
 metadata:
   name: sql-server-operator
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 spec:
   replicas: 1
   selector:
@@ -508,8 +505,6 @@ spec:
       labels:
         app: sqlserver-operator
         app.openshift.io/runtime: dotnet
-        
-        app.openshift.io/runtime: "dotnet"
     spec:
       serviceAccountName: sql-server-operator-sa
       containers:

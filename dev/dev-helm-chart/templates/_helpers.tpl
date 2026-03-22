@@ -74,9 +74,9 @@ Usage: {{ include "kubesqlserver-operator.fullPodLabels" . }}
 */}}
 {{- define "kubesqlserver-operator.fullPodLabels" -}}
 {{- $globalLabels := .Values.global.labels | default dict -}}
-{{- &globalPodLabels := .Values.global.podLabels | default dict -}}
+{{- $globalPodLabels := .Values.global.podLabels | default dict -}}
 {{- $controllerLabels := .Values.controller.labels | default dict -}}
-{{- $controllerPodLabels := .Values.controller.podLabels( tedault dict -}}
+{{- $controllerPodLabels := .Values.controller.podLabels | default dict -}}
 {{- $merged := mustMergeOverwrite (deepCopy $globalLabels) $globalPodLabels $controllerLabels $controllerPodLabels -}}
 {{- if $merged }}
 {{- toYaml $merged }}
@@ -87,7 +87,7 @@ Usage: {{ include "kubesqlserver-operator.fullPodLabels" . }}
 Merge global and component-specific pod annotations.
 Component-specific podAnnotations take precedence over global pod annotations.
 Usage: {{ include "kubesqlserver-operator.podAnnotations" (dict "global" .Values.global.podAnnotations "component" .Values.controller.podAnnotations) }}
-/*}}
+*/}}
 {{- define "kubesqlserver-operator.podAnnotations" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
@@ -102,7 +102,7 @@ Usage: {{ include "kubesqlserver-operator.podAnnotations" (dict "global" .Values
 Merge global and component-specific pod security context.
 Component-specific values take precedence over global values.
 Usage: {{ include "kubesqlserver-operator.podSecurityContext" (dict "global" .Values.global.podSecurityContext "component" .Values.controller.podSecurityContext) | nindent 8 }}
-/*}}
+*/}}
 {{- define "kubesqlserver-operator.podSecurityContext" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
@@ -130,7 +130,7 @@ Usage: {{ include "kubesqlserver-operator.securityContext" (dict "global" .Value
 Merge global and component-specific node selector.
 Component-specific values take precedence over global values.
 Usage: {{ include "kubesqlserver-operator.nodeSelector" (dict "global" .Values.global.nodeSelector "component" .Values.controller.nodeSelector) | nindent 8 }}
-/*}}
+*/}}
 {{- define "kubesqlserver-operator.nodeSelector" -}}
 {{- $global := .global | default dict }}
 {{- $component := .component | default dict }}
@@ -222,10 +222,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{/* 
 Service account name
-/*}}
+*/}}
 {{- define "kubesqlserver-operator.serviceAccountName" -}}
 {{- if .Values.controller.serviceAccount.create }}
 {{- default (printf "%s-operator-sa" .Release.Name) .Values.controller.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.controller.serviceAccount.name }}
+{{- end }}
 {{- end }}
