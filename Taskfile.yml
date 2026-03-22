@@ -122,6 +122,7 @@ tasks:
     cmds:
       - task: dev:local-cluster:delete
       - task: dev:local-cluster:delete-external-sql-container
+      - task: dev:local-cluster:delete-external-sql-container-entraid
       - dotnet clean
     desc: "Clean up the Kind Kubernetes cluster."
 
