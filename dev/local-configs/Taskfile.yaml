@@ -48,7 +48,8 @@ tasks:
   
   create-registry:
     cmds:
-    - docker run -d --name kind-registry --restart always -p 5000:5000 -v kind-registry-data:/var/lib/registry docker.io/registry:2 || true
+    - docker rm -f kind-registry || true
+    - docker run -d --name kind-registry --network bridge --restart always -p 5000:5000 -v kind-registry-data:/var/lib/registry docker.io/registry:2
 
   
   add-metallb:
@@ -63,6 +64,24 @@ tasks:
   test-login:
     cmds:
     - bash ./scripts/test-logins.sh
+
+  setup-entra-id:
+    cmds:
+    - chmod +x ./scripts/setup-entra-id.sh
+    - cd ./scripts && ./setup-entra-id.sh
+    desc: "Run the script to setup Entra ID app registration and certificate."
+
+  create-external-sql-container-entraid:
+    cmds:
+    - docker run -d --name external-sql-server-entraid --restart unless-stopped -v external-sql-data-entraid:/var/opt/mssql -v {{.USER_WORKING_DIR}}/dev/local-configs/scripts/mssql-entra-id.pfx:/var/opt/mssql/mssql-entra-id.pfx -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD={{.SA_PASSWORD}}' -e 'MSSQL_AAD_CLIENT_ID={{.MSSQL_AAD_CLIENT_ID}}' -e 'MSSQL_AAD_PRIMARY_TENANT={{.MSSQL_AAD_PRIMARY_TENANT}}' -e 'MSSQL_AAD_CERTIFICATE_FILE_PATH={{.MSSQL_AAD_CERTIFICATE_FILE_PATH}}' -e 'MSSQL_PID={{.MSSQL_PID}}' -p 1435:1433 mcr.microsoft.com/mssql/server:2022-latest
+    desc: "Create a SQL Server container with Entra ID support on port 1435."
+
+  delete-external-sql-container-entraid:
+    cmds:
+    - docker stop external-sql-server-entraid || true
+    - docker rm external-sql-server-entraid || true
+    - docker volume rm external-sql-data-entraid || true
+    desc: "Delete the external SQL Server container with Entra ID support."
 
   create-external-sql-container:
     cmds:

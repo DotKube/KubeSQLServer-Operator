@@ -87,7 +87,8 @@ public static class TestDataBuilder
         string loginName = "testuser",
         string databaseName = "TestDB",
         string sqlServerName = "test-sqlserver",
-        string namespaceName = "default")
+        string namespaceName = "default",
+        bool entraIdProvider = false)
     {
         return new V1Alpha1DatabaseUser
         {
@@ -101,7 +102,8 @@ public static class TestDataBuilder
                 SqlServerName = sqlServerName,
                 DatabaseName = databaseName,
                 LoginName = loginName,
-                Roles = new List<string> { "db_datareader", "db_datawriter" }
+                Roles = new List<string> { "db_datareader", "db_datawriter" },
+                EntraIdProvider = entraIdProvider
             }
         };
     }

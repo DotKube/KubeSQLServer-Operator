@@ -1,7 +1,10 @@
 version: "3"
 
+dotenv: ['.env']
+
 vars:
   USE_EXTERNAL_IP_WITH_LB: false
+  USE_ENTRA_ID_BASED_CONTAINER: false
 
 includes:
   dev:
@@ -56,7 +59,7 @@ tasks:
 
     desc: "Build the Docker image for the OperatorTemplate.Operator."
 
-  dev:
+  watch:
     dir: ./src/OperatorTemplate.AppHost
     cmds:
       - dotnet watch
@@ -88,7 +91,7 @@ tasks:
       - task: dev:local-cluster:delete
       - task: dev:local-cluster:create
       - |
-        if [[ "${USE_EXTERNAL_IP_WITH_LB}" == "true" ]]; then
+        if [[ "{{.USE_EXTERNAL_IP_WITH_LB}}" == "true" ]]; then
           echo "External IP with LoadBalancer is enabled."
           task dev:local-cluster:add-metallb
         else
@@ -96,11 +99,19 @@ tasks:
         fi
       - task: create-crds-and-copy
       - task: dev:helm-chart:apply-crds-from-helm-chart
-      - task: dev:local-cluster:delete-external-sql-container
-      - task: dev:local-cluster:create-external-sql-container
+      - |
+        if [[ "{{.USE_ENTRA_ID_BASED_CONTAINER}}" == "true" ]]; then
+          echo "Using Entra ID based SQL container."
+          task dev:local-cluster:delete-external-sql-container-entraid
+          task dev:local-cluster:create-external-sql-container-entraid
+        else
+          echo "Using standard external SQL container."
+          task dev:local-cluster:delete-external-sql-container
+          task dev:local-cluster:create-external-sql-container
+        fi
       - task: dev:local-cluster:apply-crd-instance
       - task: dev:local-cluster:apply-external-crd-instance
-      - task: dev
+      - task: watch
 
   quick-dev-tmux:
     cmds:
@@ -111,6 +122,7 @@ tasks:
     cmds:
       - task: dev:local-cluster:delete
       - task: dev:local-cluster:delete-external-sql-container
+      - task: dev:local-cluster:delete-external-sql-container-entraid
       - dotnet clean
     desc: "Clean up the Kind Kubernetes cluster."
 

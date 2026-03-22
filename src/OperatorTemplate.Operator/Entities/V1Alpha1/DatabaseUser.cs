@@ -24,6 +24,9 @@ public class V1Alpha1DatabaseUser : CustomKubernetesEntity<V1Alpha1DatabaseUser.
 
         [Description("The roles assigned to the database user.")]
         public List<string> Roles { get; set; } = new();
+
+        [Description("Whether to create the user from an external provider (e.g. Entra ID).")]
+        public bool EntraIdProvider { get; set; } = false;
     }
 
     [Description("Status of the database user.")]

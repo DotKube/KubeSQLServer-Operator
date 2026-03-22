@@ -47,6 +47,9 @@ spec:
                 items:
                   type: string
                 type: array
+              entraIdProvider:
+                description: Whether to create the user from an external provider (e.g. Entra ID).
+                type: boolean
             type: object
         type: object
     served: true

@@ -45,7 +45,7 @@ public class SQLServerUserController(
 
             var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.SqlServerName, entity.Metadata.NamespaceProperty);
             var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password);
+            await EnsureUserExistsAsync(entity.Spec.DatabaseName, entity.Spec.LoginName, entity.Spec.Roles, server, username, password, entity.Spec.EntraIdProvider);
 
             entity.Status ??= new();
             entity.Status.State = "Ready";
@@ -89,7 +89,7 @@ public class SQLServerUserController(
     }
 
 
-    private async Task EnsureUserExistsAsync(string databaseName, string loginName, List<string> roles, string server, string username, string password)
+    private async Task EnsureUserExistsAsync(string databaseName, string loginName, List<string> roles, string server, string username, string password, bool entraIdProvider)
     {
         var builder = new SqlConnectionStringBuilder
         {
@@ -101,16 +101,22 @@ public class SQLServerUserController(
             Encrypt = false,
         };
 
-        var commandText = @"
+        var createUserSql = entraIdProvider
+            ? $"CREATE USER [{loginName}] FROM EXTERNAL PROVIDER"
+            : $"CREATE USER [{loginName}] FOR LOGIN [{loginName}]";
+
+        var targetName = loginName;
+
+        var commandText = $@"
         IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = @LoginName)
         BEGIN
-            DECLARE @sql NVARCHAR(MAX) = N'CREATE USER [' + @LoginName + '] FOR LOGIN [' + @LoginName + ']';
+            DECLARE @sql NVARCHAR(MAX) = N'{createUserSql.Replace("'", "''")}';
             EXEC sp_executesql @sql;
         END";
 
         var parameters = new Dictionary<string, object>
         {
-            ["@LoginName"] = loginName
+            ["@LoginName"] = targetName
         };
 
         await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, commandText, parameters);
@@ -121,7 +127,7 @@ public class SQLServerUserController(
             var roleParameters = new Dictionary<string, object>
             {
                 ["@rolename"] = role,
-                ["@membername"] = loginName
+                ["@membername"] = targetName
             };
             await sqlExecutor.ExecuteNonQueryAsync(builder.ConnectionString, roleCommandText, roleParameters);
         }

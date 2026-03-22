@@ -21,6 +21,7 @@ kind: SQLServerUser
 | `databaseName` | string | Yes | Database where user should be created |
 | `loginName` | string | Yes | Name of the login to map |
 | `roles` | []string | Yes | Database roles to assign |
+| `entraIdProvider` | boolean | No | If true, user is created `FROM EXTERNAL PROVIDER` (default: false) |
 
 ### Status
 
@@ -62,16 +63,46 @@ Common built-in database roles:
 
 ## Behavior
 
-Creates user and assigns roles:
+Creates user and assigns roles. For standard users:
 
 ```sql
 IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = 'LoginName')
 BEGIN
     CREATE USER [LoginName] FOR LOGIN [LoginName]
 END
+```
 
+For Entra ID users (`entraIdProvider: true`):
+
+```sql
+IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = 'LoginName')
+BEGIN
+    CREATE USER [LoginName] FROM EXTERNAL PROVIDER
+END
+```
+
+And then assigns roles:
+
+```sql
 EXEC sp_addrolemember 'db_datareader', 'LoginName'
 EXEC sp_addrolemember 'db_datawriter', 'LoginName'
+```
+
+## Entra ID Provider Example
+
+```yaml
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: entra-user
+  namespace: default
+spec:
+  sqlServerName: my-sqlserver
+  databaseName: ApplicationDB
+  loginName: "bob@example.com"
+  entraIdProvider: true
+  roles:
+    - db_datareader
 ```
 
 ## Multiple Roles
