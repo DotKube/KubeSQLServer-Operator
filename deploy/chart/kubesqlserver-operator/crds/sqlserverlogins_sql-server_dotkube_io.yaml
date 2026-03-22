@@ -33,8 +33,13 @@ spec:
           spec:
             description: Spec of the SQL Server login.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, the instance is derived from this resource.
+                nullable: true
+                type: string
               sqlServerName:
-                description: The name of the SQLServer or ExternalSQLServer instance.
+                description: The name of the SQLServer or ExternalSQLServer instance. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               loginName:
                 description: The login name for authentication.

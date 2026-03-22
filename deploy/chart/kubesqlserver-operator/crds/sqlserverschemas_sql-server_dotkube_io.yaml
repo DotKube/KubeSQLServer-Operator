@@ -33,11 +33,17 @@ spec:
           spec:
             description: Spec of the SQL Server database schema.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, InstanceName and DatabaseName are ignored.
+                nullable: true
+                type: string
               instanceName:
-                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               databaseName:
-                description: The name of the database to create the schema in.
+                description: The name of the database to create the schema in. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               schemaName:
                 description: The name of the schema to be created.

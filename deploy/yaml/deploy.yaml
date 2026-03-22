@@ -48,6 +48,61 @@ spec:
     subresources:
       status: {}
 ---
+# Source: kubesqlserver-operator/crds/externaldatabases_sql-server_dotkube_io.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: externaldatabases.sql-server.dotkube.io
+spec:
+  group: sql-server.dotkube.io
+  names:
+    kind: ExternalDatabase
+    listKind: ExternalDatabaseList
+    plural: externaldatabases
+    singular: externaldatabase
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status of the external SQL Server database.
+            properties:
+              state:
+                description: The current state of the database.
+                type: string
+              message:
+                description: A message indicating the current status of the database.
+                type: string
+              lastChecked:
+                description: The last time the database status was checked.
+                format: date-time
+                nullable: true
+                type: string
+              isAvailable:
+                description: Whether the database is available on the server.
+                type: boolean
+            type: object
+          spec:
+            description: Spec of the external SQL Server database.
+            properties:
+              serverUrl:
+                description: The hostname or IP address of the SQL Server instance.
+                type: string
+              databaseName:
+                description: The name of the existing database.
+                type: string
+              secretName:
+                description: The name of the Kubernetes secret containing SQL Server credentials.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
 # Source: kubesqlserver-operator/crds/externalsqlservers_sql-server_dotkube_io.yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -152,8 +207,13 @@ spec:
           spec:
             description: Spec of the SQL Server login.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, the instance is derived from this resource.
+                nullable: true
+                type: string
               sqlServerName:
-                description: The name of the SQLServer or ExternalSQLServer instance.
+                description: The name of the SQLServer or ExternalSQLServer instance. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               loginName:
                 description: The login name for authentication.
@@ -263,11 +323,17 @@ spec:
           spec:
             description: Spec of the SQL Server database schema.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, InstanceName and DatabaseName are ignored.
+                nullable: true
+                type: string
               instanceName:
-                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created.
+                description: The name of the SQLServer or ExternalSQLServer instance where the schema will be created. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               databaseName:
-                description: The name of the database to create the schema in.
+                description: The name of the database to create the schema in. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               schemaName:
                 description: The name of the schema to be created.
@@ -318,11 +384,17 @@ spec:
           spec:
             description: Spec of the database user.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, SqlServerName and DatabaseName are ignored.
+                nullable: true
+                type: string
               sqlServerName:
-                description: The name of the SQLServer or ExternalSQLServer instance.
+                description: The name of the SQLServer or ExternalSQLServer instance. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               databaseName:
-                description: The name of the database where this user will be created.
+                description: The name of the database where this user will be created. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               loginName:
                 description: The login name for the database user.
@@ -345,9 +417,8 @@ kind: ServiceAccount
 metadata:
   name: sql-server-operator-sa
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 ---
 # Source: kubesqlserver-operator/templates/role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -362,6 +433,7 @@ rules:
   - sqlservers
   - externalsqlservers
   - databases
+  - externaldatabases
   - sqlserverlogins
   - sqlserverusers
   - sqlserverschemas
@@ -381,6 +453,7 @@ rules:
   - sqlservers/status
   - externalsqlservers/status
   - databases/status
+  - externaldatabases/status
   - sqlserverlogins/status
   - sqlserverusers/status
   - sqlserverschemas/status
@@ -476,9 +549,8 @@ kind: ClusterRoleBinding
 metadata:
   name: sql-server-operator-rb
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -494,9 +566,8 @@ kind: Deployment
 metadata:
   name: sql-server-operator
   labels:
-    
-    app: "sqlserver-operator"
-    app.openshift.io/runtime: "dotnet"
+    app: sqlserver-operator
+    app.openshift.io/runtime: dotnet
 spec:
   replicas: 1
   selector:
@@ -508,8 +579,6 @@ spec:
       labels:
         app: sqlserver-operator
         app.openshift.io/runtime: dotnet
-        
-        app.openshift.io/runtime: "dotnet"
     spec:
       serviceAccountName: sql-server-operator-sa
       containers:

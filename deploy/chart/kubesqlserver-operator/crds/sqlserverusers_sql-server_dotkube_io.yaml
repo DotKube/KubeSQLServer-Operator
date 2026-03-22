@@ -33,11 +33,17 @@ spec:
           spec:
             description: Spec of the database user.
             properties:
+              databaseRef:
+                description: Reference to a Database or ExternalDatabase resource. If provided, SqlServerName and DatabaseName are ignored.
+                nullable: true
+                type: string
               sqlServerName:
-                description: The name of the SQLServer or ExternalSQLServer instance.
+                description: The name of the SQLServer or ExternalSQLServer instance. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               databaseName:
-                description: The name of the database where this user will be created.
+                description: The name of the database where this user will be created. Required if DatabaseRef is not provided.
+                nullable: true
                 type: string
               loginName:
                 description: The login name for the database user.
