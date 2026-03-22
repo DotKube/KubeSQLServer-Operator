@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Optional chart version (SemVer). Defaults to version in Chart.yaml."
+        description: "Optional chart version (SemVer). Defaults to datetime-based version."
         required: false
   push:
     branches:
@@ -34,9 +34,13 @@ jobs:
       - name: Set variables
         run: |
           echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+          # Use manual version if provided, otherwise generate one based on datetime: 0.0.0-YYYYMMDDHHMMSS
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "HELM_VERSION_FLAG=--version ${{ github.event.inputs.version }}" >> "$GITHUB_ENV"
+            CHART_VERSION="${{ github.event.inputs.version }}"
+          else
+            CHART_VERSION="0.0.0-$(date +'%Y%m%d%H%M%S')"
           fi
+          echo "HELM_VERSION_FLAG=--version $CHART_VERSION" >> "$GITHUB_ENV"
 
       - name: Login to GHCR for Helm
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
@@ -45,11 +49,7 @@ jobs:
         run: |
           mkdir -p "$CHART_DIR/.artifacts"
           cd "$CHART_DIR"
-          if [ -n "$HELM_VERSION_FLAG" ]; then
-            helm package . $HELM_VERSION_FLAG --destination .artifacts
-          else
-            helm package . --destination .artifacts
-          fi
+          helm package . $HELM_VERSION_FLAG --destination .artifacts
           echo "CHART_TGZ=$(ls .artifacts/*.tgz)" >> "$GITHUB_ENV"
 
       - name: Push chart
