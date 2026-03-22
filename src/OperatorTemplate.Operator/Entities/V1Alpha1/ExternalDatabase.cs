@@ -1,7 +1,7 @@
-using System;
 using k8s.Models;
 using KubeOps.Abstractions.Entities;
 using KubeOps.Abstractions.Entities.Attributes;
+using System;
 
 namespace SqlServerOperator.Entities.V1Alpha1;
 
