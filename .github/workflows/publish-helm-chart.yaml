@@ -39,8 +39,10 @@ jobs:
             CHART_VERSION="${{ github.event.inputs.version }}"
           else
             CHART_VERSION="0.0.0-$(date +'%Y%m%d%H%M%S')"
+            echo "PUSH_LATEST=true" >> "$GITHUB_ENV"
           fi
           echo "HELM_VERSION_FLAG=--version $CHART_VERSION" >> "$GITHUB_ENV"
+          echo "CHART_VERSION=$CHART_VERSION" >> "$GITHUB_ENV"
 
       - name: Login to GHCR for Helm
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
@@ -50,9 +52,20 @@ jobs:
           mkdir -p "$CHART_DIR/.artifacts"
           cd "$CHART_DIR"
           helm package . $HELM_VERSION_FLAG --destination .artifacts
-          echo "CHART_TGZ=$(ls .artifacts/*.tgz)" >> "$GITHUB_ENV"
+          if [ "$PUSH_LATEST" = "true" ]; then
+            helm package . --version "latest" --destination .artifacts
+          fi
 
       - name: Push chart
         run: |
-          cd "$CHART_DIR"
-          helm push "$CHART_TGZ" "oci://$REGISTRY/$OWNER_LC/chart"
+          cd "$CHART_DIR/.artifacts"
+          # Get chart name from Chart.yaml
+          CHART_NAME=$(yq .name ../Chart.yaml)
+          
+          # Push main version
+          helm push "${CHART_NAME}-${{ env.CHART_VERSION }}.tgz" "oci://$REGISTRY/$OWNER_LC/chart"
+          
+          # Push latest version if enabled
+          if [ "$PUSH_LATEST" = "true" ]; then
+            helm push "${CHART_NAME}-latest.tgz" "oci://$REGISTRY/$OWNER_LC/chart"
+          fi
