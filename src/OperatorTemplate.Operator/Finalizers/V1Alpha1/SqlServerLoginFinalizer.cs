@@ -12,7 +12,6 @@ namespace SqlServerOperator.Finalizers.V1Alpha1;
 public class SQLServerLoginFinalizer(
     ILogger<SQLServerLoginFinalizer> logger,
     IKubernetesClient kubernetesClient,
-    ISqlServerEndpointService sqlServerEndpointService,
     IDatabaseReferenceResolver databaseReferenceResolver
 ) : IEntityFinalizer<V1Alpha1SQLServerLogin>
 {
@@ -28,29 +27,8 @@ public class SQLServerLoginFinalizer(
                 null,
                 entity.Metadata.NamespaceProperty);
 
-            // Try ExternalSQLServer first
-            var externalServer = await kubernetesClient.GetAsync<V1Alpha1ExternalSQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
-            string secretName;
-
-            if (externalServer is not null)
-            {
-                secretName = externalServer.Spec.SecretName;
-            }
-            else
-            {
-                // Fall back to internal SQLServer
-                var sqlServer = await kubernetesClient.GetAsync<V1Alpha1SQLServer>(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
-                if (sqlServer is null)
-                {
-                    logger.LogWarning("SQLServer instance '{SqlServerName}' not found. Skipping finalization.", resolvedDb.InstanceName);
-                    return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
-                }
-                secretName = sqlServer.Spec.SecretName ?? $"{sqlServer.Metadata.Name}-secret";
-            }
-
-            var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(resolvedDb.InstanceName, entity.Metadata.NamespaceProperty);
-            var (username, password) = await GetSqlServerCredentialsAsync(secretName, entity.Metadata.NamespaceProperty);
-            await DeleteLoginAsync(entity.Spec.LoginName, server, username, password);
+            var (username, password) = await GetSqlServerCredentialsAsync(resolvedDb.SecretName, entity.Metadata.NamespaceProperty);
+            await DeleteLoginAsync(entity.Spec.LoginName, resolvedDb.Host, username, password);
 
             logger.LogInformation("Finalization complete for SQLServerLogin: {Name}", entity.Metadata.Name);
             return ReconciliationResult<V1Alpha1SQLServerLogin>.Success(entity);
@@ -66,13 +44,18 @@ public class SQLServerLoginFinalizer(
     private async Task<(string username, string password)> GetSqlServerCredentialsAsync(string secretName, string namespaceName)
     {
         var secret = await kubernetesClient.GetAsync<V1Secret>(secretName, namespaceName);
-        if (secret?.Data is null || !secret.Data.ContainsKey("password"))
+        if (secret is null)
+        {
+            throw new Exception($"Secret '{secretName}' not found in namespace '{namespaceName}'.");
+        }
+
+        if (secret.Data is null || !secret.Data.ContainsKey("password"))
         {
             throw new Exception($"Secret '{secretName}' does not contain the expected 'password' key.");
         }
 
         var password = Encoding.UTF8.GetString(secret.Data["password"]);
-        var username = "sa";
+        var username = secret.Data.ContainsKey("username") ? Encoding.UTF8.GetString(secret.Data["username"]) : "sa";
 
         return (username, password);
     }

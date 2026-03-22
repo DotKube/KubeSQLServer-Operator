@@ -30,17 +30,20 @@ spec:
                 nullable: true
                 type: string
               isAvailable:
-                description: Whether the database is available on the instance.
+                description: Whether the database is available on the server.
                 type: boolean
             type: object
           spec:
             description: Spec of the external SQL Server database.
             properties:
-              instanceName:
-                description: The name of the SQLServer or ExternalSQLServer instance where the database exists.
+              serverUrl:
+                description: The hostname or IP address of the SQL Server instance.
                 type: string
               databaseName:
                 description: The name of the existing database.
+                type: string
+              secretName:
+                description: The name of the Kubernetes secret containing SQL Server credentials.
                 type: string
             type: object
         type: object

@@ -43,8 +43,9 @@ metadata:
   name: external-pre-created-db
   namespace: external-sql-example
 spec:
-  instanceName: docker-sql-server
+  serverUrl: localhost,1435
   databaseName: PreCreatedDB
+  secretName: external-sql-secret
 
 ---
 # Now you can create databases, schemas, logins, and users on the external SQL Server

@@ -30,7 +30,6 @@ public class DatabaseUserControllerTests
         _controller = new SQLServerUserController(
             _mockLogger.Object,
             _mockK8sClient.Object,
-            _mockEndpointService.Object,
             _mockSqlExecutor.Object,
             _mockDatabaseReferenceResolver.Object);
     }
@@ -44,7 +43,7 @@ public class DatabaseUserControllerTests
         var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
 
         _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "external-sql", "test-db", "default"))
-            .ReturnsAsync(new ResolvedDatabase("external-sql", "test-db"));
+            .ReturnsAsync(new ResolvedDatabase("localhost,1433", "test-db", "external-secret"));
 
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("external-sql", "default"))
             .ReturnsAsync(externalServer);
@@ -84,14 +83,14 @@ public class DatabaseUserControllerTests
     public async Task ReconcileAsync_WithInternalServer_CreatesUser()
     {
         // Arrange
-        var entity = TestDataBuilder.CreateDatabaseUser("test-user", "test-login", "test-db", "internal-sql", "default");
+        var entity = TestDataBuilder.CreateDatabaseUser("test-user", "test-login", "TestDB", "internal-sql", "default");
         var internalServer = TestDataBuilder.CreateSqlServer("internal-sql", "default");
         var secret = TestDataBuilder.CreateSecret("internal-sql-secret", "default", "TestPass123!");
 
-        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "internal-sql", "test-db", "default"))
-            .ReturnsAsync(new ResolvedDatabase("internal-sql", "test-db"));
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "internal-sql", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("internal-sql-host", "TestDB", "internal-sql-secret"));
 
-        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("internal-sql", "default"))
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("internal-sql", "default", It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1ExternalSQLServer?)null);
         _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("internal-sql", "default"))
             .ReturnsAsync(internalServer);
@@ -121,14 +120,17 @@ public class DatabaseUserControllerTests
     public async Task ReconcileAsync_WhenServerNotFound_ReturnsFailure()
     {
         // Arrange
-        var entity = TestDataBuilder.CreateDatabaseUser("test-user", "test-login", "test-db", "missing-server", "default");
+        var entity = TestDataBuilder.CreateDatabaseUser("test-user", "test-login", "TestDB", "missing-server", "default");
 
-        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "missing-server", "test-db", "default"))
-            .ReturnsAsync(new ResolvedDatabase("missing-server", "test-db"));
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "missing-server", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("missing-host", "TestDB", "missing-secret"));
 
-        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("missing-server", "default"))
+        _mockK8sClient.Setup(x => x.GetAsync<V1Secret>("missing-secret", "default", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((V1Secret?)null);
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("missing-server", "default", It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1ExternalSQLServer?)null);
-        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("missing-server", "default"))
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1SQLServer>("missing-server", "default", It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1SQLServer?)null);
         _mockK8sClient.Setup(x => x.UpdateStatusAsync(It.IsAny<V1Alpha1DatabaseUser>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((V1Alpha1DatabaseUser e, CancellationToken ct) => e);
@@ -138,7 +140,7 @@ public class DatabaseUserControllerTests
 
         // Assert
         Assert.Equal("Error", entity.Status?.State);
-        Assert.Contains("not found", entity.Status?.Message);
+        Assert.Contains("Secret 'missing-secret' not found", entity.Status?.Message);
         _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
             It.IsAny<string>(),
             It.IsAny<string>(),

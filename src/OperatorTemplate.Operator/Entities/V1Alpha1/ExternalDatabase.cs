@@ -1,7 +1,7 @@
+using System;
 using k8s.Models;
 using KubeOps.Abstractions.Entities;
 using KubeOps.Abstractions.Entities.Attributes;
-using System;
 
 namespace SqlServerOperator.Entities.V1Alpha1;
 
@@ -11,11 +11,14 @@ public class V1Alpha1ExternalDatabase : CustomKubernetesEntity<V1Alpha1ExternalD
     [Description("Spec of the external SQL Server database.")]
     public class V1Alpha1ExternalDatabaseSpec
     {
-        [Description("The name of the SQLServer or ExternalSQLServer instance where the database exists.")]
-        public string InstanceName { get; set; } = string.Empty;
+        [Description("The hostname or IP address of the SQL Server instance.")]
+        public string ServerUrl { get; set; } = string.Empty;
 
         [Description("The name of the existing database.")]
         public string DatabaseName { get; set; } = string.Empty;
+
+        [Description("The name of the Kubernetes secret containing SQL Server credentials.")]
+        public string SecretName { get; set; } = string.Empty;
     }
 
     [Description("Status of the external SQL Server database.")]
@@ -30,7 +33,7 @@ public class V1Alpha1ExternalDatabase : CustomKubernetesEntity<V1Alpha1ExternalD
         [Description("The last time the database status was checked.")]
         public DateTime? LastChecked { get; set; }
 
-        [Description("Whether the database is available on the instance.")]
+        [Description("Whether the database is available on the server.")]
         public bool IsAvailable { get; set; } = false;
     }
 }
