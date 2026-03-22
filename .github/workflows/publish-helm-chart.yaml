@@ -22,7 +22,35 @@ env:
   CHART_DIR: deploy/chart/kubesqlserver-operator
 
 jobs:
-  build-and-push:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      owner_lc: ${{ steps.vars.outputs.owner_lc }}
+      chart_version: ${{ steps.vars.outputs.chart_version }}
+      push_latest: ${{ steps.vars.outputs.push_latest }}
+      chart_name: ${{ steps.vars.outputs.chart_name }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set variables
+        id: vars
+        run: |
+          echo "owner_lc=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+          
+          # Use manual version if provided, otherwise generate one based on datetime: 0.0.0-YYYYMMDDHHMMSS
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "chart_version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "push_latest=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "chart_version=0.0.0-$(date +'%Y%m%d%H%M%S')" >> "$GITHUB_OUTPUT"
+            echo "push_latest=true" >> "$GITHUB_OUTPUT"
+          fi
+          
+          # Extract chart name from Chart.yaml
+          CHART_NAME=$(yq .name ${{ env.CHART_DIR }}/Chart.yaml)
+          echo "chart_name=$CHART_NAME" >> "$GITHUB_OUTPUT"
+
+  publish-versioned:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -31,36 +59,35 @@ jobs:
         with:
           version: v3.15.2
 
-      - name: Set variables
+      - name: Login to GHCR for Helm
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+
+      - name: Package and Push Versioned Chart
         run: |
-          echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
-          # Use manual version if provided, otherwise generate one based on datetime: 0.0.0-YYYYMMDDHHMMSS
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            CHART_VERSION="${{ github.event.inputs.version }}"
-          else
-            CHART_VERSION="0.0.0-$(date +'%Y%m%d%H%M%S')"
-            echo "PUSH_LATEST=true" >> "$GITHUB_ENV"
-          fi
-          echo "HELM_VERSION_FLAG=--version $CHART_VERSION" >> "$GITHUB_ENV"
-          echo "CHART_VERSION=$CHART_VERSION" >> "$GITHUB_ENV"
+          mkdir -p "$CHART_DIR/.artifacts"
+          cd "$CHART_DIR"
+          echo "Packaging chart with version: ${{ needs.prepare.outputs.chart_version }}"
+          helm package . --version "${{ needs.prepare.outputs.chart_version }}" --destination .artifacts
+          helm push ".artifacts/${{ needs.prepare.outputs.chart_name }}-${{ needs.prepare.outputs.chart_version }}.tgz" "oci://$REGISTRY/${{ needs.prepare.outputs.owner_lc }}/chart"
+
+  publish-latest:
+    needs: [prepare, publish-versioned]
+    if: needs.prepare.outputs.push_latest == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.15.2
 
       - name: Login to GHCR for Helm
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
 
-      - name: Package and Push chart
+      - name: Package and Push Latest Chart
         run: |
           mkdir -p "$CHART_DIR/.artifacts"
           cd "$CHART_DIR"
-          CHART_NAME=$(yq .name Chart.yaml)
-          
-          # 1. Package and Push the specific version (datetime or manual)
-          echo "Packaging chart with version: ${{ env.CHART_VERSION }}"
-          helm package . $HELM_VERSION_FLAG --destination .artifacts
-          helm push ".artifacts/${CHART_NAME}-${{ env.CHART_VERSION }}.tgz" "oci://$REGISTRY/$OWNER_LC/chart"
-          
-          # 2. Package and Push 'latest' version if enabled
-          if [ "${{ env.PUSH_LATEST }}" = "true" ]; then
-            echo "Packaging chart with version: latest"
-            helm package . --version "latest" --destination .artifacts
-            helm push ".artifacts/${CHART_NAME}-latest.tgz" "oci://$REGISTRY/$OWNER_LC/chart"
-          fi
+          echo "Packaging chart with version: latest"
+          helm package . --version "latest" --destination .artifacts
+          helm push ".artifacts/${{ needs.prepare.outputs.chart_name }}-latest.tgz" "oci://$REGISTRY/${{ needs.prepare.outputs.owner_lc }}/chart"
