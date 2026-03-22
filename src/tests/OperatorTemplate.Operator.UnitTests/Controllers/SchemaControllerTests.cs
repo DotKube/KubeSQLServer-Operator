@@ -140,6 +140,36 @@ public class SchemaControllerTests
     }
 
     [Fact]
+    public async Task ReconcileAsync_WithCustomOwner_EnsuresUserExists()
+    {
+        // Arrange
+        var entity = TestDataBuilder.CreateSchema("test-schema", "external-sql", "default");
+        entity.Spec.SchemaOwner = "custom-user";
+        
+        var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
+
+        _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "external-sql", "TestDB", "default"))
+            .ReturnsAsync(new ResolvedDatabase("localhost,1433", "TestDB", "external-secret"));
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Secret>("external-secret", "default"))
+            .ReturnsAsync(secret);
+        _mockSqlExecutor.Setup(x => x.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .Returns(Task.CompletedTask);
+        _mockK8sClient.Setup(x => x.UpdateStatusAsync(It.IsAny<V1Alpha1SQLServerSchema>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((V1Alpha1SQLServerSchema e, CancellationToken ct) => e);
+
+        // Act
+        await _controller.ReconcileAsync(entity, CancellationToken.None);
+
+        // Assert
+        _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
+            It.IsAny<string>(),
+            It.Is<string>(cmd => cmd.Contains("IF @SchemaOwner <> 'dbo' AND NOT EXISTS") && cmd.Contains("CREATE USER")),
+            It.Is<Dictionary<string, object>>(p => (string)p["@SchemaOwner"] == "custom-user")),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task DeletedAsync_ReturnsSuccess()
     {
         // Arrange

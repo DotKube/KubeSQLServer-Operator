@@ -99,6 +99,15 @@ public class SQLServerSchemaController(
         };
 
         var schemaExistsCommandText = @"
+            IF @SchemaOwner <> 'dbo' AND NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @SchemaOwner)
+            BEGIN
+                IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @SchemaOwner)
+                BEGIN
+                    DECLARE @createUserSql NVARCHAR(MAX) = N'CREATE USER [' + @SchemaOwner + '] FOR LOGIN [' + @SchemaOwner + ']';
+                    EXEC sp_executesql @createUserSql;
+                END
+            END
+
             IF NOT EXISTS (
                 SELECT schema_name 
                 FROM information_schema.schemata 

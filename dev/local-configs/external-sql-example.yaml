@@ -36,18 +36,6 @@ spec:
   trustServerCertificate: true
 
 ---
-# Represent an existing database on the external SQL Server
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: ExternalDatabase
-metadata:
-  name: external-pre-created-db
-  namespace: external-sql-example
-spec:
-  serverUrl: localhost,1435
-  databaseName: PreCreatedDB
-  secretName: external-sql-secret
-
----
 # Now you can create databases, schemas, logins, and users on the external SQL Server
 # using the same CRDs, just reference the ExternalSQLServer name as the instanceName
 
@@ -61,32 +49,6 @@ spec:
   instanceName: docker-sql-server  # References the ExternalSQLServer
   databaseName: ExternalAppDB
 
----
-# Create a login on the external SQL Server (Referencing the external database)
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: SQLServerLogin
-metadata:
-  name: external-app-login
-  namespace: external-sql-example
-spec:
-  databaseRef: external-pre-created-db
-  loginName: externaluser
-  authenticationType: SQL
-  secretName: external-sql-secret
-
----
-# Create a user in the pre-created database
-apiVersion: sql-server.dotkube.io/v1alpha1
-kind: SQLServerUser
-metadata:
-  name: external-app-user
-  namespace: external-sql-example
-spec:
-  databaseRef: external-pre-created-db
-  loginName: externaluser
-  roles:
-    - db_datareader
-    - db_datawriter
 
 ---
 # Create a schema in the operator-managed database

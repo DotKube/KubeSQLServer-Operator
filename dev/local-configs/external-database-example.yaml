@@ -1,15 +1,37 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-db-example
+
+---
+# Secret containing credentials for the external SQL Server
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-sql-secret
+  namespace: external-db-example
+type: Opaque
+stringData:
+  username: sa
+  password: SuperSecretPassword123!
+
+---
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: ExternalDatabase
 metadata:
   name: external-db-sample
+  namespace: external-db-example
 spec:
-  instanceName: external-sql-server-sample
-  databaseName: ExistingBusinessDb
+  serverUrl: localhost,1435
+  databaseName: AlreadyExistingDB
+  secretName: external-sql-secret
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerLogin
 metadata:
-  name: sample-login-with-db-ref
+  name: app-login
+  namespace: external-db-example
 spec:
   databaseRef: external-db-sample
   loginName: app-user
@@ -19,7 +41,8 @@ spec:
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: SQLServerUser
 metadata:
-  name: sample-user-with-db-ref
+  name: app-user
+  namespace: external-db-example
 spec:
   databaseRef: external-db-sample
   loginName: app-user
@@ -28,10 +51,129 @@ spec:
     - db_datawriter
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
-kind: SQLServerSchema
+kind: SQLServerLogin
 metadata:
-  name: sample-schema-with-db-ref
+  name: reporting-login
+  namespace: external-db-example
 spec:
   databaseRef: external-db-sample
-  schemaName: application
+  loginName: reporting-user
+  authenticationType: SQL
+  secretName: reporting-secret
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: reporting-user
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: reporting-user
+  roles:
+    - db_datareader
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: etl-login
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: etl-service
+  authenticationType: SQL
+  secretName: etl-secret
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: etl-user
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: etl-service
+  roles:
+    - db_datareader
+    - db_datawriter
+    - db_ddladmin
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: data-scientist-login
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: data-scientist
+  authenticationType: SQL
+  secretName: ds-secret
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: data-scientist-user
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: data-scientist
+  roles:
+    - db_datareader
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-etl-staging
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: etl_staging
+  schemaOwner: etl-service
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-data-science
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: data_science
+  schemaOwner: data-scientist
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-audit-logs
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: audit_logs
   schemaOwner: app-user
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-legacy-archive
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: legacy_archive
+  schemaOwner: reporting-user
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-geo-spatial
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: geo_spatial
+  schemaOwner: data-scientist
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerSchema
+metadata:
+  name: schema-hardware-telemetry
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  schemaName: hardware_telemetry
+  schemaOwner: etl-service
