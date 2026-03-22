@@ -145,7 +145,7 @@ public class SchemaControllerTests
         // Arrange
         var entity = TestDataBuilder.CreateSchema("test-schema", "external-sql", "default");
         entity.Spec.SchemaOwner = "custom-user";
-        
+
         var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!");
 
         _mockDatabaseReferenceResolver.Setup(x => x.ResolveAsync(null, "external-sql", "TestDB", "default"))
