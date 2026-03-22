@@ -67,7 +67,26 @@ tasks:
   create-external-sql-container:
     cmds:
     - docker run -d --name external-sql-server --restart unless-stopped -v external-sql-data:/var/opt/mssql -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=SuperSecretPassword123!' -p 1435:1433 mcr.microsoft.com/mssql/server:2022-latest
+    - task: create-external-db
     desc: "Create a SQL Server container on port 1435 for testing external SQL Server connections."
+
+  create-external-db:
+    internal: true
+    cmds:
+      - |
+        echo "Waiting for external SQL Server to be ready..."
+        for i in {1..30}; do
+          if docker exec external-sql-server /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SuperSecretPassword123!' -C -Q "SELECT 1" > /dev/null 2>&1; then
+            echo "SQL Server is ready."
+            docker exec external-sql-server /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SuperSecretPassword123!' -C -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'PreCreatedDB') CREATE DATABASE PreCreatedDB"
+            echo "Database 'PreCreatedDB' ensured."
+            exit 0
+          fi
+          echo "SQL Server not ready yet... ($i/30)"
+          sleep 2
+        done
+        echo "Timeout waiting for SQL Server"
+        exit 1
 
   delete-external-sql-container:
     cmds:
