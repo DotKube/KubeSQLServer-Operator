@@ -48,7 +48,8 @@ tasks:
   
   create-registry:
     cmds:
-    - docker run -d --name kind-registry --restart always -p 5000:5000 -v kind-registry-data:/var/lib/registry docker.io/registry:2 || true
+    - docker rm -f kind-registry || true
+    - docker run -d --name kind-registry --network bridge --restart always -p 5000:5000 -v kind-registry-data:/var/lib/registry docker.io/registry:2
 
   
   add-metallb:

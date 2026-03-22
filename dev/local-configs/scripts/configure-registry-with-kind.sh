@@ -7,7 +7,7 @@ reg_port="5000"
 REGISTRY_DIR="/etc/containerd/certs.d/localhost:$reg_port"
 
 # 1. Add the registry config to the nodes
-for node in $(kind get nodes); do
+for node in $(kind get nodes --name sql-server-testing-cluster); do
   echo "Configuring registry directory for node: $node"
   docker exec "${node}" mkdir -p "${REGISTRY_DIR}"
   cat <<EOF | docker exec -i "${node}" cp /dev/stdin "${REGISTRY_DIR}/hosts.toml"
