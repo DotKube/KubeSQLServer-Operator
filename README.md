@@ -18,6 +18,7 @@ This project is intended to be an open-source alternative to D2HI's Dx Operator,
   - [Available CRDs](#available-crds)
   - [Managing In-Cluster SQL Server](#managing-in-cluster-sql-server)
   - [Managing External SQL Server](#managing-external-sql-server)
+  - [Managing Existing External Databases](#managing-existing-external-databases)
 - [Planned Features and Roadmap](#planned-features-and-roadmap)
 - [Local Development - Key Commands](#local-development---key-commands)
 - [Support](#support)
@@ -78,9 +79,10 @@ The operator provides the following Custom Resource Definitions (CRDs):
 | `SQLServer` | Manages in-cluster SQL Server StatefulSets with persistent storage | [See below](#managing-in-cluster-sql-server) |
 | `ExternalSQLServer` | Manages external SQL Server instances (Azure SQL, AWS RDS, on-prem, Docker) | [See below](#managing-external-sql-server) |
 | `Database` | Creates and manages databases on SQLServer or ExternalSQLServer | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
-| `SQLServerLogin` | Creates and manages server-level logins | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
-| `SQLServerUser` | Creates database users and assigns roles | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
-| `SQLServerSchema` | Creates and manages database schemas | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
+| `ExternalDatabase` | Manages existing external databases without managing the server instance itself | [See below](#managing-existing-external-databases) |
+| `SQLServerLogin` | Creates and manages server-level logins (supports `databaseRef`) | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
+| `SQLServerUser` | Creates database-level users and assigns roles (supports `databaseRef`) | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
+| `SQLServerSchema` | Creates and manages database schemas (supports `databaseRef`) | [example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/example.yaml) |
 
 ### Managing In-Cluster SQL Server
 
@@ -126,7 +128,7 @@ metadata:
   name: admin-login
   namespace: sqlserver-example
 spec:
-  sqlServerName: sqlserver-instance
+  databaseRef: example-database
   loginName: adminuser
   authenticationType: SQL
   secretName: sqlserver-secret
@@ -138,8 +140,7 @@ metadata:
   name: admin-user
   namespace: sqlserver-example
 spec:
-  sqlServerName: sqlserver-instance
-  databaseName: HelloWorld
+  databaseRef: example-database
   loginName: adminuser
   roles:
     - db_owner
@@ -151,8 +152,7 @@ metadata:
   name: reporting-schema
   namespace: sqlserver-example
 spec:
-  instanceName: sqlserver-instance
-  databaseName: HelloWorld
+  databaseRef: example-database
   schemaName: Reporting
   schemaOwner: adminuser
 ```
@@ -204,7 +204,7 @@ metadata:
   name: external-app-login
   namespace: external-sql-example
 spec:
-  sqlServerName: docker-sql-server
+  databaseRef: external-app-database
   loginName: externaluser
   authenticationType: SQL
   secretName: external-sql-secret
@@ -216,8 +216,7 @@ metadata:
   name: external-app-user
   namespace: external-sql-example
 spec:
-  sqlServerName: docker-sql-server
-  databaseName: ExternalAppDB
+  databaseRef: external-app-database
   loginName: externaluser
   roles:
     - db_datareader
@@ -230,13 +229,66 @@ metadata:
   name: external-app-schema
   namespace: external-sql-example
 spec:
-  instanceName: docker-sql-server
-  databaseName: ExternalAppDB
+  databaseRef: external-app-database
   schemaName: Application
   schemaOwner: externaluser
 ```
 
 > 📝 **See the full example**: [external-sql-example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/external-sql-example.yaml)
+
+### Managing Existing External Databases
+
+If you have an existing database on an external SQL Server that you want to manage (e.g., users, logins, schemas) without the operator managing the server itself, use `ExternalDatabase`. This is ideal for Azure SQL Database, AWS RDS, or any database you don't control the underlying server for.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: external-sql-secret
+  namespace: external-db-example
+type: Opaque
+stringData:
+  username: sa
+  password: SuperSecretPassword123!
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: ExternalDatabase
+metadata:
+  name: external-db-sample
+  namespace: external-db-example
+spec:
+  serverUrl: localhost,1435
+  databaseName: AlreadyExistingDB
+  secretName: external-sql-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerLogin
+metadata:
+  name: app-login
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: app-user
+  authenticationType: SQL
+  secretName: app-user-secret
+
+---
+apiVersion: sql-server.dotkube.io/v1alpha1
+kind: SQLServerUser
+metadata:
+  name: app-user
+  namespace: external-db-example
+spec:
+  databaseRef: external-db-sample
+  loginName: app-user
+  roles:
+    - db_datareader
+    - db_datawriter
+```
+
+> 📝 **See the full example**: [external-database-example.yaml](https://github.com/DotKube/KubeSQLServer-Operator/blob/main/dev/local-configs/external-database-example.yaml)
 
 ---
 
