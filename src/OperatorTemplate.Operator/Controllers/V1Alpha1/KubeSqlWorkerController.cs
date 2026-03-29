@@ -32,7 +32,7 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
 
     private async Task EnsureServiceAccountAsync(V1Alpha1KubeSqlWorker entity)
     {
-        var saName = $"{entity.Metadata.Name}-sa";
+        var saName = entity.Spec.ServiceAccountName ?? $"{entity.Metadata.Name}-sa";
         var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "sql-server";
 
         var sa = new V1ServiceAccount
@@ -41,9 +41,16 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
             {
                 Name = saName,
                 NamespaceProperty = namespaceName,
-                Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } }
+                Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } },
+                Annotations = new Dictionary<string, string>()
             }
         };
+
+        if (entity.Spec.AuthType == "WorkloadIdentity" && !string.IsNullOrEmpty(entity.Spec.ClientId))
+        {
+            sa.Metadata.Annotations["azure.workload.identity/client-id"] = entity.Spec.ClientId;
+            // Tenant ID can be added here as well if needed
+        }
 
         try
         {
@@ -52,7 +59,8 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
         }
         catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            logger.LogInformation("ServiceAccount for KubeSqlWorker {Name} already exists. Skipping creation.", entity.Metadata.Name);
+            logger.LogInformation("ServiceAccount for KubeSqlWorker {Name} already exists. Updating.", entity.Metadata.Name);
+            await kubernetesClient.ApiClient.CoreV1.ReplaceNamespacedServiceAccountAsync(sa, saName, namespaceName);
         }
     }
 
@@ -60,7 +68,40 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
     {
         var deploymentName = $"{entity.Metadata.Name}-worker";
         var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "sql-server";
-        var saName = $"{entity.Metadata.Name}-sa";
+        var saName = entity.Spec.ServiceAccountName ?? $"{entity.Metadata.Name}-sa";
+
+        var podLabels = new Dictionary<string, string> { { "app", entity.Metadata.Name } };
+        if (entity.Spec.AuthType == "WorkloadIdentity")
+        {
+            podLabels["azure.workload.identity/use"] = "true";
+        }
+
+        var envVars = new List<V1EnvVar>
+        {
+            new() { Name = "WORKER_NAME", Value = entity.Metadata.Name },
+            new() { Name = "TARGET_RESOURCE_KIND", Value = entity.Spec.TargetResourceKind },
+            new() { Name = "TARGET_RESOURCE_NAME", Value = entity.Spec.TargetResourceName },
+            new() { Name = "TARGET_RESOURCE_NAMESPACE", Value = entity.Spec.TargetResourceNamespace },
+            new() { Name = "SQL_SERVER_URL", Value = entity.Spec.ServerUrl },
+            new() { Name = "SQL_SERVER_PORT", Value = entity.Spec.Port.ToString() },
+            new() { Name = "AUTH_METHOD", Value = entity.Spec.AuthType },
+            new() {
+                Name = "POD_NAMESPACE",
+                ValueFrom = new V1EnvVarSource {
+                    FieldRef = new V1ObjectFieldSelector { FieldPath = "metadata.namespace" }
+                }
+            }
+        };
+
+        if (!string.IsNullOrEmpty(entity.Spec.SecretName))
+        {
+            envVars.Add(new() { Name = "SQL_SECRET_NAME", Value = entity.Spec.SecretName });
+        }
+
+        if (!string.IsNullOrEmpty(entity.Spec.ClientId))
+        {
+            envVars.Add(new() { Name = "AZURE_CLIENT_ID", Value = entity.Spec.ClientId });
+        }
 
         var deployment = new V1Deployment
         {
@@ -81,7 +122,7 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Labels = new Dictionary<string, string> { { "app", entity.Metadata.Name } }
+                        Labels = podLabels
                     },
                     Spec = new V1PodSpec
                     {
@@ -91,7 +132,8 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
                             new V1Container
                             {
                                 Name = "worker",
-                                Image = "ghcr.io/dotkube/kubesqlworker:latest"
+                                Image = "ghcr.io/dotkube/kubesqlworker:latest",
+                                Env = envVars
                             }
                         }
                     }
@@ -106,7 +148,8 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
         }
         catch (k8s.Autorest.HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            logger.LogInformation("Deployment for KubeSqlWorker {Name} already exists. Skipping creation.", entity.Metadata.Name);
+            logger.LogInformation("Deployment for KubeSqlWorker {Name} already exists. Updating.", entity.Metadata.Name);
+            await kubernetesClient.ApiClient.AppsV1.ReplaceNamespacedDeploymentAsync(deployment, deploymentName, namespaceName);
         }
     }
 

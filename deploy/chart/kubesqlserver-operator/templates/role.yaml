@@ -16,6 +16,7 @@ rules:
   - sqlserverlogins
   - sqlserverusers
   - sqlserverschemas
+  - kubesqlworkers
   verbs:
   - create
   - delete
@@ -36,6 +37,7 @@ rules:
   - sqlserverlogins/status
   - sqlserverusers/status
   - sqlserverschemas/status
+  - kubesqlworkers/status
   verbs:
   - get
   - patch
@@ -68,6 +70,7 @@ rules:
   - ""
   resources:
   - services
+  - serviceaccounts
   verbs:
   - create
   - get
@@ -91,6 +94,7 @@ rules:
   - apps
   resources:
   - statefulsets
+  - deployments
   verbs:
   - create
   - get

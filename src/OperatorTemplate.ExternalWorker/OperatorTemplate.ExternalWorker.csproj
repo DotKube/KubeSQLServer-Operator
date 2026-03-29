@@ -6,7 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="KubeOps" Version="9.0.*" />
-    <PackageReference Include="KubeOps.Operator" Version="9.0.*" />
+    <ProjectReference Include="..\OperatorTemplate.Entities\OperatorTemplate.Entities.csproj" />
+    <ProjectReference Include="..\OperatorTemplate.ServiceDefaults\OperatorTemplate.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KubeOps.Generator" Version="10.3.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="KubeOps.Operator" Version="10.3.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
   </ItemGroup>
 </Project>

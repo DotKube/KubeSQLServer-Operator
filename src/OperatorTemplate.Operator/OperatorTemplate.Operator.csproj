@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference
       Include="..\OperatorTemplate.ServiceDefaults\OperatorTemplate.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\OperatorTemplate.Entities\OperatorTemplate.Entities.csproj" />
   </ItemGroup>
 
   <ItemGroup>
