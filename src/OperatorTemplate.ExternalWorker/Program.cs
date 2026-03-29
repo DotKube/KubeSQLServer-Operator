@@ -1,7 +1,7 @@
-using OperatorTemplate.ExternalWorker.Services;
 using KubeOps.Operator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using OperatorTemplate.ExternalWorker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
