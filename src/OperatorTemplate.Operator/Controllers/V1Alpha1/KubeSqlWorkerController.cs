@@ -91,11 +91,7 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
                             new V1Container
                             {
                                 Name = "worker",
-                                Image = "ghcr.io/dotkube/kubesqlworker:latest", 
-                                Env = new List<V1EnvVar>
-                                {
-                                    new V1EnvVar { Name = "TARGET_NAMESPACE", Value = entity.Spec.TargetNamespace }
-                                }
+                                Image = "ghcr.io/dotkube/kubesqlworker:latest"
                             }
                         }
                     }

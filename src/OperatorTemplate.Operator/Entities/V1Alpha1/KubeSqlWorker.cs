@@ -10,8 +10,6 @@ public class V1Alpha1KubeSqlWorker : CustomKubernetesEntity<V1Alpha1KubeSqlWorke
     [Description("Spec of the KubeSqlWorker configuration.")]
     public class V1Alpha1KubeSqlWorkerSpec
     {
-        [Description("The target namespace or connection details for the worker.")]
-        public string TargetNamespace { get; set; } = string.Empty;
     }
 
     [Description("Status of the KubeSqlWorker configuration.")]
