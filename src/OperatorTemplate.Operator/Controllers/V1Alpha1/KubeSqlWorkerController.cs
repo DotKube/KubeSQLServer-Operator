@@ -33,7 +33,7 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
     private async Task EnsureServiceAccountAsync(V1Alpha1KubeSqlWorker entity)
     {
         var saName = $"{entity.Metadata.Name}-sa";
-        var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "default";
+        var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "sql-server";
 
         var sa = new V1ServiceAccount
         {
@@ -59,7 +59,7 @@ public class KubeSqlWorkerController(ILogger<KubeSqlWorkerController> logger, IK
     private async Task EnsureDeploymentAsync(V1Alpha1KubeSqlWorker entity)
     {
         var deploymentName = $"{entity.Metadata.Name}-worker";
-        var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "default";
+        var namespaceName = Environment.GetEnvironmentVariable("POD_NAMESPACE") ?? "sql-server";
         var saName = $"{entity.Metadata.Name}-sa";
 
         var deployment = new V1Deployment
