@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OperatorTemplate.Operator\OperatorTemplate.Operator.csproj" />
+    <ProjectReference Include="..\OperatorTemplate.ExternalWorker\OperatorTemplate.ExternalWorker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

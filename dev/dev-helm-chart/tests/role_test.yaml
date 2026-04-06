@@ -1,0 +1,79 @@
+suite: test cluster role
+templates:
+  - role.yaml
+tests:
+  - it: should create ClusterRole with correct permissions
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-operator-role
+      - contains:
+          path: rules
+          content:
+            apiGroups:
+              - sql-server.dotkube.io
+            resources:
+              - sqlservers
+              - externalsqlservers
+              - databases
+              - externaldatabases
+              - sqlserverlogins
+              - sqlserverusers
+              - sqlserverschemas
+              - kubesqlworkers
+            verbs:
+              - create
+              - delete
+              - get
+              - list
+              - patch
+              - update
+              - watch
+      - contains:
+          path: rules
+          content:
+            apiGroups:
+              - sql-server.dotkube.io
+            resources:
+              - sqlservers/status
+              - externalsqlservers/status
+              - databases/status
+              - externaldatabases/status
+              - sqlserverlogins/status
+              - sqlserverusers/status
+              - sqlserverschemas/status
+              - kubesqlworkers/status
+            verbs:
+              - get
+              - patch
+              - update
+      - contains:
+          path: rules
+          content:
+            apiGroups:
+              - apps
+            resources:
+              - statefulsets
+              - deployments
+            verbs:
+              - create
+              - get
+              - list
+              - watch
+      - contains:
+          path: rules
+          content:
+            apiGroups:
+              - ""
+            resources:
+              - services
+              - serviceaccounts
+            verbs:
+              - create
+              - get
+              - list
+              - patch
+              - update
+              - watch

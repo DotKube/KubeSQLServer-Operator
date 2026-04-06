@@ -1,0 +1,32 @@
+{
+    "general": {
+        "previewFeatures": true,
+        "enableNotifications": true,
+        "sessionRetention": {
+            "enabled": true,
+            "maxAge": "30d",
+            "warningAcknowledged": true
+        },
+        "plan": {
+            "modelRouting": true
+        },
+        "preferredEditor": "antigravity"
+    },
+    "model": {
+        "name": "gemini-3-flash-preview"
+    },
+    "ide": {
+        "hasSeenNudge": true,
+        "enabled": true
+    },
+    "tools": {
+        "sandbox": false
+    },
+    "experimental": {
+        "enableAgents": true,
+        "modelSteering": true
+    },
+    "ui": {
+        "theme": "GitHub"
+    }
+}
