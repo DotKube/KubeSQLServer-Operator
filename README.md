@@ -115,11 +115,11 @@ spec:
 apiVersion: sql-server.dotkube.io/v1alpha1
 kind: Database
 metadata:
-  name: example-database
+  name: hello-world-database
   namespace: sqlserver-example
 spec:
   instanceName: sqlserver-instance
-  databaseName: HelloWorld
+  databaseName: hello-world
 
 ---
 apiVersion: sql-server.dotkube.io/v1alpha1
@@ -128,7 +128,7 @@ metadata:
   name: admin-login
   namespace: sqlserver-example
 spec:
-  databaseRef: example-database
+  sqlServerName: sqlserver-instance
   loginName: adminuser
   authenticationType: SQL
   secretName: sqlserver-secret
@@ -140,7 +140,8 @@ metadata:
   name: admin-user
   namespace: sqlserver-example
 spec:
-  databaseRef: example-database
+  sqlServerName: sqlserver-instance
+  databaseName: hello-world
   loginName: adminuser
   roles:
     - db_owner
@@ -152,7 +153,8 @@ metadata:
   name: reporting-schema
   namespace: sqlserver-example
 spec:
-  databaseRef: example-database
+  instanceName: sqlserver-instance
+  databaseName: hello-world
   schemaName: Reporting
   schemaOwner: adminuser
 ```
@@ -204,7 +206,7 @@ metadata:
   name: external-app-login
   namespace: external-sql-example
 spec:
-  databaseRef: external-app-database
+  sqlServerName: docker-sql-server
   loginName: externaluser
   authenticationType: SQL
   secretName: external-sql-secret
@@ -216,7 +218,8 @@ metadata:
   name: external-app-user
   namespace: external-sql-example
 spec:
-  databaseRef: external-app-database
+  sqlServerName: docker-sql-server
+  databaseName: ExternalAppDB
   loginName: externaluser
   roles:
     - db_datareader
@@ -229,7 +232,8 @@ metadata:
   name: external-app-schema
   namespace: external-sql-example
 spec:
-  databaseRef: external-app-database
+  instanceName: docker-sql-server
+  databaseName: ExternalAppDB
   schemaName: Application
   schemaOwner: externaluser
 ```
