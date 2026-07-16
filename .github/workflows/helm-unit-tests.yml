@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run Helm tests
         run: docker run --rm --user $(id -u):$(id -g) -v $(pwd):/apps helmunittest/helm-unittest deploy/chart/kubesqlserver-operator

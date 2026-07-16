@@ -29,7 +29,7 @@ jobs:
       chart_version: ${{ steps.vars.outputs.chart_version }}
       chart_name: ${{ steps.vars.outputs.chart_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set variables
         id: vars
         run: |
@@ -50,9 +50,9 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: v3.15.2
 
