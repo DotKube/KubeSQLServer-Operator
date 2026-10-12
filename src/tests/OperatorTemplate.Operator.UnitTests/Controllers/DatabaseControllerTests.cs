@@ -67,6 +67,36 @@ public class DatabaseControllerTests
     }
 
     [Fact]
+    public async Task ReconcileAsync_WithCustomUsernameInSecret_UsesUsernameFromSecret()
+    {
+        // Arrange
+        var entity = TestDataBuilder.CreateDatabase("test-db", "external-sql", "default");
+        var externalServer = TestDataBuilder.CreateExternalSqlServer("external-sql", "default");
+        var secret = TestDataBuilder.CreateSecret("external-secret", "default", "TestPass123!", username: "customUser");
+
+        _mockK8sClient.Setup(x => x.GetAsync<V1Alpha1ExternalSQLServer>("external-sql", "default"))
+            .ReturnsAsync(externalServer);
+        _mockK8sClient.Setup(x => x.GetAsync<V1Secret>("external-secret", "default"))
+            .ReturnsAsync(secret);
+        _mockEndpointService.Setup(x => x.GetSqlServerEndpointAsync("external-sql", "default"))
+            .ReturnsAsync("localhost,1433");
+        _mockSqlExecutor.Setup(x => x.ExecuteNonQueryAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .Returns(Task.CompletedTask);
+        _mockK8sClient.Setup(x => x.UpdateStatusAsync(It.IsAny<V1Alpha1SQLServerDatabase>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((V1Alpha1SQLServerDatabase e, CancellationToken ct) => e);
+
+        // Act
+        await _controller.ReconcileAsync(entity, CancellationToken.None);
+
+        // Assert
+        _mockSqlExecutor.Verify(x => x.ExecuteNonQueryAsync(
+            It.Is<string>(connStr => connStr.Contains("User ID=customUser") && !connStr.Contains("User ID=sa")),
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task ReconcileAsync_WhenInstanceNotFound_ReturnsFailure()
     {
         // Arrange

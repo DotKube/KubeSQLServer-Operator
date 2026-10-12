@@ -79,7 +79,7 @@ public class SQLServerDatabaseController(
 
         var password = Encoding.UTF8.GetString(secret.Data["password"]);
         var server = await sqlServerEndpointService.GetSqlServerEndpointAsync(entity.Spec.InstanceName, namespaceName);
-        var username = "sa";
+        var username = secret.Data.ContainsKey("username") ? Encoding.UTF8.GetString(secret.Data["username"]) : "sa";
 
         return (server, username, password);
     }
