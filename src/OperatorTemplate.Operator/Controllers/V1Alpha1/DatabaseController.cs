@@ -99,7 +99,6 @@ public class SQLServerDatabaseController(
         var connectionString = builder.ConnectionString;
 
         logger.LogInformation("Ensuring database '{DatabaseName}' on server '{Server}'.", databaseName, server);
-        logger.LogInformation("Connection string: {ConnectionString}", connectionString);
 
         try
         {
